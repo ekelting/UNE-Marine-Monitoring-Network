@@ -30,16 +30,16 @@
       "lon": -70.3492272
     },
     {
-      "label": "Saco Bay",
+      "label": "Wood Island",
       "kind": "wq",
-      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",
       "lat": 43.455593,
       "lon": -70.317699
     },
     {
-      "label": "Saco River Estuary",
+      "label": "Jordan Point",
       "kind": "wq",
-      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/",
       "lat": 43.460893,
       "lon": -70.389691
     },
@@ -55,7 +55,7 @@
   "tide_station_name": "Camp Ellis, Saco River entrance",
   "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
   "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/ferry-beach",
-  "legacy_repo": "UNE-BlueSonde-BB1.47",
+  "legacy_repo": null,
   "kind": "wq",
   "slug": "ferry-beach",
   "color": "#e87ba4"

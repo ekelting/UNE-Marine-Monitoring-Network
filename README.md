@@ -8,8 +8,8 @@ This is the public website for the University of New England's buoys in Saco Bay
 |---|---|---|---|
 | Camp Ellis | Wave (Sofar Spotter SPOT-32787C) | [/camp-ellis/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/) | [`buoys/camp-ellis`](buoys/camp-ellis) |
 | Biddeford Pool | Wave (Sofar Spotter SPOT-32905C) | [/biddeford-pool/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/) | [`buoys/biddeford-pool`](buoys/biddeford-pool) |
-| Saco Bay | Water quality (BlueSonde BB1.23) | [/saco-bay/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/) | [`buoys/saco-bay`](buoys/saco-bay) |
-| Saco River Estuary | Water quality (BlueSonde BB1.12) | [/saco-river-estuary/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/) | [`buoys/saco-river-estuary`](buoys/saco-river-estuary) |
+| Wood Island | Water quality (BlueSonde BB1.23) | [/wood-island/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/) | [`buoys/wood-island`](buoys/wood-island) |
+| Jordan Point | Water quality (BlueSonde BB1.12) | [/jordan-point/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/) | [`buoys/jordan-point`](buoys/jordan-point) |
 | Ferry Beach | Water quality (BlueSonde BB1.47) | [/ferry-beach/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/) | [`buoys/ferry-beach`](buoys/ferry-beach) |
 | Goose Rocks Beach | Water quality (BlueSonde BB1.48) | [/goose-rocks-beach/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/) | [`buoys/goose-rocks-beach`](buoys/goose-rocks-beach) |
 
@@ -18,7 +18,7 @@ This is the public website for the University of New England's buoys in Saco Bay
 - **Downloads:** every buoy page has buttons for a spreadsheet and CSV files.
 - **A Google Sheet that stays current:** type this into any cell, with the buoy's name in the address:
   ```
-  =IMPORTDATA("https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/data/daily.csv")
+  =IMPORTDATA("https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/data/daily.csv")
   ```
 - **Raw readings:** these live in `buoys/<buoy>/data/`, in UTC.
 - **Latest values as JSON:** `https://ekelting.github.io/UNE-Marine-Monitoring-Network/<buoy>/data/latest.json` gives the latest values plus the last 14 days, hourly.
@@ -44,6 +44,6 @@ This is the public website for the University of New England's buoys in Saco Bay
 
 ## History
 
-Each buoy started in its own repository (`UNE-Camp-Ellis-SPOT-32787C`, `UNE-Biddeford-Pool-SPOT-32905C`, `UNE-BlueSonde-BB1.xx`). On its first run here, each buoy's full data history was copied from its old repository. The old repositories now redirect to this site and are archived.
+The two wave buoys started in their own repositories (`UNE-Camp-Ellis-SPOT-32787C`, `UNE-Biddeford-Pool-SPOT-32905C`). Those repositories are kept as archives, and their old web addresses forward here. The BlueSonde buoys briefly had their own repositories too. Their full data history was copied here on October 12, 2026. Old page addresses (for example `/saco-bay/` and `/saco-river-estuary/`) forward to the current ones; they are listed as `aliases` in `buoys.json`.
 
 Data: Sofar Ocean (wave buoys), BlueSonde via CUMULUS / Coastal Measures (water quality), NOAA (tide predictions). University of New England.

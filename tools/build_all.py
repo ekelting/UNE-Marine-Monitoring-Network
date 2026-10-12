@@ -38,6 +38,13 @@ def main():
         if r.returncode:
             print(f'::error::{b["name"]} failed to build (exit {r.returncode}); its previous page is not updated this hour')
             failed.append(b['name'])
+    for b in buoys:                       # old addresses of renamed buoys forward to the current page
+        for old in b.get('aliases') or []:
+            os.makedirs(os.path.join(a.out, old), exist_ok=True)
+            page = (f'<!doctype html><meta charset="utf-8"><title>Moved to {b["name"]}</title>'
+                    f'<meta http-equiv="refresh" content="0; url=../{b["slug"]}/"><link rel="canonical" href="../{b["slug"]}/">'
+                    f'<p>This buoy is now called <b>{b["name"]}</b>: <a href="../{b["slug"]}/">go to its page</a>.</p>')
+            open(os.path.join(a.out, old, 'index.html'), 'w').write(page)
     shutil.copy(os.path.join(ROOT, 'web', 'index.html'), os.path.join(a.out, 'index.html'))
     shutil.copy(os.path.join(ROOT, 'buoys.json'), os.path.join(a.out, 'buoys.json'))
     open(os.path.join(a.out, '.nojekyll'), 'w').close()

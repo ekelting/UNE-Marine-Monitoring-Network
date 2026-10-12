@@ -18,22 +18,28 @@
     "legacy_repo": "UNE-Biddeford-Pool-SPOT-32905C"
   },
   {
-    "slug": "saco-bay",
+    "slug": "wood-island",
     "kind": "wq",
-    "name": "Saco Bay",
+    "name": "Wood Island",
     "lat": 43.455593,
     "lon": -70.317699,
     "color": "#1baf7a",
-    "legacy_repo": "UNE-BlueSonde-BB1.23"
+    "legacy_repo": null,
+    "aliases": [
+      "saco-bay"
+    ]
   },
   {
-    "slug": "saco-river-estuary",
+    "slug": "jordan-point",
     "kind": "wq",
-    "name": "Saco River Estuary",
+    "name": "Jordan Point",
     "lat": 43.460893,
     "lon": -70.389691,
     "color": "#eb6834",
-    "legacy_repo": "UNE-BlueSonde-BB1.12"
+    "legacy_repo": null,
+    "aliases": [
+      "saco-river-estuary"
+    ]
   },
   {
     "slug": "ferry-beach",
@@ -42,7 +48,7 @@
     "lat": 43.497213,
     "lon": -70.379113,
     "color": "#e87ba4",
-    "legacy_repo": "UNE-BlueSonde-BB1.47"
+    "legacy_repo": null
   },
   {
     "slug": "goose-rocks-beach",
@@ -51,6 +57,6 @@
     "lat": 43.396733,
     "lon": -70.402301,
     "color": "#eda100",
-    "legacy_repo": "UNE-BlueSonde-BB1.48"
+    "legacy_repo": null
   }
 ]

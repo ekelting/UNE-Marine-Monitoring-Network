@@ -22,16 +22,16 @@
       "lon": -70.36053
     },
     {
-      "label": "Saco Bay",
+      "label": "Wood Island",
       "kind": "wq",
-      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",
       "lat": 43.455593,
       "lon": -70.317699
     },
     {
-      "label": "Saco River Estuary",
+      "label": "Jordan Point",
       "kind": "wq",
-      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/",
       "lat": 43.460893,
       "lon": -70.389691
     },
