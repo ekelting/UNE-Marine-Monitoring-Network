@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNE Marine Monitoring Network</title>
+<meta name="description" content="Live wave and water-quality conditions from University of New England buoys in Saco Bay and southern Maine.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<style>
+:root{--bg:#f3f6f9;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e1e7ec;--accent:#1c5cab;
+--hero1:#0a2f57;--hero2:#16707a;--chip:#eef4fb;--chip2:#b7d3f6;--good:#1a9b5f;--warnc:#d98a00;--bad:#d4473f;--grid:#e8ecef;--sel:#fff6ef}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1112;--card:#1a1b1b;--ink:#fff;--ink2:#c3c2b7;--muted:#8f8e86;
+--line:#2c2d2e;--accent:#86b6ef;--hero1:#08213d;--hero2:#0f4f57;--chip:#23282e;--chip2:#1c5cab;--grid:#2a2b2c;--sel:#2a2119}}
+:root[data-theme="dark"]{--bg:#0f1112;--card:#1a1b1b;--ink:#fff;--ink2:#c3c2b7;--muted:#8f8e86;--line:#2c2d2e;--accent:#86b6ef;
+--hero1:#08213d;--hero2:#0f4f57;--chip:#23282e;--chip2:#1c5cab;--grid:#2a2b2c;--sel:#2a2119}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:1320px;margin:0 auto;padding:0 16px}
+header.hero{background:linear-gradient(120deg,var(--hero1),var(--hero2));color:#fff;padding:30px 0 64px;position:relative;overflow:hidden}
+header h1{margin:0;font-size:clamp(26px,4vw,42px);letter-spacing:-.6px}
+header p{margin:6px 0 0;opacity:.9;max-width:760px}
+.waves{position:absolute;left:0;right:0;bottom:-2px;height:56px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit;font-size:14px;text-decoration:none}
+.btn[aria-pressed="true"]{background:#fff;color:var(--hero1);font-weight:600}
+.status{font-size:14px;opacity:.92;display:inline-flex;align-items:center;gap:6px}
+.pulse{width:9px;height:9px;border-radius:50%;background:#4be08f;box-shadow:0 0 0 0 rgba(75,224,143,.7);animation:pl 2s infinite}
+@keyframes pl{to{box-shadow:0 0 0 10px rgba(75,224,143,0)}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:-44px;position:relative}
+.kpi,.card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+.kpi{padding:14px 16px}
+.kpi .k-l{color:var(--ink2);font-size:13px;display:flex;gap:6px;align-items:center}
+.kpi .k-v{font-size:30px;font-weight:700;letter-spacing:-.6px;margin-top:2px}
+.kpi .k-s{color:var(--muted);font-size:13px}
+.kpi .k-s b{color:var(--ink2);font-weight:600}
+section{margin-top:26px}
+h2{font-size:21px;margin:0 0 4px}
+.lede{color:var(--ink2);margin:0 0 12px}
+.main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px}
+@media (max-width:920px){.main{grid-template-columns:1fr}}
+.mapcard{overflow:hidden;display:flex;flex-direction:column;min-height:620px}
+.maptools{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;align-items:center}
+.seg{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+.seg[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.maptools .sp{flex:1}
+#map{flex:1;min-height:520px;background:var(--chip);z-index:0}
+.stations{display:flex;flex-direction:column;gap:10px;max-height:680px;overflow:auto;padding-right:2px}
+@media (max-width:920px){.stations{max-height:none}}
+.st{padding:12px 14px;cursor:pointer;transition:border-color .15s, background .15s;position:relative}
+.st:hover{border-color:var(--chip2)}
+.st.sel{border-color:#eb6834;background:var(--sel)}
+.st-top{display:flex;align-items:center;gap:10px}
+.st-ic{flex:0 0 34px}
+.st-name{font-weight:700;font-size:16px;line-height:1.2}
+.st-type{color:var(--muted);font-size:12.5px}
+.st-age{margin-left:auto;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.st-vals{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px}
+.v{display:flex;flex-direction:column;min-width:64px}
+.v .vl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.v .vv{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.v .vv small{font-size:12px;font-weight:600;color:var(--ink2)}
+.st-bottom{display:flex;align-items:flex-end;gap:10px;margin-top:6px}
+.spark{flex:1;height:38px}
+.st a.go{font-size:13px;white-space:nowrap;text-decoration:none;font-weight:600}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr));gap:12px}
+.chartcard{padding:12px 14px}
+.chartcard h3{margin:0 0 2px;font-size:16px}
+.chartcard p{margin:0;color:var(--muted);font-size:13px}
+.chart{width:100%;height:330px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink2);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.legend span.off{opacity:.35}
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.ins{padding:12px 14px;display:flex;gap:10px}
+.ins .e{font-size:24px}
+.ins h4{margin:0;font-size:14.5px}
+.ins a{font-size:12.5px;text-decoration:none}
+.err{background:#fff4e0;border-left:4px solid #eda100;border-radius:10px;padding:10px 14px;color:#000;margin-top:12px}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px}
+summary{cursor:pointer;font-weight:600}
+details li,details p{color:var(--ink2);font-size:14px}
+footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
+/* map icons + labels */
+.buoy-ic{background:none;border:0}
+.buoy-ic svg{display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45))}
+.buoy-ic.me .ring{position:absolute;left:50%;top:62%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:2px solid #eb6834;animation:ping 2.4s ease-out infinite;pointer-events:none}
+@keyframes ping{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+.leaflet-tooltip.blabel{background:rgba(255,255,255,.95);color:#16181a;border:1px solid rgba(0,0,0,.18);border-radius:7px;padding:1px 7px;
+  font:600 12px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.leaflet-tooltip.blabel .val{font-weight:700;color:#0d4a8a}
+.leaflet-tooltip.blabel.sel{background:#eb6834;color:#fff;border-color:#b8471d}
+.leaflet-tooltip.blabel.sel .val{color:#fff}
+.leaflet-tooltip.blabel:before{display:none}
+.leaflet-popup-content{font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:10px 14px}
+</style></head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>🌊 UNE Marine Monitoring Network</h1>
+  <p>Live wave and water-quality conditions from University of New England buoys in Saco Bay and along the southern Maine coast.</p>
+  <div class="toolbar">
+    <span class="status"><span class="pulse"></span><span id="status">Loading live data…</span></span>
+    <button class="btn" id="u-us" aria-pressed="true">🇺🇸 °F · feet</button>
+    <button class="btn" id="u-si" aria-pressed="false">🌍 °C · metres</button>
+    <button class="btn" id="theme">🌓 light / dark</button>
+  </div>
+</div>
+<svg class="waves" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0,30 C150,60 300,0 450,30 C600,60 750,0 900,30 C1050,60 1150,15 1200,30 L1200,60 L0,60 Z" fill="var(--bg)"/></svg>
+</header>
+
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
+  <div id="errors"></div>
+
+  <section>
+    <div class="main">
+      <div class="card mapcard">
+        <div class="maptools">
+          <button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button>
+          <button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart</button>
+          <span class="sp"></span>
+          <label for="maplabel" style="font-size:13px;color:var(--ink2)">Labels show</label>
+          <select id="maplabel" class="seg" style="padding:4px 8px">
+            <option value="temp">Water temperature</option><option value="sal">Salinity</option>
+            <option value="do">Dissolved oxygen</option><option value="hs">Wave height</option><option value="name">Names only</option>
+          </select>
+        </div>
+        <div id="map"></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);padding:8px 12px 10px">
+          <span><span id="lg-wave"></span> Wave buoy (Sofar Spotter)</span><span><span id="lg-wq"></span> Water-quality buoy (BlueSonde)</span>
+          <span>Click a buoy or a card to highlight it</span></div>
+      </div>
+      <div class="stations" id="stations"></div>
+    </div>
+  </section>
+
+  <section><h2>📈 Compare the buoys</h2><p class="lede">The last two weeks, hourly. Click a name under a chart to hide or show that buoy. Drag across a chart to zoom; double-click to reset.</p>
+    <div class="charts">
+      <div class="card chartcard"><h3>🌡️ Water temperature</h3><p>Surface water at every buoy that measures it.</p><div id="c-temp" class="chart"></div><div class="legend" data-for="c-temp"></div></div>
+      <div class="card chartcard"><h3>💧 Salinity</h3><p>How salty the water is. River water dips it; full seawater is ~32–35 PSU.</p><div id="c-sal" class="chart"></div><div class="legend" data-for="c-sal"></div></div>
+      <div class="card chartcard"><h3>🫧 Dissolved oxygen</h3><p>Dashed lines: 5 mg/L (stressful for many fish) and 2 mg/L (hypoxia).</p><div id="c-do" class="chart"></div><div class="legend" data-for="c-do"></div></div>
+      <div class="card chartcard"><h3>🌊 Wave height</h3><p>Significant wave height at the two wave buoys.</p><div id="c-hs" class="chart"></div><div class="legend" data-for="c-hs"></div></div>
+    </div>
+  </section>
+
+  <section><h2>💡 What's happening</h2><p class="lede">Headlines written automatically by each buoy's own dashboard.</p>
+    <div class="insights" id="insights"></div></section>
+
+  <section>
+    <details><summary>ℹ️ About this network</summary>
+      <p>Each buoy has its own detailed dashboard that updates every hour: two <b>Sofar Spotter wave buoys</b> (waves, wind estimate, pressure, and Smart Mooring sensors) and four <b>BlueSonde water-quality buoys</b> (temperature, salinity, dissolved oxygen, turbidity, and chlorophyll or tryptophan). This page reads the latest numbers straight from those dashboards each time it loads and refreshes itself every 10 minutes.</p>
+      <ul id="sitelist"></ul>
+      <p>Wave data: Sofar Ocean. Water-quality data: BlueSonde via CUMULUS (Coastal Measures). Tide predictions: NOAA. Built and maintained by the University of New England.</p>
+    </details>
+  </section>
+  <footer>University of New England · <span id="foot"></span></footer>
+</div>
+
+<script>
+const GH = 'https://ekelting.github.io/';
+const SITES = [
+  {repo:'UNE-Camp-Ellis-SPOT-32787C', name:'Camp Ellis', kind:'wave', lat:43.4727, lon:-70.36053, color:'#2a78d6'},
+  {repo:'UNE-Biddeford-Pool-SPOT-32905C', name:'Biddeford Pool', kind:'wave', lat:43.43761, lon:-70.34923, color:'#4a3aa7'},
+  {repo:'UNE-BlueSonde-BB1.23', name:'Saco Bay', kind:'wq', lat:43.455593, lon:-70.317699, color:'#1baf7a'},
+  {repo:'UNE-BlueSonde-BB1.12', name:'Saco River Estuary', kind:'wq', lat:43.460893, lon:-70.389691, color:'#eb6834'},
+  {repo:'UNE-BlueSonde-BB1.47', name:'Ferry Beach', kind:'wq', lat:43.497213, lon:-70.379113, color:'#e87ba4'},
+  {repo:'UNE-BlueSonde-BB1.48', name:'Goose Rocks Beach', kind:'wq', lat:43.396733, lon:-70.402301, color:'#eda100'},
+];
+const BUOY_SVG = {
+  wave: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="40" rx="17" ry="4.5" fill="#1c5cab" opacity=".28"/>
+    <line x1="20" y1="13" x2="20" y2="2" stroke="#222" stroke-width="1.6"/><circle cx="20" cy="2.5" r="1.6" fill="#222"/>
+    <path d="M4 25a16 16 0 0 0 32 0z" fill="#ffc915" stroke="#7a5d00" stroke-width="1.2"/><path d="M4 25a16 13 0 0 1 32 0z" fill="#ffc915" stroke="#7a5d00" stroke-width="1.2"/>
+    <path d="M8.5 21.5a12 9 0 0 1 23 0l-2 3h-19z" fill="#1f2a3a"/><path d="M12 20.5h16M14 17.5h12" stroke="#5b8fd1" stroke-width=".9"/><path d="M4 25h32" stroke="#7a5d00" stroke-width="1.2"/></svg>`,
+  wq: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="40" rx="15" ry="4" fill="#1c5cab" opacity=".28"/>
+    <rect x="18.2" y="30" width="3.6" height="13" rx="1" fill="#8a96a3" stroke="#4d5966" stroke-width=".8"/><line x1="27" y1="10" x2="27" y2="1.5" stroke="#222" stroke-width="1.5"/><circle cx="27" cy="2" r="1.5" fill="#222"/>
+    <rect x="6" y="18" width="28" height="13" rx="6.5" fill="#ff7a1a" stroke="#9c3d00" stroke-width="1.2"/><rect x="6" y="23.5" width="28" height="2.4" fill="#fff" opacity=".85"/>
+    <path d="M10 18l3-7h14l3 7z" fill="#1f2a3a" stroke="#0c1118" stroke-width=".8"/><path d="M14.5 14.5h11" stroke="#5b8fd1" stroke-width=".9"/></svg>`};
+let unit='us', mapMode='street', labelMode='temp', selected=null, DATA={}, LMAP=null, LBASE=null, LBASE_KEY='', MARKERS={};
+try{ unit=localStorage.getItem('net-unit')||'us'; mapMode=localStorage.getItem('net-map')||'street'; labelMode=localStorage.getItem('net-label')||'temp';
+     const t=localStorage.getItem('buoy-theme'); if(t) document.documentElement.dataset.theme=t; }catch(e){}
+const hidden = {};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const isDark = () => getComputedStyle(document.body).backgroundColor.match(/\d+/g).slice(0,3).reduce((a,c)=>a+ +c,0) < 300;
+const escH = t => String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fin = v => v!==null && v!==undefined && isFinite(v);
+const T = c => fin(c) ? (unit==='us' ? (c*9/5+32).toFixed(1)+'°F' : c.toFixed(1)+'°C') : '—';
+const Tn = c => fin(c) ? (unit==='us' ? c*9/5+32 : c) : null;
+const Hs = m => fin(m) ? (unit==='us' ? (m*3.28084).toFixed(1)+' ft' : m.toFixed(2)+' m') : '—';
+const Hn = m => fin(m) ? (unit==='us' ? m*3.28084 : m) : null;
+function ago(iso){ const m=(Date.now()-Date.parse(iso))/60000; if(!isFinite(m)) return ['—','#999'];
+  const txt = m<90 ? `${Math.max(1,Math.round(m))} min ago` : m<48*60 ? `${Math.round(m/60)} h ago` : `${Math.round(m/1440)} days ago`;
+  return [txt, m<120 ? css('--good') : m<24*60 ? css('--warnc') : css('--bad')]; }
+
+async function load(){
+  const errs=[];
+  await Promise.all(SITES.map(async s=>{
+    try{ const r=await fetch(GH+s.repo+'/data/latest.json?t='+Math.floor(Date.now()/300000), {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status); DATA[s.repo]=await r.json(); }
+    catch(e){ errs.push(s.name); }
+  }));
+  const ok = SITES.filter(s=>DATA[s.repo]);
+  const fresh = ok.filter(s=>Date.now()-Date.parse(DATA[s.repo].last_obs) < 3*3600e3).length;
+  document.getElementById('status').textContent = `${fresh} of ${SITES.length} buoys reporting · page refreshed ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+  document.getElementById('errors').innerHTML = errs.length ? `<div class="err">⚠️ Couldn't load the latest data for: ${errs.map(escH).join(', ')}. Their own dashboards may still be building — this page tries again every 10 minutes.</div>` : '';
+  renderAll();
+}
+function val(s, k){ const d=DATA[s.repo]; return d && d.now ? d.now[k] : null; }
+
+function renderKPIs(){
+  const live = SITES.filter(s=>DATA[s.repo]);
+  const by = (k, pick) => { const xs=live.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
+  const warm=by('water_temp_c',(a,b)=>a>=b), cold=by('water_temp_c',(a,b)=>a<=b), big=by('hs_m',(a,b)=>a>=b),
+        fresh=by('sal_psu',(a,b)=>a<=b), salt=by('sal_psu',(a,b)=>a>=b), lowdo=by('do_mgl',(a,b)=>a<=b);
+  const k = (emoji, label, value, sub) => `<div class="kpi"><div class="k-l">${emoji} ${label}</div><div class="k-v">${value}</div><div class="k-s">${sub}</div></div>`;
+  let h='';
+  if (warm) h += k('🌡️','Water temperature', `${T(val(cold,'water_temp_c'))}–${T(val(warm,'water_temp_c'))}`, `coldest <b>${escH(cold.name)}</b> · warmest <b>${escH(warm.name)}</b>`);
+  if (big) h += k('🌊','Biggest waves now', Hs(val(big,'hs_m')), `at <b>${escH(big.name)}</b>${fin(val(big,'tp_s'))?` · ${val(big,'tp_s').toFixed(0)} s apart, from the ${escH(val(big,'wave_dir')||'')}`:''}`);
+  if (fresh) h += k('💧','Freshest water', `${val(fresh,'sal_psu').toFixed(1)} PSU`, `at <b>${escH(fresh.name)}</b> · saltiest ${val(salt,'sal_psu').toFixed(1)} at <b>${escH(salt.name)}</b>`);
+  if (lowdo) { const v=val(lowdo,'do_mgl'); h += k('🫧','Lowest oxygen', `${v.toFixed(1)} mg/L`, `at <b>${escH(lowdo.name)}</b> · ${v>=5?'healthy everywhere ✅':v>=2?'stressful ⚠️':'hypoxic 🚨'}`); }
+  const fresh3 = live.filter(s=>Date.now()-Date.parse(DATA[s.repo].last_obs) < 3*3600e3).length;
+  h += k('📡','Buoys reporting', `${fresh3} / ${SITES.length}`, 'sent data in the last 3 hours');
+  document.getElementById('kpis').innerHTML = h;
+}
+
+function vbox(label, v, unitTxt){ return `<div class="v"><span class="vl">${label}</span><span class="vv">${v}${unitTxt?` <small>${unitTxt}</small>`:''}</span></div>`; }
+function renderStations(){
+  const el=document.getElementById('stations'); let h='';
+  for (const s of SITES){
+    const d=DATA[s.repo]; const [a,col]= d? ago(d.last_obs) : ['no data', css('--bad')];
+    let vals='';
+    if (d){ const n=d.now||{};
+      if (s.kind==='wave'){ vals += vbox('Waves', Hs(n.hs_m)) + vbox('Period', fin(n.tp_s)? n.tp_s.toFixed(0):'—','s') + vbox('From', escH(n.wave_dir||'—'));
+        if (fin(n.water_temp_c)) vals += vbox('Water', T(n.water_temp_c));
+        if (fin(n.wind_ms)) vals += vbox('Wind*', unit==='us'? (n.wind_ms*2.23694).toFixed(0):(n.wind_ms).toFixed(1), unit==='us'?'mph':'m/s');
+      } else { vals += vbox('Water', T(n.water_temp_c)) + vbox('Salinity', fin(n.sal_psu)? n.sal_psu.toFixed(1):'—','PSU') + vbox('Oxygen', fin(n.do_mgl)? n.do_mgl.toFixed(1):'—','mg/L');
+        if (fin(n.chl_ugl)) vals += vbox('Chlorophyll', n.chl_ugl.toFixed(1),'µg/L');
+        if (fin(n.trp_ppb)) vals += vbox('Tryptophan', n.trp_ppb.toFixed(0),'ppb');
+        if (fin(n.turb_ntu)) vals += vbox('Turbidity', n.turb_ntu.toFixed(1),'NTU'); } }
+    h += `<div class="card st${selected===s.repo?' sel':''}" data-repo="${s.repo}" tabindex="0" role="button" aria-label="Highlight ${escH(s.name)} on the map">
+      <div class="st-top"><div class="st-ic">${BUOY_SVG[s.kind](30)}</div>
+        <div><div class="st-name"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)}</div>
+        <div class="st-type">${s.kind==='wave'?'Wave buoy · Sofar Spotter':'Water quality · BlueSonde '+escH(d? d.device:'')}</div></div>
+        <div class="st-age"><span class="dot" style="background:${col}"></span>${a}</div></div>
+      <div class="st-vals">${vals || '<span style="color:var(--muted)">Waiting for data…</span>'}</div>
+      <div class="st-bottom"><div class="spark" id="sp-${s.repo.replace(/\W/g,'')}"></div><a class="go" href="${GH+s.repo}/" onclick="event.stopPropagation()">Full dashboard →</a></div></div>`;
+  }
+  el.innerHTML=h;
+  el.querySelectorAll('.st').forEach(c=>{ const f=()=>select(c.dataset.repo, true); c.onclick=f; c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); f();} }; });
+  for (const s of SITES){ const d=DATA[s.repo]; if(!d||!d.recent) continue;
+    const key = s.kind==='wave' ? 'hs_m' : 'water_temp_c', conv = s.kind==='wave' ? Hn : Tn;
+    const t=d.recent.t.slice(-168), y=(d.recent[key]||[]).slice(-168).map(conv);
+    Plotly.react('sp-'+s.repo.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
+      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':'water temp')+'</extra>'}],
+      {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false},yaxis:{visible:false,
+       range: (()=>{const v=y.filter(fin); if(!v.length) return undefined; const lo=Math.min(...v), hi=Math.max(...v); return [lo-(hi-lo)*.15, hi+(hi-lo)*.1+1e-6];})()},showlegend:false},
+      {displayModeBar:false,responsive:true,staticPlot:false});
+  }
+}
+
+function icon(kind, sel){ const s= sel? 40:30;
+  return L.divIcon({className:'buoy-ic'+(sel?' me':''), html:(sel?'<div class="ring"></div>':'')+BUOY_SVG[kind](s), iconSize:[s,s*1.15], iconAnchor:[s/2,s*.87], tooltipAnchor:[4,-s*.55], popupAnchor:[0,-s*.75]}); }
+function labelText(s){ const n=(DATA[s.repo]||{}).now||{}; let v='';
+  if (labelMode==='temp' && fin(n.water_temp_c)) v=T(n.water_temp_c);
+  if (labelMode==='sal' && fin(n.sal_psu)) v=n.sal_psu.toFixed(1)+' PSU';
+  if (labelMode==='do' && fin(n.do_mgl)) v=n.do_mgl.toFixed(1)+' mg/L';
+  if (labelMode==='hs' && fin(n.hs_m)) v=Hs(n.hs_m);
+  return escH(s.name) + (v? ` · <span class="val">${v}</span>`:''); }
+function popupHtml(s){ const d=DATA[s.repo]; const n=(d||{}).now||{};
+  const rows = s.kind==='wave' ? [['Waves',Hs(n.hs_m)],['Period',fin(n.tp_s)?n.tp_s.toFixed(0)+' s':'—'],['From',n.wave_dir||'—'],['Water',T(n.water_temp_c)]]
+    : [['Water',T(n.water_temp_c)],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—'],['Oxygen',fin(n.do_mgl)?n.do_mgl.toFixed(1)+' mg/L':'—'],['Turbidity',fin(n.turb_ntu)?n.turb_ntu.toFixed(1)+' NTU':'—']];
+  return `<b>${escH(s.name)}</b><br><span style="color:#777">${s.kind==='wave'?'Wave buoy':'Water-quality buoy'}${d?' · '+ago(d.last_obs)[0]:''}</span><br>`
+    + rows.map(r=>`${r[0]}: <b>${escH(r[1])}</b>`).join('<br>') + `<br><a href="${GH+s.repo}/">Open full dashboard →</a>`; }
+function renderMap(){
+  const el=document.getElementById('map'); if(!el||typeof L==='undefined') return;
+  if(!LMAP){ LMAP=L.map(el,{scrollWheelZoom:false}); el.addEventListener('click',()=>LMAP.scrollWheelZoom.enable(),{once:true});
+    LMAP.fitBounds(SITES.map(s=>[s.lat,s.lon]),{padding:[50,90]}); }
+  const key = mapMode+'|'+(mapMode==='chart'? unit : (isDark()?'dark':'light'));
+  if (key!==LBASE_KEY){ if(LBASE) LMAP.removeLayer(LBASE);
+    LBASE = mapMode==='chart'
+      ? L.tileLayer.wms('https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer',{layers:'0,1,2,3,4,5,6,7',format:'image/png',transparent:false,version:'1.3.0',maxZoom:18,
+          display_params:JSON.stringify({ECDISParameters:{DynamicParameters:{Parameter:[{name:'DisplayDepthUnits',value:unit==='us'?2:1}]}}}),attribution:'NOAA Office of Coast Survey — not for navigation'})
+      : L.tileLayer(`https://{s}.basemaps.cartocdn.com/${isDark()?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'});
+    LBASE.addTo(LMAP); LBASE_KEY=key; }
+  for (const s of SITES){ const sel = selected===s.repo;
+    if (MARKERS[s.repo]) LMAP.removeLayer(MARKERS[s.repo]);
+    MARKERS[s.repo] = L.marker([s.lat,s.lon],{icon:icon(s.kind,sel),zIndexOffset:sel?1000:0,title:s.name}).addTo(LMAP)
+      .bindTooltip(labelText(s),{permanent:true,direction:'right',className:'blabel'+(sel?' sel':'')}).bindPopup(popupHtml(s))
+      .on('click',()=>select(s.repo,false)); }
+  document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.map===mapMode));
+  setTimeout(()=>LMAP.invalidateSize(),60);
+}
+function select(repo, fromCard){
+  selected = selected===repo && fromCard ? null : repo;
+  renderStations(); renderMap();
+  if (selected && fromCard){ const s=SITES.find(x=>x.repo===repo); LMAP.panTo([s.lat,s.lon]); MARKERS[repo].openPopup(); }
+  if (selected && !fromCard){ const c=document.querySelector(`.st[data-repo="${repo}"]`); if(c) c.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+}
+
+function renderCharts(){
+  const ink=css('--ink2'), grid=css('--grid');
+  const spec = {'c-temp':['water_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-sal':['sal_psu', v=>v, ()=>'PSU'], 'c-do':['do_mgl', v=>v, ()=>'mg/L'], 'c-hs':['hs_m', Hn, ()=> unit==='us'?'ft':'m']};
+  for (const [id,[key,conv,u]] of Object.entries(spec)){
+    const tr=[]; const present=[];
+    for (const s of SITES){ const d=DATA[s.repo]; if(!d||!d.recent||!d.recent[key]||!d.recent[key].some(fin)) continue;
+      present.push(s);
+      tr.push({x:d.recent.t, y:d.recent[key].map(v=>fin(v)?conv(v):null), name:s.name, type:'scatter', mode:'lines', connectgaps:false,
+        visible: hidden[id+s.repo] ? 'legendonly' : true, line:{color:s.color,width: selected===s.repo?3.2:1.7}, opacity: selected && selected!==s.repo ? .45 : 1,
+        hovertemplate:'%{x|%b %d, %I %p}<br><b>%{y:.2f} '+u()+'</b><extra>'+escH(s.name)+'</extra>'}); }
+    const shapes = key==='do_mgl' ? [5,2].map((y,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:y,y1:y,line:{color:i?'#d4473f':'#eda100',width:1.2,dash:'dash'}})) : [];
+    const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:12},
+      margin:{l:50,r:12,t:10,b:36},showlegend:false,hovermode:'x unified',shapes,
+      xaxis:{type:'date',gridcolor:grid,linecolor:grid},yaxis:{title:{text:u(),font:{size:12}},gridcolor:grid,zerolinecolor:grid,rangemode: key==='hs_m'?'tozero':'normal'}};
+    Plotly.react(id, tr, L, {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
+    const lg=document.querySelector(`.legend[data-for="${id}"]`);
+    lg.innerHTML = present.map(s=>`<span data-repo="${s.repo}" class="${hidden[id+s.repo]?'off':''}"><span class="swatch" style="background:${s.color}"></span>${escH(s.name)}</span>`).join('');
+    lg.querySelectorAll('span[data-repo]').forEach(sp=>sp.onclick=()=>{ hidden[id+sp.dataset.repo]=!hidden[id+sp.dataset.repo]; renderCharts(); });
+  }
+}
+function renderInsights(){
+  let h='';
+  for (const s of SITES){ const d=DATA[s.repo]; if(!d||!d.insights) continue;
+    for (const [e,t] of d.insights.filter(x=>x[0]!=='📅').slice(0,2)) h+=`<div class="card ins"><div class="e">${e}</div><div><h4>${escH(t)}</h4><a href="${GH+s.repo}/"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)} →</a></div></div>`; }
+  document.getElementById('insights').innerHTML = h || '<p class="lede">Loading…</p>';
+}
+function renderAll(){
+  renderKPIs(); renderStations(); renderMap(); renderCharts(); renderInsights();
+  document.getElementById('u-us').setAttribute('aria-pressed', unit==='us'); document.getElementById('u-si').setAttribute('aria-pressed', unit==='si');
+  document.getElementById('maplabel').value = labelMode;
+}
+document.getElementById('lg-wave').innerHTML = BUOY_SVG.wave(16); document.getElementById('lg-wq').innerHTML = BUOY_SVG.wq(16);
+document.querySelectorAll('#lg-wave svg,#lg-wq svg').forEach(s=>s.style.verticalAlign='middle');
+document.getElementById('sitelist').innerHTML = SITES.map(s=>`<li><a href="${GH+s.repo}/">${escH(s.name)}</a> — ${s.kind==='wave'?'wave buoy':'water-quality buoy'} (<a href="https://github.com/ekelting/${s.repo}">code &amp; raw data</a>)</li>`).join('');
+document.getElementById('foot').innerHTML = `Live from ${SITES.length} buoy dashboards · <a href="https://github.com/ekelting/UNE-Marine-Monitoring-Network">ekelting/UNE-Marine-Monitoring-Network</a> on GitHub`;
+document.getElementById('u-us').onclick=()=>{unit='us'; try{localStorage.setItem('net-unit',unit)}catch(e){} renderAll();};
+document.getElementById('u-si').onclick=()=>{unit='si'; try{localStorage.setItem('net-unit',unit)}catch(e){} renderAll();};
+document.getElementById('theme').onclick=()=>{const r=document.documentElement; const dark=r.dataset.theme? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme=dark?'light':'dark'; try{localStorage.setItem('buoy-theme',r.dataset.theme)}catch(e){} renderAll();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
+document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{mapMode=b.dataset.map; try{localStorage.setItem('net-map',mapMode)}catch(e){} renderMap();});
+document.getElementById('maplabel').onchange=e=>{labelMode=e.target.value; try{localStorage.setItem('net-label',labelMode)}catch(e){} renderMap();};
+load(); setInterval(load, 10*60e3);
+</script>
+</body></html>
