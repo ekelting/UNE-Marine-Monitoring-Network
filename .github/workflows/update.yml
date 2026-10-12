@@ -1,6 +1,6 @@
-# 🌊 Every hour: fetch new data for every buoy (in parallel), save it, rebuild the whole website, publish it.
-# The buoy list lives in buoys.json — add a buoy there (plus buoys/<slug>/site.json) and it is picked up automatically.
-name: Update all buoys
+# 🌊 Every hour: fetch new data for every station (in parallel), save it in ONE commit, rebuild the website, publish it.
+# The station list lives in buoys.json — add a station there (plus buoys/<slug>/site.json) and it is picked up automatically.
+name: Update all stations
 
 on:
   schedule:
@@ -26,7 +26,7 @@ jobs:
     outputs:
       buoys: ${{ steps.l.outputs.buoys }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: l
         run: echo "buoys=$(jq -c . buoys.json)" >> "$GITHUB_OUTPUT"
 
@@ -36,14 +36,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     strategy:
-      fail-fast: false          # one buoy having trouble never holds up the others
+      fail-fast: false          # one station having trouble never holds up the others
       matrix:
         buoy: ${{ fromJSON(needs.list.outputs.buoys) }}
     env:
       BUOY_DIR: buoys/${{ matrix.buoy.slug }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -60,35 +60,54 @@ jobs:
             radar)   python radar/fetch.py --max-minutes 35 ;;
             *)       python sonde/fetch.py ;;
           esac
-      - name: 💾 Save new data to the repository
+      - name: 📦 Package the new / changed data files
         run: |
-          git config user.name  "buoy-bot"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$BUOY_DIR/data"
-          if git diff --cached --quiet; then echo "No new data this hour."; exit 0; fi
-          git commit -q -m "🌊 ${{ matrix.buoy.name }} data $(date -u +'%Y-%m-%d %H:%M UTC')"
-          for i in 1 2 3 4 5 6 7 8; do        # six buoys push at once — retry on collisions
-            git pull -q --rebase origin main && git push -q && exit 0
-            echo "Push collided with another buoy's update - retrying ($i/8)..."
-            sleep $(( (RANDOM % 10) + i * 5 ))
-          done
-          exit 1
+          git add -A "$BUOY_DIR/data"
+          git diff --cached --name-only > changed.txt
+          echo "$(wc -l < changed.txt) changed file(s)"
+          if [ -s changed.txt ]; then tar czf "data-${{ matrix.buoy.slug }}.tgz" -T changed.txt; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: data-${{ matrix.buoy.slug }}
+          path: data-${{ matrix.buoy.slug }}.tgz
+          if-no-files-found: ignore
+          retention-days: 2
 
   build:
     needs: [list, fetch]
-    if: ${{ always() && needs.list.result == 'success' }}    # publish even if one buoy's fetch failed
+    if: ${{ always() && needs.list.result == 'success' }}    # publish even if one station's fetch failed
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          ref: main                # the latest commit, including the data just saved
-      - uses: actions/setup-python@v5
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: data-*
+          path: incoming
+          merge-multiple: true
+      - name: 💾 Save all new data in one commit
+        run: |
+          shopt -s nullglob
+          for f in incoming/*.tgz; do tar xzf "$f"; done
+          git config user.name  "buoy-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add buoys
+          if git diff --cached --quiet; then echo "No new data this hour."; exit 0; fi
+          git commit -q -m "🌊 station data $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase origin main && git push -q && exit 0
+            echo "Push collided with another change - retrying ($i/6)..."
+            sleep $((i * 10))
+          done
+          echo "::error::Could not save the new data to the repository"; exit 1
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: 🏗️ Build every buoy page + the network overview
+      - name: 🏗️ Build every station page + the network home page
         run: python tools/build_all.py --out site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
