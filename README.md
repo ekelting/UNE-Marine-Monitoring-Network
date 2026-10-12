@@ -71,8 +71,8 @@ Not for navigation. For research use, please contact us (below) about the review
 | Who | For |
 |---|---|
 | **Dr. Will Kochtitzky**: [wkochtitzky@une.edu](mailto:wkochtitzky@une.edu) | The UNE monitoring network, the weather, marsh and pond stations, and the data archive |
-| **Tricia Thibodeau**: [pthibodeau1@une.edu](mailto:pthibodeau1@une.edu) | The Fathom buoy |
-| **Emily Kelting**: [ekelting@une.edu](mailto:ekelting@une.edu) | This website and its dashboards |
+| **Dr. Tricia Thibodeau**: [pthibodeau1@une.edu](mailto:pthibodeau1@une.edu) | The Fathom buoy |
+| **Dr. Emily Kelting**: [ekelting@une.edu](mailto:ekelting@une.edu) | This website and its dashboards |
 
 University of New England, School of Marine and Environmental Programs, Biddeford, Maine.
 
