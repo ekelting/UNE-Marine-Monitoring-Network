@@ -49,7 +49,7 @@
       "unit": "°C",
       "range": [
         -2,
-        30
+        25
       ],
       "panel": "Water temperature",
       "tile": true,
@@ -198,5 +198,6 @@
       "lat": 43.44379,
       "lon": -70.348578
     }
-  ]
+  ],
+  "status_note": "🐟 This buoy's 2026 season ran from May 7 to late September, when it came out of the water. The page shows that deployment; new readings will appear here automatically if it goes back in."
 }

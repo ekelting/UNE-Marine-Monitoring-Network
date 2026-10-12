@@ -217,7 +217,9 @@ def build_html(S, path, plotly_src, downloads=None, notice='', archive_url=None,
                     for r in mo.to_dict('records')[::-1])
 
     stale = ''
-    if age_h > 3:
+    if bc.CFG.get('status_note') and age_h > 3:
+        stale = f'<div class="banner">{esc(bc.CFG["status_note"])} Last reading: <b>{st["last"]:%b %d, %Y}</b>.</div>'
+    elif age_h > 3:
         stale = (f'<div class="banner">📡 This station hasn\'t reported since <b>{st["last"]:%b %d, %Y %I:%M %p}</b> '
                  f'({age_h / 24:.1f} days). It may be down for maintenance — this page catches up automatically once readings resume.</div>')
     if notice:
