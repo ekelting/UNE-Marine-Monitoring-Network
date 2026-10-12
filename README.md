@@ -13,6 +13,7 @@ This is the public website for the University of New England's coastal monitorin
 | Jordan Point | Water quality (BlueSonde BB1.12) | [/jordan-point/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/) | [`buoys/jordan-point`](buoys/jordan-point) |
 | Ferry Beach | Water quality (BlueSonde BB1.47) | [/ferry-beach/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/) | [`buoys/ferry-beach`](buoys/ferry-beach) |
 | Goose Rocks Beach | Water quality (BlueSonde BB1.48) | [/goose-rocks-beach/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/) | [`buoys/goose-rocks-beach`](buoys/goose-rocks-beach) |
+| Fathom Buoy | Fish-tag receiver buoy + water sensors (temp, salinity, oxygen, CDOM), May–Sep 2026 | [/fathom-buoy/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/fathom-buoy/) | [`buoys/fathom-buoy`](buoys/fathom-buoy) |
 | Ram Island | Coastal weather station | [/ram-island/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/) | [`buoys/ram-island`](buoys/ram-island) |
 | 363 Acre Woods | Forest weather + soil station | [/une-363-woods/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/une-363-woods/) | [`buoys/une-363-woods`](buoys/une-363-woods) |
 | Biddeford Pool Marsh | Salt-marsh water + weather station | [/biddeford-pool-marsh/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool-marsh/) | [`buoys/biddeford-pool-marsh`](buoys/biddeford-pool-marsh) |

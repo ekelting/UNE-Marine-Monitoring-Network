@@ -358,6 +358,13 @@
       "lon": -70.402301
     },
     {
+      "label": "Fathom Buoy",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/fathom-buoy/",
+      "lat": 43.4769,
+      "lon": -70.3509
+    },
+    {
       "label": "Ram Island",
       "kind": "wx",
       "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/",

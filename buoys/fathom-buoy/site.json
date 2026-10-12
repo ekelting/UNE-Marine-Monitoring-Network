@@ -1,0 +1,202 @@
+{
+  "short_name": "Fathom Buoy",
+  "page_title": "The Saco Bay Fathom Buoy",
+  "site_name": "Saco Bay off Camp Ellis, Maine",
+  "site_phrase": "in Saco Bay off Camp Ellis, Maine",
+  "station_desc": "UNE Fathom receiver buoy with water sensors",
+  "kind": "wq",
+  "emoji": "🐟",
+  "slug": "fathom-buoy",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/fathom-buoy/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/fathom-buoy",
+  "timezone": "America/New_York",
+  "mooring_lat": 43.4769,
+  "mooring_lon": -70.3509,
+  "moored_positions": [
+    [
+      43.4769,
+      -70.3509
+    ],
+    [
+      43.467,
+      -70.3573
+    ]
+  ],
+  "moored_radius_m": 300,
+  "arcgis_url": "https://services7.arcgis.com/0vd30ZJwMECKNLFu/arcgis/rest/services/Fathom%20Live%20Environmental%20Sensors/FeatureServer/0",
+  "time_field": "timestamp_utc",
+  "extra_fields": [
+    "latitude",
+    "longitude"
+  ],
+  "start_utc": "2026-05-01T00:00:00Z",
+  "source_url": "https://www.arcgis.com/apps/dashboards/968f1d7e5bfb4f2db1c85e861df218ed",
+  "archive_url": "https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy/folder/382628073259",
+  "notes": [
+    "This buoy carries a Fathom acoustic receiver (the kind used to detect fish fitted with small sound tags) plus water sensors. Fish detections are not part of the public data feed; the page shows the water measurements.",
+    "Launched May 2026 off Camp Ellis; moved near Ram Island in mid-September; last reading Sep 24, 2026. Readings taken anywhere other than its two moorings (for example at the dock after recovery) are left out.",
+    "Questions about this buoy: Tricia Thibodeau, UNE (pthibodeau1@une.edu)."
+  ],
+  "vars": [
+    {
+      "field": "temp_c",
+      "key": "water_temp_c",
+      "label": "Water temperature",
+      "emoji": "🌡️",
+      "conv": "temp",
+      "unit": "°C",
+      "range": [
+        -2,
+        30
+      ],
+      "panel": "Water temperature",
+      "tile": true,
+      "daily": true,
+      "color": "#eb6834"
+    },
+    {
+      "field": "salinity_psu",
+      "key": "sal_psu",
+      "label": "Salinity",
+      "emoji": "💧",
+      "unit": "PSU",
+      "range": [
+        5,
+        36
+      ],
+      "panel": "Salinity",
+      "tile": true,
+      "daily": true,
+      "dec": 1,
+      "color": "#2a78d6"
+    },
+    {
+      "field": "do_pct",
+      "key": "do_pct",
+      "label": "Oxygen saturation",
+      "emoji": "🫧",
+      "unit": "%",
+      "range": [
+        10,
+        200
+      ],
+      "panel": "Oxygen saturation",
+      "tile": true,
+      "daily": true,
+      "dec": 0,
+      "color": "#1baf7a"
+    },
+    {
+      "field": "cdom_ppb",
+      "key": "cdom_ppb",
+      "label": "CDOM (dissolved organic matter)",
+      "emoji": "🍵",
+      "unit": "ppb",
+      "range": [
+        0,
+        500
+      ],
+      "panel": "CDOM",
+      "tile": true,
+      "dec": 1,
+      "color": "#8a6d3b"
+    },
+    {
+      "field": "battery_remaining",
+      "key": "batt_pct",
+      "label": "Battery",
+      "emoji": "🔋",
+      "unit": "%",
+      "range": [
+        0,
+        100
+      ],
+      "panel": "Battery",
+      "dec": 0,
+      "month": false,
+      "today_range": false,
+      "color": "#008300"
+    }
+  ],
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Ram Island Radar",
+      "kind": "radar",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island-radar/",
+      "lat": 43.467048,
+      "lon": -70.356464
+    },
+    {
+      "label": "Wood Island",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Jordan Point",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    },
+    {
+      "label": "Ram Island",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/",
+      "lat": 43.467126,
+      "lon": -70.356328
+    },
+    {
+      "label": "363 Acre Woods",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/une-363-woods/",
+      "lat": 43.457447,
+      "lon": -70.411302
+    },
+    {
+      "label": "Biddeford Pool Marsh",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool-marsh/",
+      "lat": 43.453479,
+      "lon": -70.372845
+    },
+    {
+      "label": "Great Pond",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/great-pond/",
+      "lat": 43.44379,
+      "lon": -70.348578
+    }
+  ]
+}

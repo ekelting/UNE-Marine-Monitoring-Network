@@ -24,13 +24,15 @@ ROOT = os.path.abspath(os.environ.get('BUOY_DIR') or os.path.dirname(HERE))
 CFG = json.load(open(os.path.join(ROOT, 'site.json'), encoding='utf-8'))
 URL = CFG['arcgis_url'].rstrip('/') + '/query'
 FIELDS = [v['field'] for v in CFG['vars']]
+TF = CFG.get('time_field', 'timestamp')
+EXTRA = CFG.get('extra_fields', [])          # e.g. latitude/longitude, used to keep only moored readings
 UA = f"UNE-monitoring-dashboard/1.0 (+https://github.com/{CFG['github_user']}/{CFG['github_repo']})"
 PAGE = 1000
 
 
 def query(where, offset):
-    body = urllib.parse.urlencode(dict(f='json', where=where, outFields='timestamp,' + ','.join(FIELDS),
-                                       orderByFields='timestamp ASC', resultOffset=offset, resultRecordCount=PAGE,
+    body = urllib.parse.urlencode(dict(f='json', where=where, outFields=','.join([TF] + FIELDS + EXTRA),
+                                       orderByFields=f'{TF} ASC', resultOffset=offset, resultRecordCount=PAGE,
                                        returnGeometry='false')).encode()
     req = urllib.request.Request(URL, data=body, headers={'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded'})
     for attempt in range(4):
@@ -72,7 +74,7 @@ def main(max_minutes=40):
     old = read_all(obs_dir)
     since = old.index.max() if len(old) else pd.Timestamp(CFG.get('start_utc', '2025-12-01T00:00:00Z'))
     since = since - pd.Timedelta(hours=2)          # small overlap: late-arriving rows replace earlier copies
-    where = (f"timestamp > timestamp '{since.tz_convert('UTC'):%Y-%m-%d %H:%M:%S}' AND ("
+    where = (f"{TF} > timestamp '{since.tz_convert('UTC'):%Y-%m-%d %H:%M:%S}' AND ("
              + ' OR '.join(f'{f} IS NOT NULL' for f in FIELDS) + ')')
     rows, offset, errors = [], 0, []
     try:
@@ -92,9 +94,9 @@ def main(max_minutes=40):
         errors.append(f'ArcGIS query: {e}')
     if rows:
         new = pd.DataFrame(rows)
-        new.index = pd.to_datetime(new.pop('timestamp'), unit='ms', utc=True)
+        new.index = pd.to_datetime(new.pop(TF), unit='ms', utc=True)
         new.index.name = 'time_utc'
-        new = new.dropna(how='all')
+        new = new.groupby(level=0).first().dropna(how='all')     # several sensors can report the same minute
         both = pd.concat([x for x in [old, new] if len(x)])
         both = both[~both.index.duplicated(keep='last')].sort_index()
         touched = new.index.tz_convert(None).to_period('M').unique()

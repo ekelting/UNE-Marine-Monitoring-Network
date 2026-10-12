@@ -183,6 +183,7 @@ const SITES = [   // slug = folder under this site; keep in step with buoys.json
   {slug:'jordan-point', name:'Jordan Point', kind:'wq', lat:43.460893, lon:-70.389691, color:'#eb6834'},
   {slug:'ferry-beach', name:'Ferry Beach', kind:'wq', lat:43.497213, lon:-70.379113, color:'#e87ba4'},
   {slug:'goose-rocks-beach', name:'Goose Rocks Beach', kind:'wq', lat:43.396733, lon:-70.402301, color:'#eda100'},
+  {slug:'fathom-buoy', name:'Fathom Buoy', kind:'wq', lat:43.4769, lon:-70.3509, color:'#d4a017'},
   {slug:'ram-island', name:'Ram Island', kind:'wx', lat:43.467126, lon:-70.356328, color:'#5a6b7d'},
   {slug:'une-363-woods', name:'363 Acre Woods', kind:'wx', lat:43.457447, lon:-70.411302, color:'#6b8e23'},
   {slug:'biddeford-pool-marsh', name:'Biddeford Pool Marsh', kind:'env', lat:43.453479, lon:-70.372845, color:'#16a0a0'},
@@ -304,14 +305,15 @@ function renderStations(){
         if (fin(n.sal_psu)) vals += vbox('Salinity', n.sal_psu.toFixed(1), 'PSU');
         if (fin(n.air_temp_c)) vals += vbox('Air', T(n.air_temp_c));
         if (fin(n.rain_24h_mm)) vals += vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
-      } else { vals += vbox('Water', T(n.water_temp_c)) + vbox('Salinity', fin(n.sal_psu)? n.sal_psu.toFixed(1):'—','PSU') + vbox('Oxygen', fin(n.do_mgl)? n.do_mgl.toFixed(1):'—','mg/L');
+      } else { vals += vbox('Water', T(n.water_temp_c)) + vbox('Salinity', fin(n.sal_psu)? n.sal_psu.toFixed(1):'—','PSU') + (fin(n.do_mgl)||!fin(n.do_pct) ? vbox('Oxygen', fin(n.do_mgl)? n.do_mgl.toFixed(1):'—','mg/L') : vbox('Oxygen', n.do_pct.toFixed(0), '% sat.'));
+        if (fin(n.cdom_ppb)) vals += vbox('CDOM', n.cdom_ppb.toFixed(1),'ppb');
         if (fin(n.chl_ugl)) vals += vbox('Chlorophyll', n.chl_ugl.toFixed(1),'µg/L');
         if (fin(n.trp_ppb)) vals += vbox('Tryptophan', n.trp_ppb.toFixed(0),'ppb');
         if (fin(n.turb_ntu)) vals += vbox('Turbidity', n.turb_ntu.toFixed(1),'NTU'); } }
     h += `<div class="card st${selected===s.slug?' sel':''}" data-repo="${s.slug}" tabindex="0" role="button" aria-label="Highlight ${escH(s.name)} on the map">
       <div class="st-top"><div class="st-ic">${BUOY_SVG[s.kind](30)}</div>
         <div><div class="st-name"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)}</div>
-        <div class="st-type">${KINDS[s.kind]}${s.kind==='wq'&&d?' '+escH(d.device):''}</div></div>
+        <div class="st-type">${s.slug==='fathom-buoy' ? 'Water sensors + fish-tag receiver' : KINDS[s.kind]+(s.kind==='wq'&&d?' '+escH(d.device):'')}</div></div>
         <div class="st-age"><span class="dot" style="background:${col}"></span>${a}</div></div>
       <div class="st-vals">${vals || '<span style="color:var(--muted)">Waiting for data…</span>'}</div>
       <div class="st-bottom"><div class="spark" id="sp-${s.slug.replace(/\W/g,'')}"></div><a class="go" href="./${s.slug}/" onclick="event.stopPropagation()">Full dashboard →</a></div></div>`;

@@ -44,8 +44,15 @@ def load(data_dir):
     raw = pd.concat([pd.read_csv(f, index_col=0) for f in fs])
     raw.index = pd.to_datetime(raw.index, utc=True)
     raw = raw[~raw.index.duplicated(keep='last')].sort_index()
-    df = pd.DataFrame(index=raw.index)
     removed = {}
+    sites = CFG.get('moored_positions')        # [[lat, lon], …]: drop readings taken anywhere else (e.g. at the dock)
+    if sites and 'latitude' in raw and 'longitude' in raw:
+        la, lo = raw['latitude'].astype(float), raw['longitude'].astype(float)
+        dmin = np.min([np.hypot((la - a) * 111320, (lo - b) * 111320 * np.cos(np.radians(a))) for a, b in sites], axis=0)
+        keep = pd.Series(dmin <= CFG.get('moored_radius_m', 300), index=raw.index) | la.isna()
+        removed['off_station'] = int((~keep).sum())
+        raw = raw[keep]
+    df = pd.DataFrame(index=raw.index)
     for v in VARS:
         if v['field'] not in raw:
             continue

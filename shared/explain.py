@@ -42,6 +42,12 @@ E = {
             'often before bacteria tests come back from a lab. It helps decide when to check shellfish beds or swimming beaches.',
             'Watch for changes, not the number itself: these sensors are not calibrated to an absolute scale (they can even read below '
             'zero). A sharp rise above the usual level, especially after rain, is the thing to notice.'),
+    'cdom': ('🍵', 'CDOM (coloured dissolved organic matter)',
+             'The "tea" in the water: dissolved bits of decaying leaves, marsh grass and soil that tint water yellow-brown. The sensor '
+             'measures how much it glows under ultraviolet light, in ppb (parts per billion, quinine-sulfate equivalents).',
+             'CDOM mostly comes from land — rivers, marshes and runoff — so it is a handy tracer of fresh water reaching the bay. It also '
+             'soaks up sunlight (including UV), shading seaweed and plankton below.',
+             'Low single digits: clear ocean water. Tens: noticeable land or marsh influence. It usually rises when salinity drops.'),
     'turb': ('🟤', 'Turbidity (cloudiness)',
              'How cloudy the water is, from mud, sand, algae or other particles. The sensor measures how much light scatters off '
              'them, in NTU (nephelometric turbidity units).',
@@ -134,7 +140,7 @@ E = {
 # which explanation goes with which data key on each kind of page
 FOR_KEY = {
     'temp_c': 'water_temp', 'water_temp_c': 'water_temp', 'sal_psu': 'salinity', 'do_mgl': 'do', 'do_pct': 'do',
-    'chl_ugl': 'chl', 'trp_ppb': 'trp', 'turb_ntu': 'turb', 'spcond_uscm': 'cond', 'water_level_m': 'tide',
+    'chl_ugl': 'chl', 'cdom_ppb': 'cdom', 'trp_ppb': 'trp', 'turb_ntu': 'turb', 'spcond_uscm': 'cond', 'water_level_m': 'tide',
     'air_temp_c': 'air_temp', 'rh_pct': 'humidity', 'dewpt_c': 'dewpoint', 'wind_ms': 'wind', 'gust_ms': 'wind',
     'wind_dir': 'wind', 'rain_mm': 'rain', 'solar_wm2': 'solar', 'par': 'solar', 'pres_kpa': 'pressure',
     'soil_t_4': 'soil_temp', 'soil_t_10': 'soil_temp', 'soil_t_20': 'soil_temp', 'soil_t_30': 'soil_temp',
