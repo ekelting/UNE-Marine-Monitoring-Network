@@ -1,0 +1,62 @@
+{
+  "device_name": "BB1.23",
+  "device_model": "BlueSonde water-quality buoy",
+  "device_uuid": "a8d3c851-f539-486d-9284-a492d2345c85",
+  "cumulus_url": "https://cumulus.coastalmeasures.com/bluesonde/a8d3c851-f539-486d-9284-a492d2345c85",
+  "short_name": "Saco Bay",
+  "site_name": "Saco Bay, Maine",
+  "site_phrase": "in Saco Bay, Maine",
+  "file_stem": "Saco_Bay_BlueSonde",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "timezone": "America/New_York",
+  "deployed_utc": null,
+  "mooring_lat": 43.455593,
+  "mooring_lon": -70.317699,
+  "out_of_water_spcond_uscm": 150,
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Saco River Estuary",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    }
+  ],
+  "tide_station": "8418606",
+  "tide_station_name": "Camp Ellis, Saco River entrance",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/saco-bay",
+  "legacy_repo": "UNE-BlueSonde-BB1.23",
+  "kind": "wq",
+  "slug": "saco-bay",
+  "color": "#1baf7a"
+}

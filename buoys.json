@@ -1,0 +1,56 @@
+[
+  {
+    "slug": "camp-ellis",
+    "kind": "wave",
+    "name": "Camp Ellis",
+    "lat": 43.4727,
+    "lon": -70.36053,
+    "color": "#2a78d6",
+    "legacy_repo": "UNE-Camp-Ellis-SPOT-32787C"
+  },
+  {
+    "slug": "biddeford-pool",
+    "kind": "wave",
+    "name": "Biddeford Pool",
+    "lat": 43.4376128,
+    "lon": -70.3492272,
+    "color": "#4a3aa7",
+    "legacy_repo": "UNE-Biddeford-Pool-SPOT-32905C"
+  },
+  {
+    "slug": "saco-bay",
+    "kind": "wq",
+    "name": "Saco Bay",
+    "lat": 43.455593,
+    "lon": -70.317699,
+    "color": "#1baf7a",
+    "legacy_repo": "UNE-BlueSonde-BB1.23"
+  },
+  {
+    "slug": "saco-river-estuary",
+    "kind": "wq",
+    "name": "Saco River Estuary",
+    "lat": 43.460893,
+    "lon": -70.389691,
+    "color": "#eb6834",
+    "legacy_repo": "UNE-BlueSonde-BB1.12"
+  },
+  {
+    "slug": "ferry-beach",
+    "kind": "wq",
+    "name": "Ferry Beach",
+    "lat": 43.497213,
+    "lon": -70.379113,
+    "color": "#e87ba4",
+    "legacy_repo": "UNE-BlueSonde-BB1.47"
+  },
+  {
+    "slug": "goose-rocks-beach",
+    "kind": "wq",
+    "name": "Goose Rocks Beach",
+    "lat": 43.396733,
+    "lon": -70.402301,
+    "color": "#eda100",
+    "legacy_repo": "UNE-BlueSonde-BB1.48"
+  }
+]

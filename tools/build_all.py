@@ -1,0 +1,50 @@
+"""
+build_all.py — builds the whole website into site/:
+  site/index.html              the network overview (web/index.html, reads each buoy's data/latest.json live)
+  site/<slug>/index.html       each buoy's full dashboard, plus its spreadsheet and CSV downloads
+One buoy failing to build never stops the others.     Usage:  python tools/build_all.py [--out site] [--only slug]
+"""
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CODE = {'wave': 'wave', 'wq': 'sonde'}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--out', default=os.path.join(ROOT, 'site'))
+    ap.add_argument('--only', default=None)
+    a = ap.parse_args()
+    os.makedirs(a.out, exist_ok=True)
+    buoys = json.load(open(os.path.join(ROOT, 'buoys.json')))
+    failed = []
+    for b in buoys:
+        if a.only and b['slug'] != a.only:
+            continue
+        bdir = os.path.join(ROOT, 'buoys', b['slug'])
+        if not os.path.exists(os.path.join(bdir, 'data')):
+            print(f'::warning::{b["name"]}: no data folder yet — skipped')
+            failed.append(b['name'])
+            continue
+        print(f'\n===== {b["name"]} ({b["slug"]}) =====', flush=True)
+        r = subprocess.run([sys.executable, os.path.join(ROOT, CODE[b['kind']], 'build.py'),
+                            '--data', os.path.join(bdir, 'data'), '--out', os.path.join(a.out, b['slug'])],
+                           env=dict(os.environ, BUOY_DIR=bdir))
+        if r.returncode:
+            print(f'::error::{b["name"]} failed to build (exit {r.returncode}); its previous page is not updated this hour')
+            failed.append(b['name'])
+    shutil.copy(os.path.join(ROOT, 'web', 'index.html'), os.path.join(a.out, 'index.html'))
+    shutil.copy(os.path.join(ROOT, 'buoys.json'), os.path.join(a.out, 'buoys.json'))
+    open(os.path.join(a.out, '.nojekyll'), 'w').close()
+    print(f'\n✅ built {len(buoys) - len(failed)} of {len(buoys)} buoy pages' + (f' — failed: {", ".join(failed)}' if failed else ''))
+    if len(failed) == len(buoys):
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,62 @@
+{
+  "device_name": "BB1.48",
+  "device_model": "BlueSonde water-quality buoy",
+  "device_uuid": "9d2d4b83-2642-4fe8-b877-289bd668ec83",
+  "cumulus_url": "https://cumulus.coastalmeasures.com/bluesonde/9d2d4b83-2642-4fe8-b877-289bd668ec83",
+  "short_name": "Goose Rocks Beach",
+  "site_name": "Goose Rocks Beach, Kennebunkport, Maine",
+  "site_phrase": "off Goose Rocks Beach, Kennebunkport, Maine",
+  "file_stem": "Goose_Rocks_Beach_BlueSonde",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "timezone": "America/New_York",
+  "deployed_utc": null,
+  "mooring_lat": 43.396733,
+  "mooring_lon": -70.402301,
+  "out_of_water_spcond_uscm": 150,
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Saco Bay",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Saco River Estuary",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    }
+  ],
+  "tide_station": "8418606",
+  "tide_station_name": "Camp Ellis, Saco River entrance",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/goose-rocks-beach",
+  "legacy_repo": "UNE-BlueSonde-BB1.48",
+  "kind": "wq",
+  "slug": "goose-rocks-beach",
+  "color": "#eda100"
+}

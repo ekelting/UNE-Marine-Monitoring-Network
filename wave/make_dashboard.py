@@ -1,0 +1,784 @@
+"""
+make_dashboard.py - builds the dashboard page (index.html), a single self-contained
+page (works offline, just double-click it). Called by update_buoy_report.py.
+"""
+import datetime as dt
+import html
+import json
+
+import numpy as np
+import pandas as pd
+
+import buoy_core as bc
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'shared'))
+import mapjs  # noqa: E402
+
+# palette (validated reference palette from the dataviz method)
+BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED = (
+    '#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948')
+SEQ = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b']
+
+VIBES = bc.VIBES
+
+
+def vibe(hs):
+    for lim, e, name, desc in VIBES:
+        if hs < lim:
+            return e, name, desc
+    return VIBES[-1][1:]
+
+
+def _clean(v):
+    if isinstance(v, (list, tuple)):
+        return [_clean(x) for x in v]
+    if isinstance(v, (float, np.floating)):
+        return None if not np.isfinite(v) else round(float(v), 4)
+    if isinstance(v, (np.integer,)):
+        return int(v)
+    return v
+
+
+def _ts(idx):
+    return [t.strftime('%Y-%m-%d %H:%M') for t in idx]
+
+
+MORE_ROW = ' class="more hidden"'
+
+
+def esc_js(t):
+    return str(t).replace('<', '').replace('>', '')
+
+
+def _fig(traces, layout):
+    return {'data': traces, 'layout': layout}
+
+
+def build_figs(S, bd):
+    st, mo, ev, hr, dy = S['stats'], S['monthly'], S['storms'], S['hourly'], S['daily']
+    mo = mo[~mo['partial']].reset_index(drop=True)
+    figs = {}
+    H = hr.copy()
+    H.index = bc.local(H.index).tz_localize(None)
+
+    # 1) timeline --------------------------------------------------------------
+    dmax = H['hs'].resample('1D').max()
+    shapes = []
+    for r in ev.itertuples() if len(ev) else []:
+        shapes.append(dict(type='rect', xref='x', yref='paper', x0=r.start.strftime('%Y-%m-%d %H:%M'),
+                           x1=(r.end + pd.Timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'), y0=0, y1=1,
+                           fillcolor=ORANGE, opacity=0.2, line_width=0, layer='below'))
+    figs['timeline'] = _fig([
+        dict(type='scatter', mode='lines', name='Hourly wave height', x=_ts(H.index), y=_clean(H['hs'].tolist()),
+             line=dict(color=BLUE, width=1.2), meta='len',
+             hovertemplate='%{x|%b %d %Y, %H:%M}<br><b>%{y:.1f} UNIT</b><extra></extra>'),
+        dict(type='scatter', mode='markers', name='Daily peak', x=[d.strftime('%Y-%m-%d 12:00') for d in dmax.index],
+             y=_clean(dmax.tolist()), marker=dict(color=ORANGE, size=5), meta='len', visible='legendonly',
+             hovertemplate='%{x|%b %d %Y}: peak %{y:.1f} UNIT<extra></extra>'),
+    ], dict(shapes=shapes, yaxis=dict(title='Wave height, Hs (UNIT)', rangemode='tozero'), 
+            xaxis=dict(rangeslider=dict(visible=True, thickness=0.07), type='date',
+                       rangeselector=dict(buttons=[dict(count=7, label='1 wk', step='day', stepmode='backward'),
+                                                   dict(count=1, label='1 mo', step='month', stepmode='backward'),
+                                                   dict(count=3, label='3 mo', step='month', stepmode='backward'),
+                                                   dict(step='all', label='All')])),
+            legend=dict(orientation='h', y=1.12, x=1, xanchor='right'), height=430))
+
+    # 2) calendar heatmap -------------------------------------------------------
+    d = dy.loc[dy['n_waves_obs'] >= 8, 'hs_mean'].copy()
+    d.index = pd.to_datetime(d.index)
+    months = pd.period_range(d.index.min(), d.index.max(), freq='M')
+    z, txt = [], []
+    for p in months:
+        row, trow = [], []
+        for day in range(1, 32):
+            try:
+                t = pd.Timestamp(year=p.year, month=p.month, day=day)
+            except ValueError:
+                row.append(None)
+                trow.append('')
+                continue
+            v = d.get(t, np.nan)
+            row.append(None if pd.isna(v) else round(float(v), 3))
+            trow.append(t.strftime('%a %b %d, %Y'))
+        z.append(row)
+        txt.append(trow)
+    figs['calendar'] = _fig([dict(
+        type='heatmap', z=z, x=list(range(1, 32)), y=[p.strftime('%b %Y') for p in months], text=txt,
+        colorscale=[[i / (len(SEQ) - 1), c] for i, c in enumerate(SEQ)], xgap=2, ygap=2, meta='len',
+        zmin=0, zmax=float(np.nanpercentile(d.values, 98)),
+        colorbar=dict(title=dict(text='Daily average wave height (UNIT)', side='right'), thickness=10, len=0.9),
+        hovertemplate='%{text}<br>average wave height <b>%{z:.1f} UNIT</b><extra></extra>')],
+        dict(margin=dict(l=80, r=20, t=20, b=50), yaxis=dict(autorange='reversed', fixedrange=True, title='Month'), xaxis=dict(title='Day of the month', dtick=5, fixedrange=True),
+             height=max(260, 34 * len(months) + 90)))
+
+    # 3) monthly ---------------------------------------------------------------
+    figs['monthly'] = _fig([
+        dict(type='bar', name='Average', x=mo['label'].tolist(), y=_clean(mo['hs_mean'].tolist()), marker=dict(color=BLUE),
+             meta='len', hovertemplate='%{x}: average %{y:.1f} UNIT<extra></extra>'),
+        dict(type='bar', name='Rough days (top 10%)', x=mo['label'].tolist(), y=_clean(mo['hs_p90'].tolist()),
+             marker=dict(color=AQUA), meta='len', hovertemplate='%{x}: 90th percentile %{y:.1f} UNIT<extra></extra>'),
+        dict(type='bar', name='Biggest', x=mo['label'].tolist(), y=_clean(mo['hs_max'].tolist()), marker=dict(color=ORANGE),
+             meta='len', hovertemplate='%{x}: max %{y:.1f} UNIT<extra></extra>'),
+    ], dict(barmode='group', bargap=0.25, bargroupgap=0.08, yaxis=dict(title='Wave height, Hs (UNIT)'),
+            legend=dict(orientation='h', y=1.14, x=1, xanchor='right'), height=380))
+    figs['energy'] = _fig([dict(
+        type='bar', x=mo['label'].tolist(), y=_clean((mo['energy_mj_m'] / 3.6).tolist()), marker=dict(color=BLUE),
+        text=[f"{v / 3.6:,.0f}" for v in mo['energy_mj_m']], textposition='outside', cliponaxis=False,
+        customdata=_clean(mo['storms'].tolist()),
+        hovertemplate='%{x}<br><b>%{y:,.0f} kWh</b> per metre of coastline<br>%{customdata} storm event(s)<extra></extra>')],
+        dict(yaxis=dict(title='Wave energy (kWh per metre of coastline)'), height=340, showlegend=False))
+
+    # 4) wave rose --------------------------------------------------------------
+    ro = S['rose']
+    rose_tr = []
+    import re
+    def _ftlabel(c):
+        nums = [float(x) for x in re.findall(r'[\d.]+', c)]
+        f = [f"{bc.ft(x):.0f}" if bc.ft(x) >= 3 else f"{bc.ft(x):.1f}".rstrip('0').rstrip('.') for x in nums]
+        return (f"{f[0]}–{f[1]} ft" if len(f) == 2 else f"≥{f[0]} ft") + f"  ({c})"
+    for i, col in enumerate(ro.columns):
+        rose_tr.append(dict(type='barpolar', name=_ftlabel(col), r=_clean(ro[col].tolist()), theta=list(ro.index),
+                            marker=dict(color=SEQ[min(i + 1, len(SEQ) - 1)], line=dict(width=1, color='rgba(0,0,0,0)')),
+                            hovertemplate='from %{theta}: %{r:.1f}% of the time<extra>' + col + '</extra>'))
+    figs['rose'] = _fig(rose_tr, dict(
+        polar=dict(domain=dict(x=[0, 0.62]), angularaxis=dict(direction='clockwise', rotation=90),
+                   radialaxis=dict(ticksuffix='%', angle=90)),
+        legend=dict(title=dict(text='Wave height'), orientation='v', x=0.72, y=0.5, yanchor='middle'), height=420))
+
+    # 5) pressure + waves (stacked panels, shared time axis — no dual axis) -----
+    P = bd.met['pres'].resample('1h').mean()
+    P.index = bc.local(P.index).tz_localize(None)
+    W = H['wspd'] * 2.23694        # m/s → mph
+    figs['pressure'] = _fig([
+        dict(type='scattergl', mode='lines', name='Pressure', x=_ts(P.index), y=_clean(P.tolist()),
+             line=dict(color=VIOLET, width=1.4), xaxis='x', yaxis='y3',
+             hovertemplate='%{x|%b %d %H:%M}<br>%{y:.0f} hPa<extra></extra>'),
+        dict(type='scattergl', mode='lines', name='Wind', x=_ts(H.index), y=_clean(W.tolist()),
+             line=dict(color=AQUA, width=1.1), xaxis='x', yaxis='y2',
+             hovertemplate='%{x|%b %d %H:%M}<br>%{y:.0f} mph wind (estimated)<extra></extra>'),
+        dict(type='scattergl', mode='lines', name='Wave height', x=_ts(H.index), y=_clean(H['hs'].tolist()),
+             line=dict(color=BLUE, width=1.1), xaxis='x', yaxis='y', meta='len',
+             hovertemplate='%{x|%b %d %H:%M}<br>%{y:.1f} UNIT<extra></extra>'),
+    ], dict(yaxis3=dict(title='Air pressure (hPa)', domain=[0.70, 1], anchor='x'),
+            yaxis2=dict(title='Wind speed* (mph)', domain=[0.36, 0.64], anchor='x', rangemode='tozero'),
+            yaxis=dict(title='Wave height, Hs (UNIT)', domain=[0, 0.30]),
+            showlegend=False, height=560))
+
+    # 8) where is the buoy? live map (free OpenStreetMap/CARTO tiles — no account or key needed)
+    M = bd.met[['lat', 'lon']].dropna()
+    if len(M):
+        lat0 = bc.CFG.get('mooring_lat') or float(M['lat'].median())
+        lon0 = bc.CFG.get('mooring_lon') or float(M['lon'].median())
+        last = M.iloc[-1]
+        wk = M.loc[M.index[-1] - pd.Timedelta(days=7):].resample('1h').mean().dropna()
+        tr = [dict(type='scattermap', mode='lines', name='Last 7 days of drift', lat=_clean(wk['lat'].tolist()),
+                   lon=_clean(wk['lon'].tolist()), line=dict(color=BLUE, width=2), hoverinfo='skip'),
+              dict(type='scattermap', mode='markers', name='Mooring (anchor)', lat=[lat0], lon=[lon0],
+                   marker=dict(size=11, color=VIOLET), hovertemplate='⚓ Mooring<br>%{lat:.5f}, %{lon:.5f}<extra></extra>'),
+              dict(type='scattermap', mode='markers', name='Buoy now', lat=[float(last['lat'])], lon=[float(last['lon'])],
+                   marker=dict(size=16, color=ORANGE),
+                   hovertemplate=f'🛟 {esc_js(bc.SITE_SHORT)} buoy — latest position<br>%{{lat:.5f}}, %{{lon:.5f}}<extra></extra>')]
+        for sis in bc.SISTER_SITES:
+            if sis.get('lat') and sis.get('lon'):
+                tr.append(dict(type='scattermap', mode='markers+text', name=sis['label'], lat=[sis['lat']], lon=[sis['lon']],
+                               text=[sis['label']], textposition='top center', marker=dict(size=10, color='#8a8984'),
+                               hovertemplate=esc_js(sis['label']) + '<extra></extra>'))
+        figs['_mapdata'] = mapjs.mapdata(
+            dict(lat=float(last['lat']), lon=float(last['lon']), kind='wave', label=bc.SITE_SHORT,
+                 sub=f'Sofar Spotter {bc.SPOTTER_ID} — latest position'),
+            bc.SISTER_SITES, track=[[round(a_, 5), round(b_, 5)] for a_, b_ in zip(wk['lat'], wk['lon'])], anchor=[lat0, lon0])
+
+    # 6) spectrum by season -----------------------------------------------------
+    sp = bd.spec
+    if len(sp):
+        sp = sp.copy()
+        sp.index = pd.DatetimeIndex(sp.index)
+        f = np.array(sp.columns, float)
+        keep = (f >= 0.04) & (f <= 0.5)
+        seasons = {'❄️ Winter (Dec–Feb)': [12, 1, 2], '🌱 Spring (Mar–May)': [3, 4, 5],
+                   '☀️ Summer (Jun–Aug)': [6, 7, 8], '🍂 Fall (Sep–Nov)': [9, 10, 11]}
+        cols = [BLUE, AQUA, ORANGE, YELLOW]
+        tr = []
+        for (name, ms), c in zip(seasons.items(), cols):
+            sub = sp[sp.index.month.isin(ms)]
+            if len(sub) < 96:
+                continue
+            ok = (sub.notna().mean() >= 0.5).values      # ignore frequency bins most spectra don't have
+            mean = np.where(ok, sub.mean().values, np.nan)[keep]
+            tr.append(dict(type='scatter', mode='lines', name=name, x=_clean((1 / f[keep]).tolist()),
+                           y=_clean(mean.tolist()), line=dict(color=c, width=2.2, shape='spline'),
+                           hovertemplate='%{x:.1f}-second waves: %{y:.3f} m²/Hz<extra>' + name + '</extra>'))
+        figs['spectrum'] = _fig(tr, dict(
+            xaxis=dict(title='Wave period — seconds between crests (log scale)', type='log',
+                       tickvals=[2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25]),
+            yaxis=dict(title='Wave energy density (m²/Hz)'), legend=dict(orientation='h', y=1.14, x=1, xanchor='right'),
+            height=380))
+
+    # 7) buoy health ------------------------------------------------------------
+    M = bd.met[['humid', 'batt']].resample('6h').mean()
+    M.index = bc.local(M.index).tz_localize(None)
+    figs['health'] = _fig([
+        dict(type='scatter', mode='lines', name='Hull humidity', x=_ts(M.index), y=_clean(M['humid'].tolist()),
+             line=dict(color=AQUA, width=2), yaxis='y2', hovertemplate='%{x|%b %d}: %{y:.0f}% humidity<extra></extra>'),
+        dict(type='scatter', mode='lines', name='Battery', x=_ts(M.index), y=_clean(M['batt'].tolist()),
+             line=dict(color=GREEN, width=2), yaxis='y', hovertemplate='%{x|%b %d}: %{y:.2f} V<extra></extra>'),
+    ], dict(yaxis2=dict(title='Hull humidity (%)', domain=[0.55, 1], rangemode='tozero', anchor='x'),
+            yaxis=dict(title='Battery voltage (V)', domain=[0, 0.45]), showlegend=False, height=380))
+    return figs
+
+
+CAT = [BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED]
+
+
+def build_sensor_figs(SS):
+    """Figures + HTML for the Smart Mooring section. Returns (figs, html_block, tiles)."""
+    import sensors as sn
+    esc = html.escape
+    if not SS or not SS.get('has'):
+        block = ('<div class="card"><p style="margin:0">🔌 No Smart Mooring sensor data has arrived yet. Once Sofar reports '
+                 'subsurface temperature, dissolved oxygen or current readings for this buoy, charts appear here automatically.</p></div>')
+        return {}, block, []
+    figs, parts, tiles = {}, [], []
+    H = SS['hourly'].copy()
+    H.index = bc.local(H.index).tz_localize(None)
+    x = _ts(H.index)
+    groups = []
+    for s in SS['series']:
+        if s['group'] not in groups:
+            groups.append(s['group'])
+    for g in groups:
+        ser = [s for s in SS['series'] if s['group'] == g]
+        if g in ('cur_dir', 'diag'):
+            continue
+        emoji, name, _ = sn.GROUPS[g]
+        if g == 'other':
+            name = ', '.join(sorted({s['name'] for s in ser}))[:80]
+        units = ser[0]['units']
+        tr = []
+        unit_lbl = esc('cm/s' if g == 'cur_speed' else units)
+        for i, s in enumerate(ser):
+            yy = H[s['col']] * (100 if g == 'cur_speed' else 1)
+            if g == 'cur_dir':
+                continue
+            dly = yy.resample('1D').mean()
+            nm = s['pos_txt'] + ('' if g != 'other' else f" · {s['name']}")
+            tr.append(dict(type='scatter', mode='lines', name=nm + ' (daily avg)', legendgroup=nm,
+                           x=[d.strftime('%Y-%m-%d 12:00') for d in dly.index], y=_clean(dly.tolist()),
+                           line=dict(color=CAT[i % len(CAT)], width=2.2), connectgaps=False,
+                           hovertemplate='%{x|%b %d %Y}<br>daily average <b>%{y:.2f} ' + unit_lbl + '</b><extra>'
+                           + esc(s['pos_txt']) + '</extra>'))
+            tr.append(dict(type='scatter', mode='lines', name=nm + ' (hourly)', legendgroup=nm, visible='legendonly',
+                           x=x, y=_clean(yy.tolist()), line=dict(color=CAT[i % len(CAT)], width=1), opacity=0.6,
+                           connectgaps=False,
+                           hovertemplate='%{x|%b %d %Y, %H:%M}<br><b>%{y:.2f} ' + unit_lbl + '</b><extra>'
+                           + esc(s['pos_txt']) + '</extra>'))
+        shapes = []
+        ul = units.lower()
+        if g == 'do_conc' and ('mg' in ul or 'mol' in ul):
+            k = 1 / sn.UMOL_TO_MGL if 'mol' in ul else 1
+            for lvl, lab, col in [(sn.DO_STRESS_MGL * k, 'stress (5 mg/L)', YELLOW), (sn.DO_HYPOXIC_MGL * k, 'hypoxic (2 mg/L)', RED)]:
+                shapes.append(dict(type='line', xref='paper', x0=0, x1=1, y0=lvl, y1=lvl,
+                                   line=dict(color=col, width=1.5, dash='dash')))
+                tr.append(dict(type='scatter', mode='lines', x=[None], y=[None], name=lab,
+                               line=dict(color=col, width=1.5, dash='dash'), hoverinfo='skip'))
+        fid = f'sens_{g}'
+        figs[fid] = _fig(tr, dict(shapes=shapes, yaxis=dict(title=f"{name} ({'cm/s' if g == 'cur_speed' else units})"),
+                                  xaxis=dict(type='date'), margin=dict(l=60, r=20, t=80, b=40),
+                                  legend=dict(orientation='h', y=1.02, yanchor='bottom', x=1, xanchor='right'),
+                                  height=380, showlegend=True))
+        parts.append(f'<div><h3>{emoji} {esc(name)}</h3><div class="card"><div id="{fid}" class="chart"></div>'
+                     '<p class="t-sub" style="margin:6px 0 0">Daily averages — click “hourly” in the legend for full detail.</p></div></div>')
+        s0 = ser[0]
+        if g == 'temp':
+            tiles.append(('🌡️', f'Water temp ({s0["pos_txt"]})', f'{s0["latest"]:.1f} °C', f'{s0["latest"] * 9 / 5 + 32:.0f} °F'))
+        elif g == 'do_conc':
+            mg = f'≈ {s0["latest"] * sn.UMOL_TO_MGL:.1f} mg/L · ' if 'mol' in units.lower() else ''
+            tiles.append(('🫧', 'Dissolved oxygen', f'{s0["latest"]:.0f} {units}' if mg else f'{s0["latest"]:.1f} {units}',
+                          mg + s0['pos_txt']))
+        elif g == 'do_sat':
+            tiles.append(('🫧', 'Oxygen saturation', f'{s0["latest"]:.0f}%', s0['pos_txt']))
+        elif g == 'cur_speed':
+            tiles.append(('🌀', 'Current speed', f'{s0["latest"] * 100:.0f} cm/s', f'{s0["latest"] * 1.944:.1f} knots'))
+    # current rose
+    spd = [s for s in SS['series'] if s['group'] == 'cur_speed']
+    drs = [s for s in SS['series'] if s['group'] == 'cur_dir']
+    if spd and drs:
+        sp, dr = H[spd[0]['col']] * 100, H[drs[0]['col']]
+        ok = sp.notna() & dr.notna()
+        if ok.sum() > 10:
+            sector = ((dr[ok] % 360 + 11.25) // 22.5 % 16).astype(int).map(lambda i: bc.COMPASS16[i])
+            bins = [0, 5, 10, 20, 40, 1e9]
+            labs = ['0–5 cm/s', '5–10 cm/s', '10–20 cm/s', '20–40 cm/s', '≥40 cm/s']
+            cut = pd.cut(sp[ok], bins=bins, labels=labs, right=False)
+            tab = (pd.crosstab(sector, cut, normalize=True) * 100).reindex(bc.COMPASS16).fillna(0)
+            tr = [dict(type='barpolar', name=c, r=_clean(tab[c].tolist()) if c in tab else [0] * 16, theta=bc.COMPASS16,
+                       marker=dict(color=SEQ[min(i + 2, len(SEQ) - 1)]),
+                       hovertemplate='%{theta}: %{r:.1f}% of hours<extra>' + c + '</extra>') for i, c in enumerate(labs)]
+            figs['sens_rose'] = _fig(tr, dict(
+                polar=dict(domain=dict(x=[0, 0.62]), angularaxis=dict(direction='clockwise', rotation=90),
+                           radialaxis=dict(ticksuffix='%', angle=90)),
+                legend=dict(title=dict(text='Current speed'), x=0.72, y=0.5, yanchor='middle'), height=380))
+            parts.append('<div><h3>🧭 Which way the water flows</h3><div class="card"><div id="sens_rose" class="chart"></div>'
+                         '<p class="t-sub" style="margin:6px 0 0">Distance from the centre = % of hours. Direction as reported by the current sensor '
+                         '(most current meters report the direction the water flows <i>toward</i>).</p></div></div>')
+    rng = f"{bc.local(pd.DatetimeIndex([SS['first']]))[0]:%b %d, %Y} → {bc.local(pd.DatetimeIndex([SS['last']]))[0]:%b %d, %Y}"
+    table = ''.join(f"<tr><td>{s['emoji']} {esc(s['name'])}</td><td>{esc(s['pos_txt'])}</td><td>{esc(s['units'])}</td>"
+                    f"<td>{s['latest']:.2f}</td><td>{s['mean']:.2f}</td><td>{s['min']:.2f}</td><td>{s['max']:.2f}</td>"
+                    f"<td>{s['n']:,}</td><td>{s['removed']:,}</td><td><small>{esc(s['dtype'])}</small></td></tr>" for s in SS['series'])
+    block = (f'<p class="lede">{SS["raw_n"]:,} sensor readings, {rng}. Hourly averages shown.</p>'
+             f'<div class="grid two">{"".join(parts)}</div>'
+             '<details><summary>📋 Every sensor channel</summary><div class="tablewrap"><table><thead><tr><th>Measures</th>'
+             '<th>Position</th><th>Units</th><th>Latest</th><th>Average</th><th>Min</th><th>Max</th><th>Readings</th><th>Outliers removed</th>'
+             f'<th>Sofar name</th></tr></thead><tbody>{table}</tbody></table></div></details>')
+    return figs, block, tiles
+
+
+def build_html(S, bd, path, plotly_js=None, SS=None, mode='local', plotly_src=None, downloads=None, notice='', tides=None):
+    st, ev, lt = S['stats'], S['storms'], S['stats']['latest']
+    figs = build_figs(S, bd)
+    sfigs, sensor_block, stiles = build_sensor_figs(SS)
+    figs.update(sfigs)
+    e, vname, vdesc = vibe(lt['hs'])
+    now = pd.Timestamp.now(tz=bc.LOCAL_TZ)
+    age_days = (now - lt['time']) / pd.Timedelta(days=1)
+    stale = age_days > 1.5
+    ptrend = lt['pres_3h_change']
+    parrow = '⬇️ falling' if ptrend < -1 else ('⬆️ rising' if ptrend > 1 else '➡️ steady')
+    esc = html.escape
+
+    def tile(emoji, label, value, sub='', unit_attr=None):
+        v = f'<span class="len" data-m="{unit_attr}">{value}</span>' if unit_attr is not None else value
+        return (f'<div class="tile"><div class="t-emoji">{emoji}</div><div class="t-label">{esc(label)}</div>'
+                f'<div class="t-value">{v}</div><div class="t-sub">{sub}</div></div>')
+
+    now_tiles = ''.join([
+        tile(e, 'Wave height', f'{bc.ft(lt["hs"]):.1f} ft', f'{vname} — {esc(vdesc)}', lt['hs']),
+        tile('⏱️', 'Wave rhythm', f'{lt["tp"]:.0f} s' if np.isfinite(lt['tp']) else '—',
+             'between the biggest crests' + (' — long swell 🏄' if lt['tp'] >= 10 else '')),
+        tile(f'<span class="arrow" style="transform:rotate({(lt["dm"] + 180) % 360:.0f}deg)">⬆</span>',
+             'Waves coming from', f'{lt["dir"]}', f'{lt["dm"]:.0f}° — heading toward {bc.compass((lt["dm"] + 180) % 360)}')
+        if np.isfinite(lt['dm']) else tile('🧭', 'Waves coming from', '—'),
+        tile('🌬️', 'Air pressure', f'{lt["pres"]:.0f} hPa', f'{parrow} over 3 h') if np.isfinite(lt['pres']) else tile('🌬️', 'Air pressure', '—'),
+        tile('💨', 'Wind (estimated)', f'{lt["wspd"] * 2.23694:.0f} mph',
+             f'from the {bc.compass(lt["wdir"])} · {lt["wspd"]:.1f} m/s') if np.isfinite(lt.get('wspd', np.nan)) else tile('💨', 'Wind (estimated)', '—'),
+    ] + [tile(*t) for t in stiles] + [
+        tile('🔋', 'Buoy battery', f'{lt["batt"]:.2f} V', 'full' if lt['batt'] >= 3.8 else ('mid-level' if lt['batt'] >= 3.6 else 'low ⚠️'))
+        if np.isfinite(lt['batt']) else tile('🔋', 'Buoy battery', '—'),
+    ])
+    season_tiles = ''.join([
+        tile('📆', 'Days on watch', f'{st["days"]:.0f}', f'since {st["first"]:%b %d, %Y}'),
+        tile('📡', 'Wave readings', f'{st["n_wave_obs"]:,}', f'{st["coverage_pct"]:.0f}% of hours covered'),
+        tile('🏆', 'Biggest waves', f'{bc.ft(st["hs_max"]):.1f} ft', f'{st["hs_max_time"]:%b %d, %Y}', st['hs_max']),
+        tile('🌀', 'Storm events', f'{st["n_storms"]}', f'{st["storm_hours"]:.0f} stormy hours'),
+        tile(st['top_vibe'][0], 'Usual wave vibe', st['top_vibe'][1], f'{st["top_vibe"][2]:.0f}% of the time'),
+        tile('🏄', 'Waves ridden', f'{st["n_waves"] / 1e6:.1f} M', 'estimated, by the buoy itself'),
+    ])
+    cards = ''.join(f'<div class="card insight"><div class="i-emoji">{em}</div><div><h4>{esc(h)}</h4><p>{esc(t)}</p></div></div>'
+                    for em, h, t in bc.insights(S) + (__import__('sensors').insights(SS, S) if SS else []))
+    if len(ev):
+        top = ev.sort_values('peak_hs', ascending=False).reset_index(drop=True)
+        medals = ['🥇', '🥈', '🥉']
+        srows = ''.join(
+            f'<tr{MORE_ROW if i >= 10 else ""}><td>{medals[i] if i < 3 else i + 1}</td><td>{r.start:%b %d, %Y}</td><td>{r.hours:.0f} h</td>'
+            f'<td><b class="len" data-m="{r.peak_hs}">{bc.ft(r.peak_hs):.1f} ft</b></td>'
+            f'<td>{r.tp_at_peak:.0f} s</td><td>{r.dir}</td><td>{r.min_pres:.0f}</td><td>{r.energy_mj_m / 3.6:,.0f}</td></tr>'
+            for i, r in enumerate(top.itertuples()))
+    else:
+        srows = '<tr><td colspan="8">No storm events yet 🎉</td></tr>'
+    n_ev = len(ev)
+    storm_btn = (f'<button class="more-btn" id="storm-more" aria-expanded="false">Show all {n_ev} storms ▾</button>'
+                 if n_ev > 10 else '')
+    storm_lede = (f'The 10 biggest storm events, ranked by peak wave height ({n_ev} in total).' if n_ev > 10
+                  else 'Every storm event, ranked by peak wave height.')
+    qc = ''.join(f'<li>{esc(n)}</li>' for n in bc.qc_notes(S))
+    if mode == 'web':
+        stale_banner = (f'<div class="banner">📡 The buoy hasn\'t reported new waves since <b>{lt["time"]:%b %d, %Y %I:%M %p}</b> '
+                        f'({age_days:.1f} days). It may be offline for maintenance or a data delay — this page catches up automatically '
+                        'once readings resume.</div>') if stale else ''
+        howto = ('<li>This page updates itself <b>every hour</b> with the buoy\'s newest readings, delivered through Sofar Ocean\'s '
+                 'data service. All times are US Eastern.</li>'
+                 '<li>Want the numbers? Use the download buttons at the top: a spreadsheet plus CSV files (hourly, daily, storms, sensors).</li>'
+                 '<li>Tip: to keep a Google Sheet that stays current on its own, type this into any cell: '
+                 '<code>=IMPORTDATA("' + bc.SITE_URL + 'data/daily.csv")</code></li>')
+    else:
+        stale_banner = (f'<div class="banner">📦 These numbers run through <b>{lt["time"]:%b %d, %Y}</b> '
+                        f'({age_days:.0f} days ago).</div>') if stale else ''
+        howto = '<li>Built from the Spotter data files for this buoy. All times are US Eastern.</li>'
+    if notice:   # friendly wording only — the technical details are kept for the site owner (see maintainer guide)
+        stale_banner += ('<div class="banner">⚠️ Part of the latest hourly update didn\'t come through, so the newest readings may be '
+                         'missing for a little while. It usually sorts itself out on the next update.</div>')
+    dl = ''
+    if downloads:
+        dl = '<div class="chips" style="margin-top:12px">' + ''.join(
+            f'<a class="chip dl" href="{esc(href)}" download>{esc(lbl)}</a>' for lbl, href in downloads) + '</div>'
+    M = bd.met[['lat', 'lon', 'dist_m']].dropna()
+    where = ''
+    if len(M):
+        lastp = M.iloc[-1]
+        lt_where = bc.local(pd.DatetimeIndex([M.index[-1]]))[0]
+        depth = bc.CFG.get('depth_m')
+        rows = [('📍 Latest position', f'{lastp["lat"]:.5f}° N, {abs(lastp["lon"]):.5f}° W'),
+                ('🕒 Position time', f'{lt_where:%b %d, %Y %I:%M %p}'),
+                ('⚓ Distance from its anchor', f'{lastp["dist_m"]:.0f} m ({lastp["dist_m"] * 3.28084:.0f} ft)'),
+                ('🌊 Water depth', (f'about {depth * 3.28084:.0f} ft ({depth:g} m)' + (f' {esc(bc.CFG.get("depth_note"))}' if bc.CFG.get('depth_note') else ''))
+                                  if depth else 'not recorded yet'),
+                ('🚀 In the water since', f'{pd.Timestamp(bc.CFG.get("deployed_utc", st["first"])).tz_convert(bc.LOCAL_TZ):%B %d, %Y}')]
+        where = ''.join(f'<div class="kv"><span>{k}</span><b>{v}</b></div>' for k, v in rows)
+    tide_st = str(bc.CFG.get('tide_station') or '')
+    if tide_st:
+        where += (f'<div class="tidebox"><h3>🌙 Tides today &amp; tomorrow</h3>'
+                  f'<div class="tide-next" id="tide-next"></div>'
+                  f'<div id="tide" class="tidechart"></div>'
+                  f'<p class="t-sub" style="margin:4px 0 0">Predicted by NOAA for {esc(bc.CFG.get("tide_station_name") or tide_st)} '
+                  f'(<a href="https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id={esc(tide_st)}">station {esc(tide_st)}</a>). '
+                  'Heights are above average low tide (MLLW). Real water levels can differ in storms.</p></div>')
+    hh = bd.met['humid'].dropna()
+    health_note = ''
+    if len(hh):
+        days = pd.date_range(bc.local(pd.DatetimeIndex([bd.waves.index.min()]))[0].normalize(),
+                             bc.local(pd.DatetimeIndex([bd.met.index.max()]))[0].normalize(), freq='D')
+        have = hh.copy()
+        have.index = bc.local(have.index)
+        got = have.resample('1D').count().reindex(days, fill_value=0) > 0
+        wv = bd.waves['hs'].copy()
+        wv.index = bc.local(wv.index)
+        waves_on = wv.resample('1D').count().reindex(days, fill_value=0) > 0
+        miss = waves_on & ~got                  # the buoy was reporting waves but we have no health readings
+        runs = (miss != miss.shift()).cumsum()
+        gaps = [(g.index[0], g.index[-1]) for _, g in miss[miss].groupby(runs[miss]) if len(g) >= 7]
+        if gaps:
+            span = '; '.join(f'{a:%b %d} – {b:%b %d, %Y}' for a, b in gaps)
+            health_note = (' <i>Battery and humidity history only comes in the buoy\'s monthly data files, so there is no record for '
+                           f'{span}. New readings are logged every hour.</i>')
+    sisters = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE buoys</a>' + ''.join(f'<a class="btn" href="{esc(x["url"])}">{"🌊" if mapjs.kind_of(x) == "wave" else "🧪"} {esc(x["label"])} →</a>' for x in bc.SISTER_SITES)
+    if plotly_src:
+        plotly_tag = f'<script src="{plotly_src}"></script>'
+    else:
+        plotly_tag = f'<script>{plotly_js}</script>'
+
+    mapdata = figs.pop('_mapdata', None) or mapjs.mapdata(dict(lat=bc.CFG.get('mooring_lat'), lon=bc.CFG.get('mooring_lon'), kind='wave',
+                                                               label=bc.SITE_SHORT), bc.SISTER_SITES)
+    fig_json = json.dumps(figs, default=str, ensure_ascii=False)
+    page = TEMPLATE
+    for k, v in {
+        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND,
+        '%%PLOTLY_TAG%%': plotly_tag, '%%FIGS%%': fig_json, '%%SENSORS%%': sensor_block, '%%HOWTO%%': howto,
+        '%%DOWNLOADS%%': dl, '%%TIDES%%': json.dumps(tides or []), '%%TIDE_ST%%': json.dumps(str(bc.CFG.get('tide_station') or '')),
+        '%%TZ%%': json.dumps(str(bc.LOCAL_TZ)), '%%WHERE%%': where, '%%HEALTH_NOTE%%': health_note, '%%SISTERS%%': sisters,
+        '%%FOOTSRC%%': (f'from <a href="{bc.REPO_URL}">{bc.GITHUB_USER}/{bc.GITHUB_REPO}</a> on GitHub' if mode == 'web'
+                        else 'by <code>buoy_tools/update_buoy_report.py</code>'), '%%NOW_TILES%%': now_tiles, '%%SEASON_TILES%%': season_tiles,
+        '%%CARDS%%': cards, '%%STORM_ROWS%%': srows, '%%STORM_BTN%%': storm_btn, '%%STORM_LEDE%%': storm_lede, '%%QC%%': qc, '%%STALE%%': stale_banner,
+        '%%SHORT%%': esc(bc.SITE_SHORT), '%%SPOTTER%%': esc(st['spotter']), '%%SITE%%': esc(st['site']),
+        '%%LATEST%%': f'{lt["time"]:%A, %b %d %Y at %I:%M %p}',
+        '%%GENERATED%%': f'{pd.Timestamp.now(tz=bc.LOCAL_TZ):%b %d, %Y %I:%M %p %Z}',
+        '%%STORM_DEF%%': f'waves ≥ {bc.ft(bc.STORM_HS_M):.1f} ft ({bc.STORM_HS_M:g} m) for {bc.STORM_MIN_HOURS}+ hours',
+        '%%VIBES%%': ''.join(f'<span class="chip">{v[1]} {v[2]} <small class="len" data-m="{v[0]}" data-lt="1">'
+                             f'&lt;{bc.ft(v[0]):.0f} ft</small></span>' for v in VIBES[:-1])
+                     + f'<span class="chip">{VIBES[-1][1]} {VIBES[-1][2]}</span>',
+    }.items():
+        page = page.replace(k, v)
+    with open(path, 'w', encoding='utf-8') as fh:
+        fh.write(page)
+    return path
+
+
+TEMPLATE = r"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%%SHORT%% Buoy</title>
+%%MAPHEAD%%
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+<style>
+:root{--bg:#f5f8fa;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e3e8ec;--accent:#1c5cab;
+--hero1:#0d366b;--hero2:#1d7a8c;--chip:#eef4fb;--chip2:#b7d3f6;--warn:#fff4e0;--warnline:#eda100;--grid:#e8ecef}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111213;--card:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;
+--muted:#8f8e86;--line:#2c2d2e;--accent:#86b6ef;--hero1:#0d2a4d;--hero2:#145a66;--chip:#23282e;--chip2:#1c5cab;--warn:#2d2616;--warnline:#c98500;--grid:#2a2b2c}}
+:root[data-theme="dark"]{--bg:#111213;--card:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;--muted:#8f8e86;--line:#2c2d2e;--accent:#86b6ef;
+--hero1:#0d2a4d;--hero2:#145a66;--chip:#23282e;--chip2:#1c5cab;--warn:#2d2616;--warnline:#c98500;--grid:#2a2b2c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 48px}
+header.hero{background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;padding:36px 16px 70px;position:relative;overflow:hidden}
+header.hero .wrap{padding-bottom:0}
+header h1{margin:0;font-size:clamp(26px,4vw,40px);letter-spacing:-.5px}
+header p{margin:6px 0 0;opacity:.88}
+.waves{position:absolute;left:0;right:0;bottom:-2px;height:60px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit;font-size:14px}
+a.btn{text-decoration:none;display:inline-block}
+.maptools{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px}
+.seg{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+.seg[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:0}.wherecard{display:flex;flex-direction:column}.mapcard{display:flex;flex-direction:column}.mapcard #map{flex:1}.tidebox{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex:1;display:flex;flex-direction:column}.tidebox h3{margin:0 0 6px;font-size:15px}.tidechart{min-height:250px}.tide-next{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--ink2)}.tide-next b{color:var(--ink)}.kv span{color:var(--ink2)}.kv b{text-align:right}
+.btn[aria-pressed="true"]{background:#fff;color:#0d366b;font-weight:600}
+section{margin-top:28px}
+h2{font-size:22px;margin:0 0 4px}
+h3{font-size:17px;margin:14px 0 8px}
+.lede{color:var(--ink2);margin:0 0 14px}
+.grid{display:grid;gap:12px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.tile,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.now{margin-top:-52px;position:relative}
+.t-emoji{font-size:26px;line-height:1.1}
+.arrow{display:inline-block;font-size:24px;color:var(--accent)}
+.t-label{color:var(--ink2);font-size:13px;margin-top:6px}
+.t-value{font-size:28px;font-weight:700;letter-spacing:-.5px}
+.t-sub{color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+a.chip.dl{background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)}
+.chip{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--ink2)}
+.insights{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.insight{display:flex;gap:12px}
+.i-emoji{font-size:28px}
+.insight h4{margin:0 0 4px;font-size:15px}
+.insight p{margin:0;color:var(--ink2);font-size:14px}
+.chart{width:100%;min-height:260px}
+.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))}
+.banner{background:var(--warn);border-left:4px solid var(--warnline);border-radius:10px;padding:10px 14px;margin-top:16px;color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--ink2);font-weight:600;font-size:13px}
+.tablewrap{overflow-x:auto}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px}
+summary{cursor:pointer;font-weight:600}
+tr.hidden{display:none}
+.more-btn{margin-top:10px;background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit;font-size:14px}
+details li{color:var(--ink2);margin:6px 0;font-size:14px}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:14px}
+dt{font-weight:600}dd{margin:0;color:var(--ink2)}
+footer{color:var(--muted);font-size:13px;margin-top:36px}
+a{color:var(--accent)}
+code{background:var(--chip);padding:1px 5px;border-radius:5px}
+%%MAPCSS%%
+@media (max-width:560px){dl{grid-template-columns:1fr}.t-value{font-size:24px}}
+</style></head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>🌊 The %%SHORT%% Wave Buoy</h1>
+  <p>What the ocean has been up to off %%SITE%% · Sofar Spotter <b>%%SPOTTER%%</b></p>
+  <div class="toolbar">
+    <button class="btn" id="u-ft" aria-pressed="true">📏 feet</button>
+    <button class="btn" id="u-m" aria-pressed="false">📐 metres</button>
+    <button class="btn" id="theme">🌓 light / dark</button>
+    %%SISTERS%%
+  </div>
+  %%DOWNLOADS%%
+</div>
+<svg class="waves" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+<path d="M0,30 C150,60 300,0 450,30 C600,60 750,0 900,30 C1050,60 1150,15 1200,30 L1200,60 L0,60 Z" fill="var(--bg)"/></svg>
+</header>
+<div class="wrap">
+  <section class="now" style="margin-top:-44px">
+    <div class="grid tiles">%%NOW_TILES%%</div>
+    <p class="lede" style="margin-top:10px">🕒 Latest reading: <b>%%LATEST%%</b>. How to read the wave vibe:</p>
+    <div class="chips">%%VIBES%%</div>
+    %%STALE%%
+  </section>
+
+  <section><h2>📍 Where is the buoy?</h2><p class="lede">Updates every hour. This buoy is highlighted in orange, at its latest position; the blue line is where it has drifted around its anchor (⚓) over the last week. The others are UNE's nearby wave buoys (yellow) and water-quality buoys (orange floats) — click one to visit its page.</p>
+    <div class="grid two"><div class="card mapcard" style="padding:0;overflow:hidden">
+      <div class="maptools"><button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button><button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart (depths &amp; contours)</button></div>
+      <div id="map"></div>%%LEGEND%%
+      <p class="t-sub" style="margin:6px 12px 10px">Nautical chart: NOAA Office of Coast Survey — depths at low tide, in the units you pick at the top. Not for navigation.</p></div>
+    <div class="card wherecard">%%WHERE%%</div></div></section>
+
+  <section><h2>📊 The season so far</h2><p class="lede">Big-picture numbers since the buoy went in the water.</p>
+    <div class="grid tiles">%%SEASON_TILES%%</div></section>
+
+  <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
+    <div class="grid insights">%%CARDS%%</div></section>
+
+  <section><h2>📈 Every wave, every hour</h2>
+    <p class="lede">Drag the slider underneath to zoom. Orange bands are storm events (%%STORM_DEF%%).</p>
+    <div class="card"><div id="timeline" class="chart"></div></div></section>
+
+  <section><h2>🗓️ The wave calendar</h2><p class="lede">Each square is one day. Darker blue = bigger waves. Blank squares = no data.</p>
+    <div class="card"><div id="calendar" class="chart"></div></div></section>
+
+  <section class="grid two">
+    <div><h2>📅 Month by month</h2><p class="lede">Average, rough-day and biggest wave heights.</p>
+      <div class="card"><div id="monthly" class="chart"></div></div></div>
+    <div><h2>⚡ Wave energy delivered</h2><p class="lede">How much push the waves carried toward shore each month.</p>
+      <div class="card"><div id="energy" class="chart"></div></div></div>
+  </section>
+
+  <section class="grid two">
+    <div><h2>🧭 Where the waves come from</h2><p class="lede">Each wedge shows how often waves arrive from that direction.</p>
+      <div class="card"><div id="rose" class="chart"></div><p class="t-sub" style="margin:6px 0 0">Distance from the centre = % of all wave readings from that direction.</p></div></div>
+    <div><h2>🎵 The ocean's playlist</h2><p class="lede">Which wave “rhythms” carry the most energy each season. Peaks on the right = long, powerful swell.</p>
+      <div class="card"><div id="spectrum" class="chart"></div></div></div>
+  </section>
+
+  <section><h2>🧪 Below the surface — Smart Mooring sensors</h2>
+    <p class="lede">Instruments hanging under the buoy: water temperature, dissolved oxygen, currents and more.</p>
+    %%SENSORS%%</section>
+
+  <section><h2>🌬️ Storms leave a fingerprint</h2><p class="lede">When air pressure (top) drops sharply, the wind (middle) picks up and the waves (bottom) jump. That's a storm passing. *Wind is estimated by the buoy from the waves.</p>
+    <div class="card"><div id="pressure" class="chart"></div></div></section>
+
+  <section><h2>🌀 Storm leaderboard</h2><p class="lede">%%STORM_LEDE%%</p>
+    <div class="card tablewrap"><table><thead><tr><th>Rank</th><th>Started</th><th>Lasted</th><th>Peak waves</th><th>Rhythm</th><th>From</th><th>Lowest pressure (hPa)</th><th>Energy (kWh/m)</th></tr></thead>
+    <tbody>%%STORM_ROWS%%</tbody></table>%%STORM_BTN%%</div></section>
+
+  <section><h2>🔧 Buoy health</h2><p class="lede">Battery (bottom) and the humidity inside the hull (top). Humidity creeping upward can mean moisture is getting in.%%HEALTH_NOTE%%</p>
+    <div class="card"><div id="health" class="chart"></div></div></section>
+
+  <section>
+    <details><summary>⚠️ Data-quality notes — what was cleaned and why</summary><ul>%%QC%%</ul></details>
+    <details><summary>📖 Glossary — what do these words mean?</summary><dl>
+      <dt>Wave height</dt><dd>“Significant wave height” (Hs): the average height of the biggest third of waves, trough to crest. It's close to what a person on the beach would say the waves are. Single waves can be about twice as big.</dd>
+      <dt>Wave rhythm / period</dt><dd>Seconds between wave crests. Short (under 6 s) = choppy local wind waves. Long (10 s+) = swell that travelled from a distant storm and packs more punch.</dd>
+      <dt>Direction</dt><dd>The compass direction the waves are coming <i>from</i> (like wind). “E” means waves rolling in from the east.</dd>
+      <dt>Wind*</dt><dd>Estimated by the buoy from the shape of the waves (it has no wind vane), so treat it as approximate — especially in light winds.</dd>
+      <dt>hPa</dt><dd>Hectopascals — the unit for air pressure. ~1013 is average; under ~1000 usually means a storm.</dd>
+      <dt>Wave energy</dt><dd>How much energy the waves carried past each metre of coastline. 1 kWh ≈ running a microwave for an hour.</dd>
+      <dt>Storm event</dt><dd>%%STORM_DEF%%.</dd>
+    </dl></details>
+    <details><summary>ℹ️ About this data</summary><ul>%%HOWTO%%</ul></details>
+  </section>
+  <footer>Generated %%GENERATED%% %%FOOTSRC%%. Data: Sofar Ocean Spotter %%SPOTTER%%, University of New England.</footer>
+</div>
+%%PLOTLY_TAG%%
+<script>
+const FIGS = %%FIGS%%;
+function unitKey(){ return unit==='m' ? 'metric' : 'us'; }
+%%MAPJS%%
+const M2FT = 3.28084;
+let unit = 'ft';
+try { unit = localStorage.getItem('buoy-unit') || 'ft'; } catch (e) {}
+const ORIG = JSON.parse(JSON.stringify(FIGS));
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function sub(s,u){return typeof s==='string'? s.replaceAll('UNIT',u):s;}
+function scaleArr(a,k){return Array.isArray(a)? a.map(x=>Array.isArray(x)? scaleArr(x,k): (x==null? null: x*k)) : a;}
+function themed(layout){
+  const ink=css('--ink2'), grid=css('--grid');
+  const L = Object.assign({}, layout, {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+    font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif', color:ink, size:13},
+    margin:layout.margin||{l:60,r:20,t:30,b:50}, hoverlabel:{font:{size:13}}});
+  for (const k of Object.keys(L)) if (/^[xy]axis\d*$/.test(k)) {
+    L[k]=Object.assign({gridcolor:grid, zerolinecolor:grid, linecolor:grid}, L[k]);
+    if (typeof L[k].title === 'string') L[k].title = {text: L[k].title, standoff: 10};
+    if (L[k].title) L[k].title.font = Object.assign({size: 13, color: ink}, L[k].title.font || {});
+  }
+  if (!L.xaxis) L.xaxis={gridcolor:grid}; if(!L.yaxis) L.yaxis={gridcolor:grid};
+  if (L.polar){L.polar=Object.assign({bgcolor:'rgba(0,0,0,0)'},L.polar);
+    L.polar.angularaxis=Object.assign({gridcolor:grid,linecolor:grid},L.polar.angularaxis);
+    L.polar.radialaxis=Object.assign({gridcolor:grid,linecolor:grid},L.polar.radialaxis);
+    if (typeof L.polar.radialaxis.title === 'string') L.polar.radialaxis.title = {text: L.polar.radialaxis.title, font:{size:12, color:ink}};}
+  if (L.map) { const dark = getComputedStyle(document.body).backgroundColor.match(/\d+/g).slice(0,3).reduce((a,c)=>a+ +c,0) < 300;
+    L.map = Object.assign({}, L.map, {style: dark ? 'carto-darkmatter' : 'carto-positron'}); delete L.xaxis; delete L.yaxis;
+    if (L.legend) L.legend = Object.assign({}, L.legend, {bgcolor: dark ? 'rgba(26,26,25,0.8)' : 'rgba(255,255,255,0.8)'}); }
+  if (L.xaxis && L.xaxis.rangeselector) L.xaxis.rangeselector=Object.assign({bgcolor:css('--chip'),activecolor:css('--chip2'),font:{color:ink}},L.xaxis.rangeselector);
+  return L;
+}
+
+// ---------- tide chart (NOAA high/low predictions, smooth cosine curve between them) ----------
+let TIDES = %%TIDES%%;                      // [{t:'YYYY-MM-DD HH:MM' local, v: ft, type:'H'|'L'}]
+const TIDE_ST = %%TIDE_ST%%, SITE_TZ = %%TZ%%;
+const tms = s => Date.parse(s.replace(' ','T')+':00Z');          // treat site-local clock times as plain numbers
+const tstr = ms => new Date(ms).toISOString().slice(0,16).replace('T',' ');
+function siteNow(){ const p=new Intl.DateTimeFormat('en-CA',{timeZone:SITE_TZ,year:'numeric',month:'2-digit',day:'2-digit',
+  hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()); const g=k=>p.find(x=>x.type===k).value;
+  return `${g('year')}-${g('month')}-${g('day')} ${g('hour')}:${g('minute')}`; }
+function clock(s){ const [h,m]=s.slice(11,16).split(':').map(Number); return `${(h%12)||12}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`; }
+function fmtH(ft){ return unit==='ft'? ft.toFixed(1)+' ft' : (ft/M2FT).toFixed(2)+' m'; }
+function renderTide(){
+  const el=document.getElementById('tide'); if(!el || !TIDES.length) return;
+  const now=siteNow(), nowMs=tms(now), day0=tms(now.slice(0,10)+' 00:00'), end=day0+48*3600e3;
+  const ev=TIDES.map(e=>({ms:tms(e.t), t:e.t, v:+e.v, type:e.type})).sort((a,b)=>a.ms-b.ms);
+  const k = unit==='ft'? 1 : 1/M2FT, xs=[], ys=[];
+  for (let i=0;i<ev.length-1;i++){ const a=ev[i], b=ev[i+1];
+    for (let ms=Math.max(a.ms,day0-3600e3); ms<b.ms && ms<=end+3600e3; ms+=10*60e3){
+      const f=(ms-a.ms)/(b.ms-a.ms); xs.push(tstr(ms)); ys.push((a.v+(b.v-a.v)*(1-Math.cos(Math.PI*f))/2)*k); } }
+  const vis=ev.filter(e=>e.ms>=day0 && e.ms<=end), ink=css('--ink2'), acc=css('--accent'), narrow=el.clientWidth<480;
+  let cur=null; for (let i=0;i<ev.length-1;i++) if (ev[i].ms<=nowMs && nowMs<ev[i+1].ms){ const a=ev[i],b=ev[i+1],f=(nowMs-a.ms)/(b.ms-a.ms);
+    cur={v:a.v+(b.v-a.v)*(1-Math.cos(Math.PI*f))/2, rising:b.type==='H', next:b}; }
+  const data=[
+    {x:xs,y:ys,type:'scatter',mode:'lines',line:{color:acc,width:2.5,shape:'spline'},fill:'tozeroy',fillcolor:'rgba(28,92,171,0.13)',
+     hovertemplate:'%{x|%a %I:%M %p}<br>%{y:.1f} '+unit+'<extra></extra>',name:'tide'},
+    {x:vis.map(e=>e.t),y:vis.map(e=>e.v*k),type:'scatter',mode:'markers+text',marker:{size:7,color:acc},
+     text:vis.map(e=>(narrow?'':(e.type==='H'?'High ':'Low '))+clock(e.t)),textposition:vis.map(e=>(e.type==='H'?'top ':'bottom ')+(e.ms-day0<3*3600e3?'right':end-e.ms<3*3600e3?'left':'center')),
+     cliponaxis:false,textfont:{size:11,color:ink},hovertemplate:vis.map(e=>(e.type==='H'?'High tide':'Low tide')+'<br>%{x|%a %I:%M %p}<br>'+fmtH(e.v)+'<extra></extra>'),name:'hi/lo'}];
+  if (cur) data.push({x:[now],y:[cur.v*k],type:'scatter',mode:'markers',marker:{size:12,color:'#f28f16',line:{color:'#fff',width:2}},
+     hovertemplate:'Now: '+fmtH(cur.v)+(cur.rising?' and rising':' and falling')+'<extra></extra>',name:'now'});
+  const lo=Math.min(...ys), hi=Math.max(...ys), pad=(hi-lo)*0.28;
+  const L=themed({showlegend:false,height:250,margin:{l:46,r:14,t:22,b:30},
+    xaxis:{type:'date',range:[tstr(day0-40*60e3),tstr(end+40*60e3)],tickformat:'%-I %p',dtick:(narrow?12:6)*3600e3,tickangle:0},
+    yaxis:{title:'Tide ('+unit+')',range:[lo-pad,hi+pad],zeroline:true},
+    shapes:[{type:'line',x0:now,x1:now,y0:0,y1:1,yref:'paper',line:{color:'#f28f16',width:1.5,dash:'dot'}},
+            {type:'line',x0:tstr(day0+24*3600e3),x1:tstr(day0+24*3600e3),y0:0,y1:1,yref:'paper',line:{color:css('--grid'),width:1}}],
+    annotations:[{x:tstr(day0+12*3600e3),y:1.0,yref:'paper',yanchor:'bottom',text:'<b>Today</b>',showarrow:false,font:{size:12,color:ink}},
+                 {x:tstr(day0+36*3600e3),y:1.0,yref:'paper',yanchor:'bottom',text:'<b>Tomorrow</b>',showarrow:false,font:{size:12,color:ink}}]});
+  try{ Plotly.react(el,data,L,{responsive:true,displaylogo:false,displayModeBar:false}); }catch(e){ console.error('tide',e); }
+  const nx=document.getElementById('tide-next');
+  if (nx){ const up=ev.filter(e=>e.ms>nowMs).slice(0,2);
+    nx.innerHTML=(cur? `<span>Now: <b>${fmtH(cur.v)}</b> ${cur.rising?'⬆️ rising':'⬇️ falling'}</span>`:'')+
+      up.map(e=>`<span>Next ${e.type==='H'?'high':'low'}: <b>${clock(e.t)}</b> (${fmtH(e.v)})</span>`).join(''); }
+}
+async function refreshTides(){   // page left open for a while? fetch fresh predictions straight from NOAA
+  if (!TIDE_ST) return; const now=siteNow(), last=TIDES.length? tms(TIDES[TIDES.length-1].t):0;
+  if (last > tms(now)+36*3600e3) return;
+  const d=new Date(tms(now)-86400e3).toISOString().slice(0,10).replaceAll('-','');
+  try{ const r=await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=UNE_buoy&begin_date=${d}&range=96&datum=MLLW&station=${TIDE_ST}&time_zone=lst_ldt&units=english&interval=hilo&format=json`);
+    const j=await r.json(); if (j.predictions && j.predictions.length){ TIDES=j.predictions; renderTide(); } }catch(e){ console.warn('tides',e); }
+}
+function render(){
+  const k = unit==='ft'? M2FT:1;
+  let chartLayers = [];
+  for (const id of Object.keys(ORIG)){
+    const el=document.getElementById(id); if(!el) continue;
+    const f=JSON.parse(JSON.stringify(ORIG[id]));
+    for (const t of f.data){
+      if (t.meta==='len'){ if(t.y && t.type!=='heatmap') t.y=scaleArr(t.y,k); if(t.type==='heatmap'){t.z=scaleArr(t.z,k); t.zmax=t.zmax*k;} }
+      t.hovertemplate=sub(t.hovertemplate,unit);
+      if (t.colorbar&&t.colorbar.title) t.colorbar.title.text=sub(t.colorbar.title.text,unit);
+    }
+    const L=themed(JSON.parse(sub(JSON.stringify(f.layout),unit)));
+    if (L.map && mapMode==='chart') {           // NOAA nautical chart: soundings + depth contours, in the page's units
+      const dp=encodeURIComponent(JSON.stringify({ECDISParameters:{DynamicParameters:{Parameter:[{name:'DisplayDepthUnits',value: unit==='ft'?2:1}]}}}));
+      L.map.style='white-bg';
+      chartLayers=[{sourcetype:'raster', below:'traces', sourceattribution:'NOAA Office of Coast Survey — not for navigation',
+        source:['https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer?service=WMS&request=GetMap&version=1.3.0&layers=0,1,2,3,4,5,6,7&styles=&format=image/png&transparent=false&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}&display_params='+dp]}];
+    }
+    if (L.map) L.height = Math.max(380, el.clientHeight || 0);
+    if (L.polar && el.clientWidth < 560) {      // narrow screens: legend underneath the rose
+      L.height=640; L.polar.domain={x:[0,1],y:[0.42,1]};
+      L.legend=Object.assign({},L.legend,{orientation:'v',x:0,y:0,xanchor:'left',yanchor:'bottom'}); }
+    try {
+      const p = Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
+      // raster layers must be added after the new base style has loaded, or MapLibre drops them
+      if (L.map) { const lay = (mapMode==='chart') ? chartLayers : [];
+        Promise.resolve(p).then(()=>setTimeout(()=>Plotly.relayout(el, {'map.layers': lay}), 150)); }
+    } catch(e) { console.error('chart '+id, e); }
+  }
+  document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.map===mapMode));
+  document.querySelectorAll('.len').forEach(el=>{const m=parseFloat(el.dataset.m); if(isNaN(m))return;
+    const v = unit==='ft'? m*M2FT : m; const lt = el.dataset.lt? '<':'';
+    el.textContent = lt + (unit==='ft'? v.toFixed(el.dataset.lt?0:1)+' ft' : v.toFixed(el.dataset.lt?1:2)+' m');});
+  try { renderMap(); } catch(e) { console.error('map', e); }
+  renderTide();
+  document.getElementById('u-ft').setAttribute('aria-pressed', unit==='ft');
+  document.getElementById('u-m').setAttribute('aria-pressed', unit==='m');
+}
+document.getElementById('u-ft').onclick=()=>{unit='ft'; try{localStorage.setItem('buoy-unit',unit)}catch(e){} render();};
+document.getElementById('u-m').onclick=()=>{unit='m'; try{localStorage.setItem('buoy-unit',unit)}catch(e){} render();};
+document.getElementById('theme').onclick=()=>{const r=document.documentElement;
+  const dark = r.dataset.theme? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark? 'light':'dark'; try{localStorage.setItem('buoy-theme',r.dataset.theme)}catch(e){} render();};
+try{const t=localStorage.getItem('buoy-theme'); if(t) document.documentElement.dataset.theme=t;}catch(e){}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+const sm=document.getElementById('storm-more');
+if (sm) { sm.dataset.all = sm.textContent;
+  sm.onclick=()=>{const open=sm.getAttribute('aria-expanded')==='true';
+    document.querySelectorAll('tr.more').forEach(r=>{r.classList.toggle('hidden',open); r.hidden=open;});
+    sm.setAttribute('aria-expanded',String(!open));
+    sm.textContent = open? sm.dataset.all : 'Show top 10 only ▴';}; }
+let mapMode='street';
+try{ mapMode = localStorage.getItem('buoy-map') || 'street'; }catch(e){}
+document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{mapMode=b.dataset.map; try{localStorage.setItem('buoy-map',mapMode)}catch(e){} render();});
+render();
+refreshTides(); setInterval(()=>{refreshTides(); renderTide();}, 10*60e3);
+</script>
+</body></html>
+"""

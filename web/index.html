@@ -161,15 +161,15 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 </div>
 
 <script>
-const GH = 'https://ekelting.github.io/';
-const SITES = [
-  {repo:'UNE-Camp-Ellis-SPOT-32787C', name:'Camp Ellis', kind:'wave', lat:43.4727, lon:-70.36053, color:'#2a78d6'},
-  {repo:'UNE-Biddeford-Pool-SPOT-32905C', name:'Biddeford Pool', kind:'wave', lat:43.43761, lon:-70.34923, color:'#4a3aa7'},
-  {repo:'UNE-BlueSonde-BB1.23', name:'Saco Bay', kind:'wq', lat:43.455593, lon:-70.317699, color:'#1baf7a'},
-  {repo:'UNE-BlueSonde-BB1.12', name:'Saco River Estuary', kind:'wq', lat:43.460893, lon:-70.389691, color:'#eb6834'},
-  {repo:'UNE-BlueSonde-BB1.47', name:'Ferry Beach', kind:'wq', lat:43.497213, lon:-70.379113, color:'#e87ba4'},
-  {repo:'UNE-BlueSonde-BB1.48', name:'Goose Rocks Beach', kind:'wq', lat:43.396733, lon:-70.402301, color:'#eda100'},
+const SITES = [   // slug = folder under this site; keep in step with buoys.json
+  {slug:'camp-ellis', name:'Camp Ellis', kind:'wave', lat:43.4727, lon:-70.36053, color:'#2a78d6'},
+  {slug:'biddeford-pool', name:'Biddeford Pool', kind:'wave', lat:43.43761, lon:-70.34923, color:'#4a3aa7'},
+  {slug:'saco-bay', name:'Saco Bay', kind:'wq', lat:43.455593, lon:-70.317699, color:'#1baf7a'},
+  {slug:'saco-river-estuary', name:'Saco River Estuary', kind:'wq', lat:43.460893, lon:-70.389691, color:'#eb6834'},
+  {slug:'ferry-beach', name:'Ferry Beach', kind:'wq', lat:43.497213, lon:-70.379113, color:'#e87ba4'},
+  {slug:'goose-rocks-beach', name:'Goose Rocks Beach', kind:'wq', lat:43.396733, lon:-70.402301, color:'#eda100'},
 ];
+const REPO = 'https://github.com/ekelting/UNE-Marine-Monitoring-Network';
 const BUOY_SVG = {
   wave: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="40" rx="17" ry="4.5" fill="#1c5cab" opacity=".28"/>
     <line x1="20" y1="13" x2="20" y2="2" stroke="#222" stroke-width="1.6"/><circle cx="20" cy="2.5" r="1.6" fill="#222"/>
@@ -198,20 +198,20 @@ function ago(iso){ const m=(Date.now()-Date.parse(iso))/60000; if(!isFinite(m)) 
 async function load(){
   const errs=[];
   await Promise.all(SITES.map(async s=>{
-    try{ const r=await fetch(GH+s.repo+'/data/latest.json?t='+Math.floor(Date.now()/300000), {cache:'no-store'});
-      if(!r.ok) throw new Error('HTTP '+r.status); DATA[s.repo]=await r.json(); }
+    try{ const r=await fetch('./'+s.slug+'/data/latest.json?t='+Math.floor(Date.now()/300000), {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status); DATA[s.slug]=await r.json(); }
     catch(e){ errs.push(s.name); }
   }));
-  const ok = SITES.filter(s=>DATA[s.repo]);
-  const fresh = ok.filter(s=>Date.now()-Date.parse(DATA[s.repo].last_obs) < 3*3600e3).length;
+  const ok = SITES.filter(s=>DATA[s.slug]);
+  const fresh = ok.filter(s=>Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length;
   document.getElementById('status').textContent = `${fresh} of ${SITES.length} buoys reporting · page refreshed ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
   document.getElementById('errors').innerHTML = errs.length ? `<div class="err">⚠️ Couldn't load the latest data for: ${errs.map(escH).join(', ')}. Their own dashboards may still be building — this page tries again every 10 minutes.</div>` : '';
   renderAll();
 }
-function val(s, k){ const d=DATA[s.repo]; return d && d.now ? d.now[k] : null; }
+function val(s, k){ const d=DATA[s.slug]; return d && d.now ? d.now[k] : null; }
 
 function renderKPIs(){
-  const live = SITES.filter(s=>DATA[s.repo]);
+  const live = SITES.filter(s=>DATA[s.slug]);
   const by = (k, pick) => { const xs=live.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
   const warm=by('water_temp_c',(a,b)=>a>=b), cold=by('water_temp_c',(a,b)=>a<=b), big=by('hs_m',(a,b)=>a>=b),
         fresh=by('sal_psu',(a,b)=>a<=b), salt=by('sal_psu',(a,b)=>a>=b), lowdo=by('do_mgl',(a,b)=>a<=b);
@@ -221,7 +221,7 @@ function renderKPIs(){
   if (big) h += k('🌊','Biggest waves now', Hs(val(big,'hs_m')), `at <b>${escH(big.name)}</b>${fin(val(big,'tp_s'))?` · ${val(big,'tp_s').toFixed(0)} s apart, from the ${escH(val(big,'wave_dir')||'')}`:''}`);
   if (fresh) h += k('💧','Freshest water', `${val(fresh,'sal_psu').toFixed(1)} PSU`, `at <b>${escH(fresh.name)}</b> · saltiest ${val(salt,'sal_psu').toFixed(1)} at <b>${escH(salt.name)}</b>`);
   if (lowdo) { const v=val(lowdo,'do_mgl'); h += k('🫧','Lowest oxygen', `${v.toFixed(1)} mg/L`, `at <b>${escH(lowdo.name)}</b> · ${v>=5?'healthy everywhere ✅':v>=2?'stressful ⚠️':'hypoxic 🚨'}`); }
-  const fresh3 = live.filter(s=>Date.now()-Date.parse(DATA[s.repo].last_obs) < 3*3600e3).length;
+  const fresh3 = live.filter(s=>Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length;
   h += k('📡','Buoys reporting', `${fresh3} / ${SITES.length}`, 'sent data in the last 3 hours');
   document.getElementById('kpis').innerHTML = h;
 }
@@ -230,7 +230,7 @@ function vbox(label, v, unitTxt){ return `<div class="v"><span class="vl">${labe
 function renderStations(){
   const el=document.getElementById('stations'); let h='';
   for (const s of SITES){
-    const d=DATA[s.repo]; const [a,col]= d? ago(d.last_obs) : ['no data', css('--bad')];
+    const d=DATA[s.slug]; const [a,col]= d? ago(d.last_obs) : ['no data', css('--bad')];
     let vals='';
     if (d){ const n=d.now||{};
       if (s.kind==='wave'){ vals += vbox('Waves', Hs(n.hs_m)) + vbox('Period', fin(n.tp_s)? n.tp_s.toFixed(0):'—','s') + vbox('From', escH(n.wave_dir||'—'));
@@ -240,20 +240,20 @@ function renderStations(){
         if (fin(n.chl_ugl)) vals += vbox('Chlorophyll', n.chl_ugl.toFixed(1),'µg/L');
         if (fin(n.trp_ppb)) vals += vbox('Tryptophan', n.trp_ppb.toFixed(0),'ppb');
         if (fin(n.turb_ntu)) vals += vbox('Turbidity', n.turb_ntu.toFixed(1),'NTU'); } }
-    h += `<div class="card st${selected===s.repo?' sel':''}" data-repo="${s.repo}" tabindex="0" role="button" aria-label="Highlight ${escH(s.name)} on the map">
+    h += `<div class="card st${selected===s.slug?' sel':''}" data-repo="${s.slug}" tabindex="0" role="button" aria-label="Highlight ${escH(s.name)} on the map">
       <div class="st-top"><div class="st-ic">${BUOY_SVG[s.kind](30)}</div>
         <div><div class="st-name"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)}</div>
         <div class="st-type">${s.kind==='wave'?'Wave buoy · Sofar Spotter':'Water quality · BlueSonde '+escH(d? d.device:'')}</div></div>
         <div class="st-age"><span class="dot" style="background:${col}"></span>${a}</div></div>
       <div class="st-vals">${vals || '<span style="color:var(--muted)">Waiting for data…</span>'}</div>
-      <div class="st-bottom"><div class="spark" id="sp-${s.repo.replace(/\W/g,'')}"></div><a class="go" href="${GH+s.repo}/" onclick="event.stopPropagation()">Full dashboard →</a></div></div>`;
+      <div class="st-bottom"><div class="spark" id="sp-${s.slug.replace(/\W/g,'')}"></div><a class="go" href="./${s.slug}/" onclick="event.stopPropagation()">Full dashboard →</a></div></div>`;
   }
   el.innerHTML=h;
   el.querySelectorAll('.st').forEach(c=>{ const f=()=>select(c.dataset.repo, true); c.onclick=f; c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); f();} }; });
-  for (const s of SITES){ const d=DATA[s.repo]; if(!d||!d.recent) continue;
+  for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent) continue;
     const key = s.kind==='wave' ? 'hs_m' : 'water_temp_c', conv = s.kind==='wave' ? Hn : Tn;
     const t=d.recent.t.slice(-168), y=(d.recent[key]||[]).slice(-168).map(conv);
-    Plotly.react('sp-'+s.repo.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
+    Plotly.react('sp-'+s.slug.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
       hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':'water temp')+'</extra>'}],
       {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false},yaxis:{visible:false,
        range: (()=>{const v=y.filter(fin); if(!v.length) return undefined; const lo=Math.min(...v), hi=Math.max(...v); return [lo-(hi-lo)*.15, hi+(hi-lo)*.1+1e-6];})()},showlegend:false},
@@ -263,17 +263,17 @@ function renderStations(){
 
 function icon(kind, sel){ const s= sel? 40:30;
   return L.divIcon({className:'buoy-ic'+(sel?' me':''), html:(sel?'<div class="ring"></div>':'')+BUOY_SVG[kind](s), iconSize:[s,s*1.15], iconAnchor:[s/2,s*.87], tooltipAnchor:[4,-s*.55], popupAnchor:[0,-s*.75]}); }
-function labelText(s){ const n=(DATA[s.repo]||{}).now||{}; let v='';
+function labelText(s){ const n=(DATA[s.slug]||{}).now||{}; let v='';
   if (labelMode==='temp' && fin(n.water_temp_c)) v=T(n.water_temp_c);
   if (labelMode==='sal' && fin(n.sal_psu)) v=n.sal_psu.toFixed(1)+' PSU';
   if (labelMode==='do' && fin(n.do_mgl)) v=n.do_mgl.toFixed(1)+' mg/L';
   if (labelMode==='hs' && fin(n.hs_m)) v=Hs(n.hs_m);
   return escH(s.name) + (v? ` · <span class="val">${v}</span>`:''); }
-function popupHtml(s){ const d=DATA[s.repo]; const n=(d||{}).now||{};
+function popupHtml(s){ const d=DATA[s.slug]; const n=(d||{}).now||{};
   const rows = s.kind==='wave' ? [['Waves',Hs(n.hs_m)],['Period',fin(n.tp_s)?n.tp_s.toFixed(0)+' s':'—'],['From',n.wave_dir||'—'],['Water',T(n.water_temp_c)]]
     : [['Water',T(n.water_temp_c)],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—'],['Oxygen',fin(n.do_mgl)?n.do_mgl.toFixed(1)+' mg/L':'—'],['Turbidity',fin(n.turb_ntu)?n.turb_ntu.toFixed(1)+' NTU':'—']];
   return `<b>${escH(s.name)}</b><br><span style="color:#777">${s.kind==='wave'?'Wave buoy':'Water-quality buoy'}${d?' · '+ago(d.last_obs)[0]:''}</span><br>`
-    + rows.map(r=>`${r[0]}: <b>${escH(r[1])}</b>`).join('<br>') + `<br><a href="${GH+s.repo}/">Open full dashboard →</a>`; }
+    + rows.map(r=>`${r[0]}: <b>${escH(r[1])}</b>`).join('<br>') + `<br><a href="./${s.slug}/">Open full dashboard →</a>`; }
 function renderMap(){
   const el=document.getElementById('map'); if(!el||typeof L==='undefined') return;
   if(!LMAP){ LMAP=L.map(el,{scrollWheelZoom:false}); el.addEventListener('click',()=>LMAP.scrollWheelZoom.enable(),{once:true});
@@ -289,18 +289,18 @@ function renderMap(){
         : L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {maxZoom:16, attribution:'Esri, GEBCO, NOAA, Garmin, HERE, &copy; OpenStreetMap contributors'}),
                         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom:16})]));
     LBASE.addTo(LMAP); LBASE_KEY=key; }
-  for (const s of SITES){ const sel = selected===s.repo;
-    if (MARKERS[s.repo]) LMAP.removeLayer(MARKERS[s.repo]);
-    MARKERS[s.repo] = L.marker([s.lat,s.lon],{icon:icon(s.kind,sel),zIndexOffset:sel?1000:0,title:s.name}).addTo(LMAP)
+  for (const s of SITES){ const sel = selected===s.slug;
+    if (MARKERS[s.slug]) LMAP.removeLayer(MARKERS[s.slug]);
+    MARKERS[s.slug] = L.marker([s.lat,s.lon],{icon:icon(s.kind,sel),zIndexOffset:sel?1000:0,title:s.name}).addTo(LMAP)
       .bindTooltip(labelText(s),{permanent:true,direction:'right',className:'blabel'+(sel?' sel':'')}).bindPopup(popupHtml(s))
-      .on('click',()=>select(s.repo,false)); }
+      .on('click',()=>select(s.slug,false)); }
   document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.map===mapMode));
   setTimeout(()=>LMAP.invalidateSize(),60);
 }
 function select(repo, fromCard){
   selected = selected===repo && fromCard ? null : repo;
   renderStations(); renderMap();
-  if (selected && fromCard){ const s=SITES.find(x=>x.repo===repo); LMAP.panTo([s.lat,s.lon]); MARKERS[repo].openPopup(); }
+  if (selected && fromCard){ const s=SITES.find(x=>x.slug===repo); LMAP.panTo([s.lat,s.lon]); MARKERS[repo].openPopup(); }
   if (selected && !fromCard){ const c=document.querySelector(`.st[data-repo="${repo}"]`); if(c) c.scrollIntoView({block:'nearest',behavior:'smooth'}); }
 }
 
@@ -309,10 +309,10 @@ function renderCharts(){
   const spec = {'c-temp':['water_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-sal':['sal_psu', v=>v, ()=>'PSU'], 'c-do':['do_mgl', v=>v, ()=>'mg/L'], 'c-hs':['hs_m', Hn, ()=> unit==='us'?'ft':'m']};
   for (const [id,[key,conv,u]] of Object.entries(spec)){
     const tr=[]; const present=[];
-    for (const s of SITES){ const d=DATA[s.repo]; if(!d||!d.recent||!d.recent[key]||!d.recent[key].some(fin)) continue;
+    for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent||!d.recent[key]||!d.recent[key].some(fin)) continue;
       present.push(s);
       tr.push({x:d.recent.t, y:d.recent[key].map(v=>fin(v)?conv(v):null), name:s.name, type:'scatter', mode:'lines', connectgaps:false,
-        visible: hidden[id+s.repo] ? 'legendonly' : true, line:{color:s.color,width: selected===s.repo?3.2:1.7}, opacity: selected && selected!==s.repo ? .45 : 1,
+        visible: hidden[id+s.slug] ? 'legendonly' : true, line:{color:s.color,width: selected===s.slug?3.2:1.7}, opacity: selected && selected!==s.slug ? .45 : 1,
         hovertemplate:'%{x|%b %d, %I %p}<br><b>%{y:.2f} '+u()+'</b><extra>'+escH(s.name)+'</extra>'}); }
     const shapes = key==='do_mgl' ? [5,2].map((y,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:y,y1:y,line:{color:i?'#d4473f':'#eda100',width:1.2,dash:'dash'}})) : [];
     const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:12},
@@ -320,14 +320,14 @@ function renderCharts(){
       xaxis:{type:'date',gridcolor:grid,linecolor:grid},yaxis:{title:{text:u(),font:{size:12}},gridcolor:grid,zerolinecolor:grid,rangemode: key==='hs_m'?'tozero':'normal'}};
     Plotly.react(id, tr, L, {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
     const lg=document.querySelector(`.legend[data-for="${id}"]`);
-    lg.innerHTML = present.map(s=>`<span data-repo="${s.repo}" class="${hidden[id+s.repo]?'off':''}"><span class="swatch" style="background:${s.color}"></span>${escH(s.name)}</span>`).join('');
+    lg.innerHTML = present.map(s=>`<span data-repo="${s.slug}" class="${hidden[id+s.slug]?'off':''}"><span class="swatch" style="background:${s.color}"></span>${escH(s.name)}</span>`).join('');
     lg.querySelectorAll('span[data-repo]').forEach(sp=>sp.onclick=()=>{ hidden[id+sp.dataset.repo]=!hidden[id+sp.dataset.repo]; renderCharts(); });
   }
 }
 function renderInsights(){
   let h='';
-  for (const s of SITES){ const d=DATA[s.repo]; if(!d||!d.insights) continue;
-    for (const [e,t] of d.insights.filter(x=>x[0]!=='📅').slice(0,2)) h+=`<div class="card ins"><div class="e">${e}</div><div><h4>${escH(t)}</h4><a href="${GH+s.repo}/"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)} →</a></div></div>`; }
+  for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.insights) continue;
+    for (const [e,t] of d.insights.filter(x=>x[0]!=='📅').slice(0,2)) h+=`<div class="card ins"><div class="e">${e}</div><div><h4>${escH(t)}</h4><a href="./${s.slug}/"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)} →</a></div></div>`; }
   document.getElementById('insights').innerHTML = h || '<p class="lede">Loading…</p>';
 }
 function renderAll(){
@@ -337,7 +337,7 @@ function renderAll(){
 }
 document.getElementById('lg-wave').innerHTML = BUOY_SVG.wave(16); document.getElementById('lg-wq').innerHTML = BUOY_SVG.wq(16);
 document.querySelectorAll('#lg-wave svg,#lg-wq svg').forEach(s=>s.style.verticalAlign='middle');
-document.getElementById('sitelist').innerHTML = SITES.map(s=>`<li><a href="${GH+s.repo}/">${escH(s.name)}</a> — ${s.kind==='wave'?'wave buoy':'water-quality buoy'} (<a href="https://github.com/ekelting/${s.repo}">code &amp; raw data</a>)</li>`).join('');
+document.getElementById('sitelist').innerHTML = SITES.map(s=>`<li><a href="./${s.slug}/">${escH(s.name)}</a> — ${s.kind==='wave'?'wave buoy':'water-quality buoy'} (<a href="${REPO}/tree/main/buoys/${s.slug}">code &amp; raw data</a>)</li>`).join('');
 document.getElementById('foot').innerHTML = `Live from ${SITES.length} buoy dashboards · <a href="https://github.com/ekelting/UNE-Marine-Monitoring-Network">ekelting/UNE-Marine-Monitoring-Network</a> on GitHub`;
 document.getElementById('u-us').onclick=()=>{unit='us'; try{localStorage.setItem('net-unit',unit)}catch(e){} renderAll();};
 document.getElementById('u-si').onclick=()=>{unit='si'; try{localStorage.setItem('net-unit',unit)}catch(e){} renderAll();};

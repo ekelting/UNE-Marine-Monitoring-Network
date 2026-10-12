@@ -1,0 +1,61 @@
+{
+  "spotter_id": "SPOT-32905C",
+  "short_name": "Biddeford Pool",
+  "site_name": "Biddeford Pool, Maine",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "timezone": "America/New_York",
+  "deployed_utc": "2026-02-02T12:00:00Z",
+  "settled_utc": "2026-02-03T00:00:00Z",
+  "waves_fetch_start_utc": "2026-02-02T00:00:00Z",
+  "mooring_lat": 43.4376128,
+  "mooring_lon": -70.3492272,
+  "depth_m": 7.92,
+  "depth_note": "at low tide, from the NOAA nautical chart",
+  "river_note": "",
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Saco Bay",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Saco River Estuary",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    }
+  ],
+  "tide_station": "8418606",
+  "tide_station_name": "Camp Ellis, Saco River entrance",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/biddeford-pool",
+  "legacy_repo": "UNE-Biddeford-Pool-SPOT-32905C",
+  "kind": "wave",
+  "slug": "biddeford-pool",
+  "color": "#4a3aa7"
+}

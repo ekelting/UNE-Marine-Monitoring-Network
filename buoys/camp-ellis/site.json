@@ -1,0 +1,61 @@
+{
+  "spotter_id": "SPOT-32787C",
+  "short_name": "Camp Ellis",
+  "site_name": "Camp Ellis, Saco Bay, Maine",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "timezone": "America/New_York",
+  "deployed_utc": "2025-11-03T05:00:00Z",
+  "settled_utc": "2025-11-03T15:00:00Z",
+  "waves_fetch_start_utc": "2026-09-01T04:00:00Z",
+  "mooring_lat": 43.4727,
+  "mooring_lon": -70.36053,
+  "depth_m": 11.28,
+  "depth_note": "at low tide, from the NOAA nautical chart",
+  "river_note": "near the Saco River mouth the water can be fresher",
+  "sister_sites": [
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Saco Bay",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Saco River Estuary",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-river-estuary/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    }
+  ],
+  "tide_station": "8418606",
+  "tide_station_name": "Camp Ellis, Saco River entrance",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/camp-ellis",
+  "legacy_repo": "UNE-Camp-Ellis-SPOT-32787C",
+  "kind": "wave",
+  "slug": "camp-ellis",
+  "color": "#2a78d6"
+}
