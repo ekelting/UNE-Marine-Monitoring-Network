@@ -287,6 +287,10 @@ TEMPLATE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%%SHORT%% Station</title>
+<script>/* one units choice for the whole site */
+try{const u=localStorage.getItem('une-units'); if(u){ const m=u==='metric'; localStorage.setItem('buoy-unit', m?'m':'ft'); localStorage.setItem('wq-unit', m?'si':'us'); localStorage.setItem('net-unit', m?'si':'us'); }}catch(e){}
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('#u-si,#u-m,#u-us,#u-ft'); if(b){ try{localStorage.setItem('une-units',(b.id==='u-si'||b.id==='u-m')?'metric':'imperial')}catch(_){} } },true);</script>
+
 %%MAPHEAD%%
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%%EMOJI%%</text></svg>">
 <style>
@@ -348,6 +352,13 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 %%MAPCSS%%
 %%EXCSS%%
 @media (max-width:560px){.t-value{font-size:24px}.kv{flex-direction:column;gap:2px}.kv b{text-align:left}}
+.seggrp{display:inline-flex;align-items:center;gap:8px;margin-right:10px}
+.seglbl{font-size:12px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;opacity:.75}
+.segctl{position:relative;display:inline-flex;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px}
+.segctl button{position:relative;z-index:1;background:none;border:0;color:#fff;font:inherit;font-size:14px;font-weight:600;padding:5px 15px;border-radius:999px;cursor:pointer;opacity:.85;transition:color .2s}
+.segctl button[aria-pressed="true"]{color:#14304d;opacity:1}
+.segctl .knob{position:absolute;z-index:0;top:3px;bottom:3px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .25s ease,width .25s ease}
+@media (prefers-reduced-motion:reduce){.segctl .knob{transition:none}}
 </style></head>
 <body>
 <header class="hero"><div class="wrap">
@@ -355,9 +366,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   <p>Live conditions %%SITE%% · %%KINDTXT%%</p>
   <div class="toolbar">%%SISTERS%%</div>
   <div class="toolbar">
-    <button class="btn" id="u-us" aria-pressed="true">🇺🇸 °F · mph · inches</button>
-    <button class="btn" id="u-si" aria-pressed="false">🌍 °C · m/s · mm</button>
-    <button class="btn" id="theme">🌓 light / dark</button>
+    <div class="seggrp"><span class="seglbl">Units:</span><div class="segctl" role="group" aria-label="Units"><span class="knob"></span><button id="u-si" aria-pressed="false">Metric</button><button id="u-us" aria-pressed="true">Imperial</button></div></div>
+    <div class="seggrp"><span class="seglbl">Theme:</span><div class="segctl" role="group" aria-label="Theme"><span class="knob"></span><button id="th-light" aria-pressed="true">Light</button><button id="th-dark" aria-pressed="false">Dark</button></div></div>
   </div>
   %%DOWNLOADS%%
 </div>
@@ -446,9 +456,17 @@ function render(){
 }
 document.getElementById('u-us').onclick=()=>{unit='us'; try{localStorage.setItem('wq-unit',unit)}catch(e){} render();};
 document.getElementById('u-si').onclick=()=>{unit='si'; try{localStorage.setItem('wq-unit',unit)}catch(e){} render();};
-document.getElementById('theme').onclick=()=>{const r=document.documentElement;
-  const dark = r.dataset.theme? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  r.dataset.theme = dark? 'light':'dark'; try{localStorage.setItem('buoy-theme',r.dataset.theme)}catch(e){} render();};
+function curTheme(){ const r=document.documentElement; return r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+function slideKnobs(){ document.querySelectorAll('.segctl').forEach(g=>{ const on=g.querySelector('button[aria-pressed="true"]'), k=g.querySelector('.knob');
+  if(on&&k){ k.style.left=on.offsetLeft+'px'; k.style.width=on.offsetWidth+'px'; } }); }
+function syncTheme(){ const t=curTheme(); document.getElementById('th-light').setAttribute('aria-pressed', t==='light'); document.getElementById('th-dark').setAttribute('aria-pressed', t==='dark'); slideKnobs(); }
+function setTheme(t){ document.documentElement.dataset.theme=t; try{localStorage.setItem('buoy-theme',t)}catch(e){} syncTheme(); render(); }
+document.getElementById('th-light').onclick=()=>setTheme('light');
+document.getElementById('th-dark').onclick=()=>setTheme('dark');
+new MutationObserver(slideKnobs).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-pressed']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncTheme);
+window.addEventListener('resize',slideKnobs);
+setTimeout(syncTheme,0);
 try{const t=localStorage.getItem('buoy-theme'); if(t) document.documentElement.dataset.theme=t;}catch(e){}
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{mapMode=b.dataset.map; try{localStorage.setItem('buoy-map',mapMode)}catch(e){} render();});

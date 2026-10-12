@@ -2,6 +2,10 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%%SHORT%% Wave Radar</title>
+<script>/* one units choice for the whole site */
+try{const u=localStorage.getItem('une-units'); if(u){ const m=u==='metric'; localStorage.setItem('buoy-unit', m?'m':'ft'); localStorage.setItem('wq-unit', m?'si':'us'); localStorage.setItem('net-unit', m?'si':'us'); }}catch(e){}
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('#u-si,#u-m,#u-us,#u-ft'); if(b){ try{localStorage.setItem('une-units',(b.id==='u-si'||b.id==='u-m')?'metric':'imperial')}catch(_){} } },true);</script>
+
 <meta name="description" content="Live X-band wave radar at %%SHORT%%, Saco Bay, Maine — what the sea looks like every hour, explained.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -96,6 +100,13 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 .lbl{background:rgba(15,23,42,.8);color:#fff;border:0;border-radius:6px;padding:2px 7px;font-size:12px;box-shadow:none}
 .lbl:before{display:none}
 @media (max-width:560px){dl{grid-template-columns:1fr}.t-value{font-size:22px}}
+.seggrp{display:inline-flex;align-items:center;gap:8px;margin-right:10px}
+.seglbl{font-size:12px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;opacity:.75}
+.segctl{position:relative;display:inline-flex;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px}
+.segctl button{position:relative;z-index:1;background:none;border:0;color:#fff;font:inherit;font-size:14px;font-weight:600;padding:5px 15px;border-radius:999px;cursor:pointer;opacity:.85;transition:color .2s}
+.segctl button[aria-pressed="true"]{color:#14304d;opacity:1}
+.segctl .knob{position:absolute;z-index:0;top:3px;bottom:3px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .25s ease,width .25s ease}
+@media (prefers-reduced-motion:reduce){.segctl .knob{transition:none}}
 </style></head>
 <body>
 <header class="hero"><div class="sweep" aria-hidden="true"></div><div class="wrap">
@@ -103,9 +114,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   <p id="sub">An X-band radar watching the sea surface in Saco Bay, Maine. Every hour it records a 5-minute movie of the water. This page turns each movie into pictures and numbers anyone can read.</p>
   <div class="toolbar">%%NAV%%<span id="sisters" style="display:contents"></span></div>
   <div class="toolbar">
-    <button class="btn" id="u-ft" aria-pressed="true">📏 feet &amp; mph</button>
-    <button class="btn" id="u-m" aria-pressed="false">📐 metres &amp; m/s</button>
-    <button class="btn" id="theme">🌓 light / dark</button>
+    <div class="seggrp"><span class="seglbl">Units:</span><div class="segctl" role="group" aria-label="Units"><span class="knob"></span><button id="u-m" aria-pressed="false">Metric</button><button id="u-ft" aria-pressed="true">Imperial</button></div></div>
+    <div class="seggrp"><span class="seglbl">Theme:</span><div class="segctl" role="group" aria-label="Theme"><span class="knob"></span><button id="th-light" aria-pressed="true">Light</button><button id="th-dark" aria-pressed="false">Dark</button></div></div>
   </div>
   <div class="chips" id="downloads"></div>
 </div>
@@ -447,8 +457,17 @@ function initBoats(){
 function drawAll(){ renderTiles(); drawTimeline(); drawScatter(); drawHours(); drawWhite(); drawDiary(); drawRhythm(); }
 function setUnit(u){ unit=u; try{localStorage.setItem('buoy-unit',u);}catch(e){} $('u-ft').setAttribute('aria-pressed',u==='ft'); $('u-m').setAttribute('aria-pressed',u==='m'); drawAll(); }
 $('u-ft').onclick=()=>setUnit('ft'); $('u-m').onclick=()=>setUnit('m');
-$('theme').onclick=()=>{ const r=document.documentElement; const dark=matchMedia('(prefers-color-scheme: dark)').matches;
-  const cur=r.dataset.theme||(dark?'dark':'light'); r.dataset.theme=cur==='dark'?'light':'dark'; try{localStorage.setItem('buoy-theme',r.dataset.theme);}catch(e){} drawAll(); };
+function curTheme(){ const r=document.documentElement; return r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+function slideKnobs(){ document.querySelectorAll('.segctl').forEach(g=>{ const on=g.querySelector('button[aria-pressed="true"]'), k=g.querySelector('.knob');
+  if(on&&k){ k.style.left=on.offsetLeft+'px'; k.style.width=on.offsetWidth+'px'; } }); }
+function syncTheme(){ const t=curTheme(); document.getElementById('th-light').setAttribute('aria-pressed', t==='light'); document.getElementById('th-dark').setAttribute('aria-pressed', t==='dark'); slideKnobs(); }
+function setTheme(t){ document.documentElement.dataset.theme=t; try{localStorage.setItem('buoy-theme',t)}catch(e){} syncTheme(); drawAll(); }
+document.getElementById('th-light').onclick=()=>setTheme('light');
+document.getElementById('th-dark').onclick=()=>setTheme('dark');
+new MutationObserver(slideKnobs).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-pressed']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncTheme);
+window.addEventListener('resize',slideKnobs);
+setTimeout(syncTheme,0);
 try{ const th=localStorage.getItem('buoy-theme'); if(th) document.documentElement.dataset.theme=th; }catch(e){}
 $('u-ft').setAttribute('aria-pressed',unit==='ft'); $('u-m').setAttribute('aria-pressed',unit==='m');
 try { initMap(); renderStrip(); initBoats(); } catch(e) { console.error(e); }
