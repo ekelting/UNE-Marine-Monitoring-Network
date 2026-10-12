@@ -226,5 +226,6 @@ def insights(S):
     if 'water_temp_c' in st:
         w = st['water_temp_c']
         out.append(('🌡️', f'Water temperature {fmt(w["min"], "water_temp_c").split(" (")[0]} to {fmt(w["max"], "water_temp_c").split(" (")[0]}',
-                    f'Warmest {when(w["tmax"])}; coldest {when(w["tmin"])}.'))
+                    f'Warmest {when(w["tmax"])}; coldest {when(w["tmin"])}.' + (' ' + VBY['water_temp_c']['note'][0].upper() + VBY['water_temp_c']['note'][1:] + '.'
+                                                                             if VBY.get('water_temp_c', {}).get('note') else '')))
     return out[:6]

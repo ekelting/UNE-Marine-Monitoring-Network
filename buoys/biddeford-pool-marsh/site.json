@@ -18,7 +18,9 @@
   "start_utc": "2025-12-01T00:00:00Z",
   "source_url": "https://www.licor.cloud/dashboards/public/770a7e23-f8d5-43b8-89b3-09802b408ef1/true",
   "archive_url": "https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy/folder/379186273371",
-  "notes": [],
+  "notes": [
+    "The marsh sensors sit on the marsh surface. At low tide the marsh can drain, so \"water temperature\" then follows the air — that is why it can read below freezing in winter or very warm on summer afternoons."
+  ],
   "vars": [
     {
       "field": "marsh_water_level",
@@ -52,7 +54,8 @@
       "range": [
         -40,
         50
-      ]
+      ],
+      "note": "follows the air when the marsh drains at low tide"
     },
     {
       "field": "marsh_temperature",
