@@ -58,5 +58,45 @@
     "lon": -70.402301,
     "color": "#eda100",
     "legacy_repo": null
+  },
+  {
+    "slug": "ram-island",
+    "kind": "station",
+    "name": "Ram Island",
+    "lat": 43.467126,
+    "lon": -70.356328,
+    "color": "#5a6b7d",
+    "legacy_repo": null,
+    "icon": "wx"
+  },
+  {
+    "slug": "une-363-woods",
+    "kind": "station",
+    "name": "363 Acre Woods",
+    "lat": 43.457447,
+    "lon": -70.411302,
+    "color": "#6b8e23",
+    "legacy_repo": null,
+    "icon": "wx"
+  },
+  {
+    "slug": "biddeford-pool-marsh",
+    "kind": "station",
+    "name": "Biddeford Pool Marsh",
+    "lat": 43.453479,
+    "lon": -70.372845,
+    "color": "#16a0a0",
+    "legacy_repo": null,
+    "icon": "env"
+  },
+  {
+    "slug": "great-pond",
+    "kind": "station",
+    "name": "Great Pond",
+    "lat": 43.44379,
+    "lon": -70.348578,
+    "color": "#b5559b",
+    "legacy_repo": null,
+    "icon": "env"
   }
 ]

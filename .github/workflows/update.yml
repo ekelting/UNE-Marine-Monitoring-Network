@@ -8,7 +8,7 @@ on:
   workflow_dispatch:            # "Run workflow" button on the Actions tab
   push:
     branches: [main]
-    paths: ["wave/**", "sonde/**", "shared/**", "web/**", "tools/**", "buoys.json", "buoys/*/site.json",
+    paths: ["wave/**", "sonde/**", "station/**", "shared/**", "web/**", "tools/**", "buoys.json", "buoys/*/site.json",
             "requirements.txt", ".github/workflows/**"]
 
 permissions:
@@ -32,7 +32,7 @@ jobs:
 
   fetch:
     needs: list
-    name: "🛰️ ${{ matrix.buoy.name }}"
+    name: "📡 ${{ matrix.buoy.name }}"
     runs-on: ubuntu-latest
     timeout-minutes: 55
     strategy:
@@ -54,11 +54,11 @@ jobs:
         env:
           SOFAR_API_TOKEN: ${{ secrets.SOFAR_API_TOKEN }}
         run: |
-          if [ "${{ matrix.buoy.kind }}" = "wave" ]; then
-            python wave/fetch.py --max-minutes 40
-          else
-            python sonde/fetch.py
-          fi
+          case "${{ matrix.buoy.kind }}" in
+            wave)    python wave/fetch.py --max-minutes 40 ;;
+            station) python station/fetch.py --max-minutes 40 ;;
+            *)       python sonde/fetch.py ;;
+          esac
       - name: 💾 Save new data to the repository
         run: |
           git config user.name  "buoy-bot"

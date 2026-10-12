@@ -1,0 +1,170 @@
+{
+  "short_name": "Great Pond",
+  "page_title": "The Great Pond Water Station",
+  "site_name": "Great Pond, Biddeford Pool, Maine",
+  "site_phrase": "in Great Pond, Biddeford Pool, Maine",
+  "station_desc": "UNE pond water-quality station",
+  "kind": "env",
+  "emoji": "🏞️",
+  "slug": "great-pond",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/great-pond/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/great-pond",
+  "timezone": "America/New_York",
+  "mooring_lat": 43.44379,
+  "mooring_lon": -70.348578,
+  "arcgis_url": "https://services7.arcgis.com/0vd30ZJwMECKNLFu/arcgis/rest/services/UNE_observations_data_layer_view/FeatureServer/0",
+  "start_utc": "2025-12-01T00:00:00Z",
+  "source_url": "https://www.licor.cloud/dashboards/15334c54-dfe0-459e-aa86-a0e549681a3e/true",
+  "archive_url": "https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy/folder/379182962197",
+  "notes": [],
+  "vars": [
+    {
+      "field": "greatpond_dissolved_oxygen",
+      "key": "do_mgl",
+      "label": "Dissolved oxygen",
+      "emoji": "🫧",
+      "unit": "mg/L",
+      "range": [
+        0,
+        25
+      ],
+      "panel": "Oxygen",
+      "tile": true,
+      "daily": true,
+      "dec": 1,
+      "color": "#1baf7a"
+    },
+    {
+      "field": "greatpond_salinity",
+      "key": "sal_psu",
+      "label": "Salinity",
+      "emoji": "💧",
+      "unit": "PSU",
+      "range": [
+        0,
+        45
+      ],
+      "panel": "Salinity",
+      "tile": true,
+      "daily": true,
+      "dec": 1,
+      "color": "#2a78d6"
+    },
+    {
+      "field": "greatpond_dissolved_oxygen_temperature",
+      "key": "water_temp_c",
+      "label": "Water temperature",
+      "emoji": "🌡️",
+      "panel": "Water temperature",
+      "tile": true,
+      "color": "#eb6834",
+      "conv": "temp",
+      "unit": "°C",
+      "range": [
+        -40,
+        50
+      ]
+    },
+    {
+      "field": "greatpond_water_level",
+      "key": "water_level_m",
+      "label": "Water level",
+      "emoji": "🌊",
+      "conv": "len",
+      "unit": "m",
+      "range": [
+        -5,
+        10
+      ],
+      "panel": "Water level",
+      "tile": true,
+      "dec": 2,
+      "color": "#4a3aa7",
+      "note": "vs. the sensor’s reference level"
+    },
+    {
+      "field": "greatpond_rain",
+      "key": "rain_mm",
+      "label": "Rain",
+      "emoji": "🌧️",
+      "conv": "rain",
+      "unit": "mm",
+      "range": [
+        0,
+        100
+      ],
+      "agg": "sum",
+      "panel": "Rain",
+      "tile": true,
+      "daily": true,
+      "color": "#2a78d6"
+    }
+  ],
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Wood Island",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Jordan Point",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    },
+    {
+      "label": "Ram Island",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/",
+      "lat": 43.467126,
+      "lon": -70.356328
+    },
+    {
+      "label": "363 Acre Woods",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/une-363-woods/",
+      "lat": 43.457447,
+      "lon": -70.411302
+    },
+    {
+      "label": "Biddeford Pool Marsh",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool-marsh/",
+      "lat": 43.453479,
+      "lon": -70.372845
+    }
+  ]
+}

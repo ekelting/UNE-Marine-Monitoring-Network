@@ -49,6 +49,34 @@
       "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
       "lat": 43.396733,
       "lon": -70.402301
+    },
+    {
+      "label": "Ram Island",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/",
+      "lat": 43.467126,
+      "lon": -70.356328
+    },
+    {
+      "label": "363 Acre Woods",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/une-363-woods/",
+      "lat": 43.457447,
+      "lon": -70.411302
+    },
+    {
+      "label": "Biddeford Pool Marsh",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool-marsh/",
+      "lat": 43.453479,
+      "lon": -70.372845
+    },
+    {
+      "label": "Great Pond",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/great-pond/",
+      "lat": 43.44379,
+      "lon": -70.348578
     }
   ],
   "tide_station": "8418606",
@@ -58,5 +86,6 @@
   "legacy_repo": null,
   "kind": "wq",
   "slug": "jordan-point",
-  "color": "#eb6834"
+  "color": "#eb6834",
+  "freshwater_source": "the Saco River"
 }

@@ -47,7 +47,21 @@ const BUOY_SVG = {
     <rect x="6" y="18" width="28" height="13" rx="6.5" fill="#ff7a1a" stroke="#9c3d00" stroke-width="1.2"/>
     <rect x="6" y="23.5" width="28" height="2.4" fill="#fff" opacity=".85"/>
     <path d="M10 18l3-7h14l3 7z" fill="#1f2a3a" stroke="#0c1118" stroke-width=".8"/>
-    <path d="M14.5 14.5h11" stroke="#5b8fd1" stroke-width=".9"/></svg>`};
+    <path d="M14.5 14.5h11" stroke="#5b8fd1" stroke-width=".9"/></svg>`,
+  wx: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true">
+    <ellipse cx="20" cy="43" rx="10" ry="2.5" fill="#000" opacity=".2"/>
+    <path d="M20 12v31M20 43l-8 1M20 43l8 1" stroke="#4d5966" stroke-width="2" stroke-linecap="round"/>
+    <path d="M10 8h20" stroke="#4d5966" stroke-width="1.6"/><circle cx="10" cy="8" r="3" fill="#2a78d6"/><circle cx="30" cy="8" r="3" fill="#2a78d6"/>
+    <circle cx="20" cy="5" r="3" fill="#2a78d6"/><path d="M20 8v4" stroke="#4d5966" stroke-width="1.6"/>
+    <rect x="22" y="20" width="12" height="8" rx="1.5" fill="#1f2a3a" stroke="#0c1118"/><path d="M24 24h8" stroke="#5b8fd1"/>
+    <path d="M12 20h6v7h-6z" fill="#fff" stroke="#4d5966"/><path d="M12 22.3h6M12 24.6h6" stroke="#4d5966" stroke-width=".8"/></svg>`,
+  env: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true">
+    <path d="M3 36c4-3 8-3 12 0s8 3 12 0 8-3 10 0v8H3z" fill="#2a78d6" opacity=".45"/>
+    <path d="M6 33l2-9M11 33l-1-11M30 33l1-10M35 33l-2-8" stroke="#2e8b57" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 8v36" stroke="#4d5966" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="13" y="10" width="14" height="10" rx="2" fill="#1baf7a" stroke="#0b5e40" stroke-width="1.2"/>
+    <path d="M16 15h8" stroke="#fff" stroke-width="1.3"/><path d="M20 4v4" stroke="#222" stroke-width="1.4"/><circle cx="20" cy="3.5" r="1.4" fill="#222"/></svg>`};
+const KIND_TXT = {wave:'🌊 Wave buoy (Sofar Spotter)', wq:'💧 Water-quality buoy (BlueSonde)', wx:'🌦️ Weather station', env:'🌿 Environmental station'};
 let LMAP=null, LBASE=null, LBASE_KEY='';
 function buoyIcon(kind, me){
   const s = me? 40 : 28;
@@ -56,6 +70,14 @@ function buoyIcon(kind, me){
 }
 function mapIsDark(){ return getComputedStyle(document.body).backgroundColor.match(/\d+/g).slice(0,3).reduce((a,c)=>a+ +c,0) < 300; }
 function esc(t){ return String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function declutter(){       // hide labels that would overlap a label already shown (this buoy's label wins)
+  const tips = [...document.querySelectorAll('#map .leaflet-tooltip.blabel')];
+  tips.sort((a,b)=> (b.classList.contains('me')?1:0) - (a.classList.contains('me')?1:0));
+  const shown = [];
+  for (const t of tips){ t.style.visibility='visible'; const r=t.getBoundingClientRect();
+    const hit = shown.some(s=> r.left < s.right+2 && r.right > s.left-2 && r.top < s.bottom+1 && r.bottom > s.top-1);
+    if (hit) t.style.visibility='hidden'; else shown.push(r); }
+}
 function renderMap(){
   const el = document.getElementById('map'); if (!el || typeof L === 'undefined') return;
   if (!LMAP){
@@ -69,12 +91,13 @@ function renderMap(){
     for (const o of (MAPDATA.others||[])){
       L.marker([o.lat, o.lon], {icon:buoyIcon(o.kind, false), title:o.label}).addTo(LMAP)
         .bindTooltip(esc(o.label), {permanent:true, direction:'right', offset:[4,-12], className:'blabel'})
-        .bindPopup(`<b>${esc(o.label)}</b><br>${o.kind==='wave'?'🌊 Wave buoy (Sofar Spotter)':'🧪 Water-quality buoy (BlueSonde)'}<br><a href="${esc(o.url)}">Open its dashboard →</a>`);
+        .bindPopup(`<b>${esc(o.label)}</b><br>${KIND_TXT[o.kind]||''}<br><a href="${esc(o.url)}">Open its dashboard →</a>`);
     }
     const me = MAPDATA.me;
     L.marker([me.lat, me.lon], {icon:buoyIcon(me.kind, true), zIndexOffset:1000, title:me.label}).addTo(LMAP)
       .bindTooltip(esc(me.label), {permanent:true, direction:'top', className:'blabel me'})
       .bindPopup(`<b>${esc(me.label)}</b><br>${esc(me.sub||'')}`);
+    LMAP.on('zoomend moveend', declutter);
     const pts = [[me.lat, me.lon]].concat((MAPDATA.others||[]).map(o=>[o.lat, o.lon])).concat(MAPDATA.track||[]);
     if (pts.length > 1) LMAP.fitBounds(pts, {padding:[40, 60], maxZoom:15});
   }
@@ -95,7 +118,7 @@ function renderMap(){
     }
     LBASE.addTo(LMAP); LBASE_KEY = key;
   }
-  setTimeout(()=>LMAP.invalidateSize(), 50);
+  setTimeout(()=>{ LMAP.invalidateSize(); declutter(); }, 80);
 }
 """
 
@@ -103,11 +126,26 @@ LEGEND = ('<div class="maplegend"><span><svg width="18" height="20" viewBox="0 0
           '<path d="M4 25a16 13 0 0 1 32 0z" fill="#1f2a3a"/></svg>Wave buoy</span>'
           '<span><svg width="18" height="20" viewBox="0 0 40 46"><rect x="6" y="18" width="28" height="13" rx="6.5" fill="#ff7a1a" stroke="#9c3d00"/>'
           '<path d="M10 18l3-7h14l3 7z" fill="#1f2a3a"/></svg>Water-quality buoy</span>'
-          '<span>Click a buoy to visit its page</span></div>')
+          '<span><svg width="16" height="18" viewBox="0 0 40 46"><path d="M20 12v31" stroke="#4d5966" stroke-width="3"/><circle cx="20" cy="6" r="5" fill="#2a78d6"/></svg>Weather station</span>'
+          '<span><svg width="16" height="18" viewBox="0 0 40 46"><path d="M20 8v36" stroke="#4d5966" stroke-width="3"/><rect x="12" y="10" width="16" height="11" rx="2" fill="#1baf7a"/></svg>Marsh / pond station</span>'
+          '<span>Click any icon to visit its page</span></div>')
 
 
 def kind_of(site):
     return site.get('kind') or ('wave' if 'SPOT' in site.get('url', '') else 'wq')
+
+
+KIND_EMOJI = {'wave': '🌊', 'wq': '💧', 'wx': '🌦️', 'env': '🌿'}
+
+
+def nav_buttons(sisters):
+    """Top-row navigation: home + every other station, grouped by kind."""
+    import html
+    order = {'wave': 0, 'wq': 1, 'wx': 2, 'env': 3}
+    out = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE stations</a>'
+    for x in sorted(sisters, key=lambda x: order.get(kind_of(x), 9)):
+        out += f'<a class="btn" href="{html.escape(x["url"])}">{KIND_EMOJI.get(kind_of(x), "📍")} {html.escape(x["label"])}</a>'
+    return out
 
 
 def mapdata(me, others, center=None, zoom=12, track=None, anchor=None):

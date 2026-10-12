@@ -49,6 +49,7 @@ h2{font-size:21px;margin:0 0 4px}
 #map{flex:1;min-height:520px;background:var(--chip);z-index:0}
 .stations{display:flex;flex-direction:column;gap:10px;max-height:680px;overflow:auto;padding-right:2px}
 @media (max-width:920px){.stations{max-height:none}}
+.grp{font-weight:700;font-size:13px;color:var(--ink2);text-transform:uppercase;letter-spacing:.4px;margin:6px 2px -2px}
 .st{padding:12px 14px;cursor:pointer;transition:border-color .15s, background .15s;position:relative}
 .st:hover{border-color:var(--chip2)}
 .st.sel{border-color:#eb6834;background:var(--sel)}
@@ -101,7 +102,7 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 <body>
 <header class="hero"><div class="wrap">
   <h1>🌊 UNE Marine Monitoring Network</h1>
-  <p>Live wave and water-quality conditions from University of New England buoys in Saco Bay and along the southern Maine coast.</p>
+  <p>Live waves, water quality and weather from University of New England buoys and stations in Saco Bay, Biddeford and along the southern Maine coast.</p>
   <div class="toolbar">
     <span class="status"><span class="pulse"></span><span id="status">Loading live data…</span></span>
     <button class="btn" id="u-us" aria-pressed="true">🇺🇸 °F · feet</button>
@@ -125,34 +126,37 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
           <span class="sp"></span>
           <label for="maplabel" style="font-size:13px;color:var(--ink2)">Labels show</label>
           <select id="maplabel" class="seg" style="padding:4px 8px">
-            <option value="temp">Water temperature</option><option value="sal">Salinity</option>
+            <option value="temp">Water temperature</option><option value="air">Air temperature</option><option value="wind">Wind</option><option value="sal">Salinity</option>
             <option value="do">Dissolved oxygen</option><option value="hs">Wave height</option><option value="name">Names only</option>
           </select>
         </div>
         <div id="map"></div>
         <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);padding:8px 12px 10px">
-          <span><span id="lg-wave"></span> Wave buoy (Sofar Spotter)</span><span><span id="lg-wq"></span> Water-quality buoy (BlueSonde)</span>
+          <span><span id="lg-wave"></span> Wave buoy</span><span><span id="lg-wq"></span> Water-quality buoy</span><span><span id="lg-wx"></span> Weather station</span><span><span id="lg-env"></span> Marsh / pond station</span>
           <span>Click a buoy or a card to highlight it</span></div>
       </div>
       <div class="stations" id="stations"></div>
     </div>
   </section>
 
-  <section><h2>📈 Compare the buoys</h2><p class="lede">The last two weeks, hourly. Click a name under a chart to hide or show that buoy. Drag across a chart to zoom; double-click to reset.</p>
+  <section><h2>📈 Compare the stations</h2><p class="lede">The last two weeks, hourly. Click a name under a chart to hide or show that buoy. Drag across a chart to zoom; double-click to reset.</p>
     <div class="charts">
-      <div class="card chartcard"><h3>🌡️ Water temperature</h3><p>Surface water at every buoy that measures it.</p><div id="c-temp" class="chart"></div><div class="legend" data-for="c-temp"></div></div>
-      <div class="card chartcard"><h3>💧 Salinity</h3><p>How salty the water is. River water dips it; full seawater is ~32–35 PSU.</p><div id="c-sal" class="chart"></div><div class="legend" data-for="c-sal"></div></div>
+      <div class="card chartcard"><h3>🌡️ Water temperature</h3><p>At every buoy and station that measures it.</p><div id="c-temp" class="chart"></div><div class="legend" data-for="c-temp"></div></div>
+      <div class="card chartcard"><h3>💧 Salinity</h3><p>How salty the water is. Fresh water from rain, streams or rivers lowers it; full seawater is ~32–35 PSU.</p><div id="c-sal" class="chart"></div><div class="legend" data-for="c-sal"></div></div>
       <div class="card chartcard"><h3>🫧 Dissolved oxygen</h3><p>Dashed lines: 5 mg/L (stressful for many fish) and 2 mg/L (hypoxia).</p><div id="c-do" class="chart"></div><div class="legend" data-for="c-do"></div></div>
       <div class="card chartcard"><h3>🌊 Wave height</h3><p>Significant wave height at the two wave buoys.</p><div id="c-hs" class="chart"></div><div class="legend" data-for="c-hs"></div></div>
+      <div class="card chartcard"><h3>🌤️ Air temperature</h3><p>At the weather stations and the marsh.</p><div id="c-air" class="chart"></div><div class="legend" data-for="c-air"></div></div>
+      <div class="card chartcard"><h3>💨 Wind speed</h3><p>Average wind at the weather stations. (The coast is usually windier than the woods.)</p><div id="c-wind" class="chart"></div><div class="legend" data-for="c-wind"></div></div>
+      <div class="card chartcard" style="grid-column:1/-1"><h3>🌧️ Rain</h3><p>Hourly rain totals. Watch salinity drop and turbidity rise at the buoys after a big storm.</p><div id="c-rain" class="chart" style="height:260px"></div><div class="legend" data-for="c-rain"></div></div>
     </div>
   </section>
 
-  <section><h2>💡 What's happening</h2><p class="lede">Headlines written automatically by each buoy's own dashboard.</p>
+  <section><h2>💡 What's happening</h2><p class="lede">Headlines written automatically by each station's own page.</p>
     <div class="insights" id="insights"></div></section>
 
   <section>
     <details><summary>ℹ️ About this network</summary>
-      <p>Each buoy has its own detailed dashboard that updates every hour: two <b>Sofar Spotter wave buoys</b> (waves, wind estimate, pressure, and Smart Mooring sensors) and four <b>BlueSonde water-quality buoys</b> (temperature, salinity, dissolved oxygen, turbidity, and chlorophyll or tryptophan). This page reads the latest numbers straight from those dashboards each time it loads and refreshes itself every 10 minutes.</p>
+      <p>Each station has its own detailed page that updates every hour: two <b>Sofar Spotter wave buoys</b> (waves, wind estimate, pressure, and Smart Mooring sensors) four <b>BlueSonde water-quality buoys</b> (temperature, salinity, dissolved oxygen, turbidity, and chlorophyll or tryptophan), two <b>weather stations</b> (Ram Island on the coast and the 363 Acre Woods inland, which also measures soil temperature and moisture), and two <b>marsh and pond stations</b> (Biddeford Pool salt marsh and Great Pond). Every page has a "What do these numbers mean?" guide. The complete raw archive is on <a href="https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy">UNE Box</a>. This page reads the latest numbers straight from those dashboards each time it loads and refreshes itself every 10 minutes.</p>
       <ul id="sitelist"></ul>
       <p>Wave data: Sofar Ocean. Water-quality data: BlueSonde via CUMULUS (Coastal Measures). Tide predictions: NOAA. Built and maintained by the University of New England.</p>
     </details>
@@ -168,7 +172,12 @@ const SITES = [   // slug = folder under this site; keep in step with buoys.json
   {slug:'jordan-point', name:'Jordan Point', kind:'wq', lat:43.460893, lon:-70.389691, color:'#eb6834'},
   {slug:'ferry-beach', name:'Ferry Beach', kind:'wq', lat:43.497213, lon:-70.379113, color:'#e87ba4'},
   {slug:'goose-rocks-beach', name:'Goose Rocks Beach', kind:'wq', lat:43.396733, lon:-70.402301, color:'#eda100'},
+  {slug:'ram-island', name:'Ram Island', kind:'wx', lat:43.467126, lon:-70.356328, color:'#5a6b7d'},
+  {slug:'une-363-woods', name:'363 Acre Woods', kind:'wx', lat:43.457447, lon:-70.411302, color:'#6b8e23'},
+  {slug:'biddeford-pool-marsh', name:'Biddeford Pool Marsh', kind:'env', lat:43.453479, lon:-70.372845, color:'#16a0a0'},
+  {slug:'great-pond', name:'Great Pond', kind:'env', lat:43.443790, lon:-70.348578, color:'#b5559b'},
 ];
+const KINDS = {wave:'Wave buoy · Sofar Spotter', wq:'Water quality · BlueSonde', wx:'Weather station', env:'Marsh / pond station'};
 const REPO = 'https://github.com/ekelting/UNE-Marine-Monitoring-Network';
 const BUOY_SVG = {
   wave: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="40" rx="17" ry="4.5" fill="#1c5cab" opacity=".28"/>
@@ -178,7 +187,20 @@ const BUOY_SVG = {
   wq: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="40" rx="15" ry="4" fill="#1c5cab" opacity=".28"/>
     <rect x="18.2" y="30" width="3.6" height="13" rx="1" fill="#8a96a3" stroke="#4d5966" stroke-width=".8"/><line x1="27" y1="10" x2="27" y2="1.5" stroke="#222" stroke-width="1.5"/><circle cx="27" cy="2" r="1.5" fill="#222"/>
     <rect x="6" y="18" width="28" height="13" rx="6.5" fill="#ff7a1a" stroke="#9c3d00" stroke-width="1.2"/><rect x="6" y="23.5" width="28" height="2.4" fill="#fff" opacity=".85"/>
-    <path d="M10 18l3-7h14l3 7z" fill="#1f2a3a" stroke="#0c1118" stroke-width=".8"/><path d="M14.5 14.5h11" stroke="#5b8fd1" stroke-width=".9"/></svg>`};
+    <path d="M10 18l3-7h14l3 7z" fill="#1f2a3a" stroke="#0c1118" stroke-width=".8"/><path d="M14.5 14.5h11" stroke="#5b8fd1" stroke-width=".9"/></svg>`,
+  wx: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true">
+    <ellipse cx="20" cy="43" rx="10" ry="2.5" fill="#000" opacity=".2"/>
+    <path d="M20 12v31M20 43l-8 1M20 43l8 1" stroke="#4d5966" stroke-width="2" stroke-linecap="round"/>
+    <path d="M10 8h20" stroke="#4d5966" stroke-width="1.6"/><circle cx="10" cy="8" r="3" fill="#2a78d6"/><circle cx="30" cy="8" r="3" fill="#2a78d6"/>
+    <circle cx="20" cy="5" r="3" fill="#2a78d6"/><path d="M20 8v4" stroke="#4d5966" stroke-width="1.6"/>
+    <rect x="22" y="20" width="12" height="8" rx="1.5" fill="#1f2a3a" stroke="#0c1118"/><path d="M24 24h8" stroke="#5b8fd1"/>
+    <path d="M12 20h6v7h-6z" fill="#fff" stroke="#4d5966"/><path d="M12 22.3h6M12 24.6h6" stroke="#4d5966" stroke-width=".8"/></svg>`,
+  env: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true">
+    <path d="M3 36c4-3 8-3 12 0s8 3 12 0 8-3 10 0v8H3z" fill="#2a78d6" opacity=".45"/>
+    <path d="M6 33l2-9M11 33l-1-11M30 33l1-10M35 33l-2-8" stroke="#2e8b57" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 8v36" stroke="#4d5966" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="13" y="10" width="14" height="10" rx="2" fill="#1baf7a" stroke="#0b5e40" stroke-width="1.2"/>
+    <path d="M16 15h8" stroke="#fff" stroke-width="1.3"/><path d="M20 4v4" stroke="#222" stroke-width="1.4"/><circle cx="20" cy="3.5" r="1.4" fill="#222"/></svg>`};
 let unit='us', mapMode='street', labelMode='temp', selected=null, DATA={}, LMAP=null, LBASE=null, LBASE_KEY='', MARKERS={};
 try{ unit=localStorage.getItem('net-unit')||'us'; mapMode=localStorage.getItem('net-map')||'street'; labelMode=localStorage.getItem('net-label')||'temp';
      const t=localStorage.getItem('buoy-theme'); if(t) document.documentElement.dataset.theme=t; }catch(e){}
@@ -191,6 +213,13 @@ const T = c => fin(c) ? (unit==='us' ? (c*9/5+32).toFixed(1)+'°F' : c.toFixed(1
 const Tn = c => fin(c) ? (unit==='us' ? c*9/5+32 : c) : null;
 const Hs = m => fin(m) ? (unit==='us' ? (m*3.28084).toFixed(1)+' ft' : m.toFixed(2)+' m') : '—';
 const Hn = m => fin(m) ? (unit==='us' ? m*3.28084 : m) : null;
+const Wd = v => fin(v) ? (unit==='us' ? (v*2.23694).toFixed(0)+' mph' : v.toFixed(1)+' m/s') : '—';
+const Wn = v => fin(v) ? (unit==='us' ? v*2.23694 : v) : null;
+const Rn = v => fin(v) ? (unit==='us' ? v/25.4 : v) : null;
+const Rs = v => fin(v) ? (unit==='us' ? (v/25.4).toFixed(2)+' in' : v.toFixed(1)+' mm') : '—';
+const Lv = v => fin(v) ? (unit==='us' ? (v*3.28084).toFixed(1)+' ft' : v.toFixed(2)+' m') : '—';
+const COMP = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const compass = d => fin(d) ? COMP[Math.round(((d%360)+360)%360/22.5)%16] : '';
 function ago(iso){ const m=(Date.now()-Date.parse(iso))/60000; if(!isFinite(m)) return ['—','#999'];
   const txt = m<90 ? `${Math.max(1,Math.round(m))} min ago` : m<48*60 ? `${Math.round(m/60)} h ago` : `${Math.round(m/1440)} days ago`;
   return [txt, m<120 ? css('--good') : m<24*60 ? css('--warnc') : css('--bad')]; }
@@ -204,7 +233,7 @@ async function load(){
   }));
   const ok = SITES.filter(s=>DATA[s.slug]);
   const fresh = ok.filter(s=>Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length;
-  document.getElementById('status').textContent = `${fresh} of ${SITES.length} buoys reporting · page refreshed ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+  document.getElementById('status').textContent = `${fresh} of ${SITES.length} stations reporting · page refreshed ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
   document.getElementById('errors').innerHTML = errs.length ? `<div class="err">⚠️ Couldn't load the latest data for: ${errs.map(escH).join(', ')}. Their own dashboards may still be building — this page tries again every 10 minutes.</div>` : '';
   renderAll();
 }
@@ -213,29 +242,49 @@ function val(s, k){ const d=DATA[s.slug]; return d && d.now ? d.now[k] : null; }
 function renderKPIs(){
   const live = SITES.filter(s=>DATA[s.slug]);
   const by = (k, pick) => { const xs=live.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
-  const warm=by('water_temp_c',(a,b)=>a>=b), cold=by('water_temp_c',(a,b)=>a<=b), big=by('hs_m',(a,b)=>a>=b),
+  const wlive = live.filter(s=>s.kind==='wave'||s.kind==='wq'), byw = (k, pick) => { const xs=wlive.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
+  const warm=byw('water_temp_c',(a,b)=>a>=b), cold=byw('water_temp_c',(a,b)=>a<=b), big=by('hs_m',(a,b)=>a>=b),
         fresh=by('sal_psu',(a,b)=>a<=b), salt=by('sal_psu',(a,b)=>a>=b), lowdo=by('do_mgl',(a,b)=>a<=b);
   const k = (emoji, label, value, sub) => `<div class="kpi"><div class="k-l">${emoji} ${label}</div><div class="k-v">${value}</div><div class="k-s">${sub}</div></div>`;
   let h='';
-  if (warm) h += k('🌡️','Water temperature', `${T(val(cold,'water_temp_c'))}–${T(val(warm,'water_temp_c'))}`, `coldest <b>${escH(cold.name)}</b> · warmest <b>${escH(warm.name)}</b>`);
+  if (warm) h += k('🌡️','Sea temperature', `${T(val(cold,'water_temp_c'))}–${T(val(warm,'water_temp_c'))}`, `coldest <b>${escH(cold.name)}</b> · warmest <b>${escH(warm.name)}</b>`);
   if (big) h += k('🌊','Biggest waves now', Hs(val(big,'hs_m')), `at <b>${escH(big.name)}</b>${fin(val(big,'tp_s'))?` · ${val(big,'tp_s').toFixed(0)} s apart, from the ${escH(val(big,'wave_dir')||'')}`:''}`);
   if (fresh) h += k('💧','Freshest water', `${val(fresh,'sal_psu').toFixed(1)} PSU`, `at <b>${escH(fresh.name)}</b> · saltiest ${val(salt,'sal_psu').toFixed(1)} at <b>${escH(salt.name)}</b>`);
   if (lowdo) { const v=val(lowdo,'do_mgl'); h += k('🫧','Lowest oxygen', `${v.toFixed(1)} mg/L`, `at <b>${escH(lowdo.name)}</b> · ${v>=5?'healthy everywhere ✅':v>=2?'stressful ⚠️':'hypoxic 🚨'}`); }
+  const air=by('air_temp_c',(a,b)=>a>=b), aircold=by('air_temp_c',(a,b)=>a<=b), windy=(()=>{const xs=live.filter(s=>s.kind==='wx'&&fin(val(s,'wind_ms'))); return xs.length? xs.reduce((a,b)=>val(a,'wind_ms')>=val(b,'wind_ms')?a:b):null;})(), wet=by('rain_24h_mm',(a,b)=>a>=b);
+  if (air) h += k('🌤️','Air temperature', air===aircold? T(val(air,'air_temp_c')) : `${T(val(aircold,'air_temp_c'))}–${T(val(air,'air_temp_c'))}`,
+                  air===aircold? `at <b>${escH(air.name)}</b>` : `coolest <b>${escH(aircold.name)}</b> · warmest <b>${escH(air.name)}</b>`);
+  if (windy) h += k('💨','Wind now', Wd(val(windy,'wind_ms')), `at <b>${escH(windy.name)}</b>${fin(val(windy,'gust_ms'))?' · gusting '+Wd(val(windy,'gust_ms')):''}${fin(val(windy,'wind_dir'))?' from the '+compass(val(windy,'wind_dir')):''}`);
+  if (wet) h += k('🌧️','Rain, last 24 h', Rs(val(wet,'rain_24h_mm')), `most at <b>${escH(wet.name)}</b>`);
   const fresh3 = live.filter(s=>Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length;
-  h += k('📡','Buoys reporting', `${fresh3} / ${SITES.length}`, 'sent data in the last 3 hours');
+  h += k('📡','Stations reporting', `${fresh3} / ${SITES.length}`, 'sent data in the last 3 hours');
   document.getElementById('kpis').innerHTML = h;
 }
 
 function vbox(label, v, unitTxt){ return `<div class="v"><span class="vl">${label}</span><span class="vv">${v}${unitTxt?` <small>${unitTxt}</small>`:''}</span></div>`; }
 function renderStations(){
   const el=document.getElementById('stations'); let h='';
+  let lastGrp='';
   for (const s of SITES){
+    const grp = (s.kind==='wave'||s.kind==='wq') ? '🛟 Buoys in the water' : '🌦️ Weather, marsh & pond stations';
+    if (grp!==lastGrp){ h += `<div class="grp">${grp}</div>`; lastGrp=grp; }
     const d=DATA[s.slug]; const [a,col]= d? ago(d.last_obs) : ['no data', css('--bad')];
     let vals='';
     if (d){ const n=d.now||{};
       if (s.kind==='wave'){ vals += vbox('Waves', Hs(n.hs_m)) + vbox('Period', fin(n.tp_s)? n.tp_s.toFixed(0):'—','s') + vbox('From', escH(n.wave_dir||'—'));
         if (fin(n.water_temp_c)) vals += vbox('Water', T(n.water_temp_c));
         if (fin(n.wind_ms)) vals += vbox('Wind*', unit==='us'? (n.wind_ms*2.23694).toFixed(0):(n.wind_ms).toFixed(1), unit==='us'?'mph':'m/s');
+      } else if (s.kind==='wx'){ vals += vbox('Air', T(n.air_temp_c)) + vbox('Wind', Wd(n.wind_ms).split(' ')[0], unit==='us'?'mph':'m/s')
+          + vbox('From', compass(n.wind_dir)||'—') + vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
+        if (fin(n.rh_pct)) vals += vbox('Humidity', n.rh_pct.toFixed(0), '%');
+        if (fin(n.soil_t_10)) vals += vbox('Soil 10 cm', T(n.soil_t_10));
+      } else if (s.kind==='env'){
+        if (fin(n.water_level_m)) vals += vbox('Water level', Lv(n.water_level_m));
+        if (fin(n.water_temp_c)) vals += vbox('Water', T(n.water_temp_c));
+        if (fin(n.do_mgl)) vals += vbox('Oxygen', n.do_mgl.toFixed(1), 'mg/L');
+        if (fin(n.sal_psu)) vals += vbox('Salinity', n.sal_psu.toFixed(1), 'PSU');
+        if (fin(n.air_temp_c)) vals += vbox('Air', T(n.air_temp_c));
+        if (fin(n.rain_24h_mm)) vals += vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
       } else { vals += vbox('Water', T(n.water_temp_c)) + vbox('Salinity', fin(n.sal_psu)? n.sal_psu.toFixed(1):'—','PSU') + vbox('Oxygen', fin(n.do_mgl)? n.do_mgl.toFixed(1):'—','mg/L');
         if (fin(n.chl_ugl)) vals += vbox('Chlorophyll', n.chl_ugl.toFixed(1),'µg/L');
         if (fin(n.trp_ppb)) vals += vbox('Tryptophan', n.trp_ppb.toFixed(0),'ppb');
@@ -243,7 +292,7 @@ function renderStations(){
     h += `<div class="card st${selected===s.slug?' sel':''}" data-repo="${s.slug}" tabindex="0" role="button" aria-label="Highlight ${escH(s.name)} on the map">
       <div class="st-top"><div class="st-ic">${BUOY_SVG[s.kind](30)}</div>
         <div><div class="st-name"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)}</div>
-        <div class="st-type">${s.kind==='wave'?'Wave buoy · Sofar Spotter':'Water quality · BlueSonde '+escH(d? d.device:'')}</div></div>
+        <div class="st-type">${KINDS[s.kind]}${s.kind==='wq'&&d?' '+escH(d.device):''}</div></div>
         <div class="st-age"><span class="dot" style="background:${col}"></span>${a}</div></div>
       <div class="st-vals">${vals || '<span style="color:var(--muted)">Waiting for data…</span>'}</div>
       <div class="st-bottom"><div class="spark" id="sp-${s.slug.replace(/\W/g,'')}"></div><a class="go" href="./${s.slug}/" onclick="event.stopPropagation()">Full dashboard →</a></div></div>`;
@@ -251,10 +300,10 @@ function renderStations(){
   el.innerHTML=h;
   el.querySelectorAll('.st').forEach(c=>{ const f=()=>select(c.dataset.repo, true); c.onclick=f; c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); f();} }; });
   for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent) continue;
-    const key = s.kind==='wave' ? 'hs_m' : 'water_temp_c', conv = s.kind==='wave' ? Hn : Tn;
+    const key = s.kind==='wave' ? 'hs_m' : s.kind==='wx' ? 'air_temp_c' : (d.recent.water_temp_c ? 'water_temp_c' : 'air_temp_c'), conv = s.kind==='wave' ? Hn : Tn;
     const t=d.recent.t.slice(-168), y=(d.recent[key]||[]).slice(-168).map(conv);
     Plotly.react('sp-'+s.slug.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
-      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':'water temp')+'</extra>'}],
+      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':key==='air_temp_c'?'air temp':'water temp')+'</extra>'}],
       {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false},yaxis:{visible:false,
        range: (()=>{const v=y.filter(fin); if(!v.length) return undefined; const lo=Math.min(...v), hi=Math.max(...v); return [lo-(hi-lo)*.15, hi+(hi-lo)*.1+1e-6];})()},showlegend:false},
       {displayModeBar:false,responsive:true,staticPlot:false});
@@ -268,16 +317,24 @@ function labelText(s){ const n=(DATA[s.slug]||{}).now||{}; let v='';
   if (labelMode==='sal' && fin(n.sal_psu)) v=n.sal_psu.toFixed(1)+' PSU';
   if (labelMode==='do' && fin(n.do_mgl)) v=n.do_mgl.toFixed(1)+' mg/L';
   if (labelMode==='hs' && fin(n.hs_m)) v=Hs(n.hs_m);
+  if (labelMode==='air' && fin(n.air_temp_c)) v=T(n.air_temp_c);
+  if (labelMode==='wind' && fin(n.wind_ms)) v=Wd(n.wind_ms);
   return escH(s.name) + (v? ` · <span class="val">${v}</span>`:''); }
 function popupHtml(s){ const d=DATA[s.slug]; const n=(d||{}).now||{};
   const rows = s.kind==='wave' ? [['Waves',Hs(n.hs_m)],['Period',fin(n.tp_s)?n.tp_s.toFixed(0)+' s':'—'],['From',n.wave_dir||'—'],['Water',T(n.water_temp_c)]]
+    : s.kind==='wx' ? [['Air',T(n.air_temp_c)],['Wind',Wd(n.wind_ms)+(fin(n.wind_dir)?' from the '+compass(n.wind_dir):'')],['Humidity',fin(n.rh_pct)?n.rh_pct.toFixed(0)+'%':'—'],['Rain, last 24 h',Rs(n.rain_24h_mm)]]
+    : s.kind==='env' ? [['Water level',Lv(n.water_level_m)],['Water',T(n.water_temp_c)],...(fin(n.do_mgl)?[['Oxygen',n.do_mgl.toFixed(1)+' mg/L'],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—']]:[['Air',T(n.air_temp_c)]])]
     : [['Water',T(n.water_temp_c)],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—'],['Oxygen',fin(n.do_mgl)?n.do_mgl.toFixed(1)+' mg/L':'—'],['Turbidity',fin(n.turb_ntu)?n.turb_ntu.toFixed(1)+' NTU':'—']];
-  return `<b>${escH(s.name)}</b><br><span style="color:#777">${s.kind==='wave'?'Wave buoy':'Water-quality buoy'}${d?' · '+ago(d.last_obs)[0]:''}</span><br>`
+  return `<b>${escH(s.name)}</b><br><span style="color:#777">${KINDS[s.kind]}${d?' · '+ago(d.last_obs)[0]:''}</span><br>`
     + rows.map(r=>`${r[0]}: <b>${escH(r[1])}</b>`).join('<br>') + `<br><a href="./${s.slug}/">Open full dashboard →</a>`; }
+function declutter(){
+  const tips=[...document.querySelectorAll('#map .leaflet-tooltip.blabel')]; tips.sort((a,b)=>(b.classList.contains('sel')?1:0)-(a.classList.contains('sel')?1:0));
+  const shown=[]; for (const t of tips){ t.style.visibility='visible'; const r=t.getBoundingClientRect();
+    if (shown.some(s=> r.left<s.right+2 && r.right>s.left-2 && r.top<s.bottom+1 && r.bottom>s.top-1)) t.style.visibility='hidden'; else shown.push(r); } }
 function renderMap(){
   const el=document.getElementById('map'); if(!el||typeof L==='undefined') return;
   if(!LMAP){ LMAP=L.map(el,{scrollWheelZoom:false}); el.addEventListener('click',()=>LMAP.scrollWheelZoom.enable(),{once:true});
-    LMAP.fitBounds(SITES.map(s=>[s.lat,s.lon]),{padding:[50,90]}); }
+    LMAP.fitBounds(SITES.map(s=>[s.lat,s.lon]),{padding:[40,80]}); LMAP.on('zoomend moveend', declutter); }
   const key = mapMode+'|'+(mapMode==='chart'? unit : (isDark()?'dark':'light'));
   if (key!==LBASE_KEY){ if(LBASE) LMAP.removeLayer(LBASE);
     LBASE = mapMode==='chart'
@@ -295,7 +352,7 @@ function renderMap(){
       .bindTooltip(labelText(s),{permanent:true,direction:'right',className:'blabel'+(sel?' sel':'')}).bindPopup(popupHtml(s))
       .on('click',()=>select(s.slug,false)); }
   document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.map===mapMode));
-  setTimeout(()=>LMAP.invalidateSize(),60);
+  setTimeout(()=>{ LMAP.invalidateSize(); declutter(); },80);
 }
 function select(repo, fromCard){
   selected = selected===repo && fromCard ? null : repo;
@@ -306,12 +363,13 @@ function select(repo, fromCard){
 
 function renderCharts(){
   const ink=css('--ink2'), grid=css('--grid');
-  const spec = {'c-temp':['water_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-sal':['sal_psu', v=>v, ()=>'PSU'], 'c-do':['do_mgl', v=>v, ()=>'mg/L'], 'c-hs':['hs_m', Hn, ()=> unit==='us'?'ft':'m']};
+  const spec = {'c-temp':['water_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-sal':['sal_psu', v=>v, ()=>'PSU'], 'c-do':['do_mgl', v=>v, ()=>'mg/L'], 'c-hs':['hs_m', Hn, ()=> unit==='us'?'ft':'m'],
+                'c-air':['air_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-wind':['wind_ms', Wn, ()=> unit==='us'?'mph':'m/s'], 'c-rain':['rain_mm', Rn, ()=> unit==='us'?'in':'mm']};
   for (const [id,[key,conv,u]] of Object.entries(spec)){
     const tr=[]; const present=[];
     for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent||!d.recent[key]||!d.recent[key].some(fin)) continue;
       present.push(s);
-      tr.push({x:d.recent.t, y:d.recent[key].map(v=>fin(v)?conv(v):null), name:s.name, type:'scatter', mode:'lines', connectgaps:false,
+      tr.push({x:d.recent.t, y:d.recent[key].map(v=>fin(v)?conv(v):null), name:s.name, type: key==='rain_mm'?'bar':'scatter', mode:'lines', connectgaps:false, marker:{color:s.color},
         visible: hidden[id+s.slug] ? 'legendonly' : true, line:{color:s.color,width: selected===s.slug?3.2:1.7}, opacity: selected && selected!==s.slug ? .45 : 1,
         hovertemplate:'%{x|%b %d, %I %p}<br><b>%{y:.2f} '+u()+'</b><extra>'+escH(s.name)+'</extra>'}); }
     const shapes = key==='do_mgl' ? [5,2].map((y,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:y,y1:y,line:{color:i?'#d4473f':'#eda100',width:1.2,dash:'dash'}})) : [];
@@ -335,8 +393,8 @@ function renderAll(){
   document.getElementById('u-us').setAttribute('aria-pressed', unit==='us'); document.getElementById('u-si').setAttribute('aria-pressed', unit==='si');
   document.getElementById('maplabel').value = labelMode;
 }
-document.getElementById('lg-wave').innerHTML = BUOY_SVG.wave(16); document.getElementById('lg-wq').innerHTML = BUOY_SVG.wq(16);
-document.querySelectorAll('#lg-wave svg,#lg-wq svg').forEach(s=>s.style.verticalAlign='middle');
+for (const k of ['wave','wq','wx','env']) document.getElementById('lg-'+k).innerHTML = BUOY_SVG[k](16);
+document.querySelectorAll('[id^="lg-"] svg').forEach(s=>s.style.verticalAlign='middle');
 document.getElementById('sitelist').innerHTML = SITES.map(s=>`<li><a href="./${s.slug}/">${escH(s.name)}</a> — ${s.kind==='wave'?'wave buoy':'water-quality buoy'} (<a href="${REPO}/tree/main/buoys/${s.slug}">code &amp; raw data</a>)</li>`).join('');
 document.getElementById('foot').innerHTML = `Live from ${SITES.length} buoy dashboards · <a href="https://github.com/ekelting/UNE-Marine-Monitoring-Network">ekelting/UNE-Marine-Monitoring-Network</a> on GitHub`;
 document.getElementById('u-us').onclick=()=>{unit='us'; try{localStorage.setItem('net-unit',unit)}catch(e){} renderAll();};

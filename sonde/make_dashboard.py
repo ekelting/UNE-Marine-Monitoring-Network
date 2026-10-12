@@ -12,6 +12,7 @@ import core as bc
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'shared'))
 import mapjs  # noqa: E402
+import explain  # noqa: E402
 
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED = (
     '#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948')
@@ -225,8 +226,13 @@ def build_html(S, path, plotly_src, downloads=None, notice='', tides=None):
     now = pd.Timestamp.now(tz=bc.LOCAL_TZ)
     age_days = (now - st['last']) / pd.Timedelta(days=1)
 
+    EXL = {'Salinity': 'salinity', 'Water temperature': 'water_temp', 'Dissolved oxygen': 'do', 'Chlorophyll (algae)': 'chl',
+           'Tryptophan (relative)': 'trp', 'Turbidity (cloudiness)': 'turb', 'Specific conductivity': 'conductivity'}
+
     def tile(emoji, label, value, sub=''):
-        return (f'<div class="tile"><div class="t-emoji">{emoji}</div><div class="t-label">{esc(label)}</div>'
+        k = EXL.get(label)
+        info = f' <a class="ti" href="#ex-{"cond" if k == "conductivity" else k}" title="What is this?">ⓘ</a>' if k else ''
+        return (f'<div class="tile"><div class="t-emoji">{emoji}</div><div class="t-label">{esc(label)}{info}</div>'
                 f'<div class="t-value">{value}</div><div class="t-sub">{sub}</div></div>')
 
     def T(c, dec=1):
@@ -257,7 +263,7 @@ def build_html(S, path, plotly_src, downloads=None, notice='', tides=None):
         base = v.iloc[-500:].median() if len(v) else np.nan
         d = g('trp_ppb') - base
         tiles.append(tile('🔬', 'Tryptophan (relative)', f'{g("trp_ppb"):.0f} ppb',
-                          f'{d:+.0f} vs. its usual level' if np.isfinite(base) else 'wastewater / organic-matter marker'))
+                          f'{d:+.0f} vs. its usual level · rises can signal sewage or runoff' if np.isfinite(base) else 'pollution early-warning signal'))
     if np.isfinite(g('turb_ntu')):
         tiles.append(tile('🟤', 'Turbidity (cloudiness)', f'{g("turb_ntu"):.1f} NTU',
                           level(g('turb_ntu'), [(5, 'clear'), (20, 'a little cloudy'), (100, 'murky'), (1e9, 'very muddy')])))
@@ -314,7 +320,7 @@ def build_html(S, path, plotly_src, downloads=None, notice='', tides=None):
         dl = '<div class="chips" style="margin-top:12px">' + ''.join(
             f'<a class="chip dl" href="{esc(h)}" download>{esc(lbl)}</a>' for lbl, h in downloads) + '</div>'
     rows = [('📍 Position', f'{bc.CFG["mooring_lat"]:.5f}° N, {abs(bc.CFG["mooring_lon"]):.5f}° W'),
-            ('🧪 Instrument', f'BlueSonde {esc(bc.DEV)} — ' + ', '.join(n for c, n in [('temp_c', 'temperature'), ('sal_psu', 'salinity'),
+            ('🔬 Instrument', f'BlueSonde {esc(bc.DEV)} — ' + ', '.join(n for c, n in [('temp_c', 'temperature'), ('sal_psu', 'salinity'),
                 ('do_mgl', 'oxygen'), ('chl_ugl', 'chlorophyll'), ('trp_ppb', 'tryptophan'), ('turb_ntu', 'turbidity')] if c in S['df'])),
             ('🕒 Reports', 'about every 15 minutes'),
             ('🚀 Data since', f'{st["first"]:%B %d, %Y}'),
@@ -330,7 +336,27 @@ def build_html(S, path, plotly_src, downloads=None, notice='', tides=None):
     me = dict(lat=bc.CFG['mooring_lat'], lon=bc.CFG['mooring_lon'], kind='wq', label=bc.SITE_SHORT,
               sub=f'BlueSonde {bc.DEV} water-quality buoy')
     mapdata = mapjs.mapdata(me, bc.SISTER_SITES, center=[me['lat'] + 0.005, me['lon'] - 0.025], zoom=11)
-    sisters = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE buoys</a>' + ''.join(f'<a class="btn" href="{esc(x["url"])}">{"🌊" if mapjs.kind_of(x) == "wave" else "🧪"} {esc(x["label"])} →</a>' for x in bc.SISTER_SITES)
+    sisters = mapjs.nav_buttons(bc.SISTER_SITES)
+    here = {}
+    if 'temp_c' in st:
+        t = st['temp_c']
+        here['water_temp'] = f'typically {bc.c2f(t["median"]):.0f} °F ({t["median"]:.1f} °C); {bc.c2f(t["min"]):.0f}–{bc.c2f(t["max"]):.0f} °F so far.'
+    if 'sal_psu' in st:
+        t = st['sal_psu']
+        here['salinity'] = f'typically {t["median"]:.1f} PSU; lowest so far {t["min"]:.1f}, highest {t["max"]:.1f}.'
+    if 'do_mgl' in st:
+        t = st['do_mgl']
+        here['do'] = f'averages {t["mean"]:.1f} mg/L; lowest so far {t["min"]:.1f} mg/L.'
+    if 'chl_ugl' in st:
+        here['chl'] = f'typically {st["chl_ugl"]["median"]:.1f} µg/L; highest so far {st["chl_ugl"]["max"]:.1f}.'
+    if 'trp_ppb' in st:
+        here['trp'] = f'usual level about {st["trp_ppb"]["median"]:.0f} ppb on this sensor — look for rises above that.'
+    if 'turb_ntu' in st:
+        here['turb'] = f'typically {st["turb_ntu"]["median"]:.1f} NTU.'
+    if 'spcond_uscm' in st:
+        here['cond'] = f'typically {st["spcond_uscm"]["median"] / 1000:.1f} mS/cm.'
+    exp_keys = [explain.FOR_KEY[c] for c in ['temp_c', 'sal_psu', 'do_mgl', 'chl_ugl', 'trp_ppb', 'turb_ntu', 'spcond_uscm'] if c in S['df']] + ['tide']
+    explain_html = explain.SECTION.format(cards=explain.cards(exp_keys, here))
     vibes = ''.join(f'<span class="chip">{v[1]} {v[2]} <small>{"&lt;" + format(v[0], "g") + " PSU" if v[0] < 99 else "30+ PSU"}</small></span>'
                     for v in bc.SAL_VIBES)
     qc = ''.join(f'<li>{esc(n)}</li>' for n in bc.qc_notes(S))
@@ -345,7 +371,7 @@ def build_html(S, path, plotly_src, downloads=None, notice='', tides=None):
     page = TEMPLATE
     for k, v in {
         '%%PLOTLY_TAG%%': f'<script src="{plotly_src}"></script>', '%%FIGS%%': json.dumps(figs, default=str, ensure_ascii=False),
-        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND,
+        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND, '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html,
         '%%TIDES%%': json.dumps(tides or []), '%%TIDE_ST%%': json.dumps(tide_st), '%%TZ%%': json.dumps(bc.LOCAL_TZ),
         '%%WHERE%%': where, '%%SISTERS%%': sisters, '%%DOWNLOADS%%': dl, '%%NOW_TILES%%': now_tiles,
         '%%SEASON_TILES%%': season_tiles, '%%CARDS%%': cards, '%%MROWS%%': mrows, '%%MHEAD%%': mhead, '%%STALE%%': stale, '%%VIBES%%': vibes,
@@ -366,7 +392,7 @@ TEMPLATE = r"""<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%%SHORT%% Water Quality</title>
 %%MAPHEAD%%
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
 <style>
 :root{--bg:#f5f8fa;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e3e8ec;--accent:#1c5cab;
 --hero1:#0d4a5a;--hero2:#2a7a5c;--chip:#eef4fb;--chip2:#b7d3f6;--warn:#fff4e0;--warnline:#eda100;--grid:#e8ecef}
@@ -431,17 +457,20 @@ footer{color:var(--muted);font-size:13px;margin-top:36px}
 a{color:var(--accent)}
 code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-all}
 %%MAPCSS%%
+a.ti{text-decoration:none;font-size:12px;opacity:.75;margin-left:2px}a.ti:hover{opacity:1}
+table.mtable{font-size:13.5px}.mtable th{white-space:normal;vertical-align:bottom;line-height:1.25}.mtable th,.mtable td{padding:6px 7px}
+%%EXCSS%%
 @media (max-width:560px){dl{grid-template-columns:1fr}.t-value{font-size:24px}.kv{flex-direction:column;gap:2px}.kv b{text-align:left}}
 </style></head>
 <body>
 <header class="hero"><div class="wrap">
-  <h1>🧪 The %%SHORT%% Water-Quality Buoy</h1>
+  <h1>💧 The %%SHORT%% Water-Quality Buoy</h1>
   <p>What the water is doing %%SITE%% · BlueSonde <b>%%DEV%%</b></p>
+  <div class="toolbar">%%SISTERS%%</div>
   <div class="toolbar">
     <button class="btn" id="u-us" aria-pressed="true">🇺🇸 °F · feet</button>
     <button class="btn" id="u-si" aria-pressed="false">🌍 °C · metres</button>
     <button class="btn" id="theme">🌓 light / dark</button>
-    %%SISTERS%%
   </div>
   %%DOWNLOADS%%
 </div>
@@ -451,7 +480,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 <div class="wrap">
   <section class="now" style="margin-top:-44px">
     <div class="grid tiles">%%NOW_TILES%%</div>
-    <p class="lede" style="margin-top:10px">🕒 Latest reading: <b>%%LATEST%%</b>. How salty is it? Where river meets sea:</p>
+    <p class="lede" style="margin-top:10px">🕒 Latest reading: <b>%%LATEST%%</b>. How salty is it? The salinity scale (fresh water from rain, streams or rivers lowers it):</p>
     <div class="chips">%%VIBES%%</div>
     %%STALE%%
   </section>
@@ -469,12 +498,14 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
     <div class="grid insights">%%CARDS%%</div></section>
 
+  %%EXPLAIN%%
+
   <section><h2>📈 Every reading</h2>
     <p class="lede">All the measurements on one shared timeline, with the tide on top. Use the buttons to zoom to the last day, week or month, or drag across any panel. Dashed lines on the oxygen panel mark the 5 mg/L stress and 2 mg/L hypoxia levels.</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
 
   <section class="grid two">
-    <div><h2>🌙 The water breathes with the tide</h2><p class="lede">Each line is the average across every tide so far, lined up by hours before (−) and after (+) high tide. When the tide goes out, river water slides past the buoy.</p>
+    <div><h2>🌙 The water breathes with the tide</h2><p class="lede">Each line is the average across every tide so far, lined up by hours before (−) and after (+) high tide. The rising tide brings in ocean water; the falling tide carries water from closer to shore back past the buoy.</p>
       <div class="card"><div id="tidephase" class="chart"></div><p class="t-sub" style="margin:6px 0 0">High-tide times from NOAA predictions for station %%TIDE_ST_TXT%%.</p></div></div>
     <div><h2>☀️ The daily rhythm</h2><p class="lede">Average for each hour of the day. Algae make oxygen in sunlight and everything uses it up overnight; the water warms through the afternoon.</p>
       <div class="card"><div id="diel" class="chart"></div></div></div>
@@ -484,7 +515,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
     <div class="card"><div class="maptools" style="padding:0 0 8px">%%CALBTNS%%</div><div id="calendar" class="chart"></div></div></section>
 
   <section><h2>📅 Month by month</h2><p class="lede">Averages, lows and highs for each month (newest first).</p>
-    <div class="card tablewrap"><table><thead><tr>%%MHEAD%%</tr></thead>
+    <div class="card tablewrap"><table class="mtable"><thead><tr>%%MHEAD%%</tr></thead>
     <tbody>%%MROWS%%</tbody></table></div></section>
 
   <section><h2>🔧 Buoy health</h2><p class="lede">Power and conditions inside the hull, hourly. The voltage channel drops to 0 every night and climbs with the sun, so it looks like solar-charge input. Humidity creeping upward can mean moisture is getting in.</p>
@@ -492,17 +523,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 
   <section>
     <details><summary>⚠️ Data-quality notes — what was cleaned and why</summary><ul>%%QC%%</ul></details>
-    <details><summary>📖 Glossary — what do these words mean?</summary><dl>
-      <dt>Estuary</dt><dd>Where a river meets the sea. Fresh river water floats on top of and mixes with salty ocean water, pushed back and forth by the tide.</dd>
-      <dt>Salinity (PSU)</dt><dd>How salty the water is. PSU (practical salinity units) ≈ grams of salt per kilogram of water. River water is ~0, the open Gulf of Maine ~32–33.</dd>
-      <dt>Dissolved oxygen</dt><dd>Oxygen gas dissolved in the water, which fish and shellfish breathe. In mg/L, or as % saturation (100% = as much as the water can hold at that temperature and salinity; above 100% happens when algae are photosynthesising hard).</dd>
-      <dt>Hypoxia</dt><dd>Very low oxygen — under 2 mg/L. Most fish leave or die. 2–5 mg/L is stressful for many species.</dd>
-      <dt>Chlorophyll (µg/L)</dt><dd>The green pigment in algae, measured by how it glows (fluoresces) under blue light. A stand-in for how much phytoplankton is in the water.</dd>
-      <dt>Tryptophan (ppb)</dt><dd>A fluorescence reading that rises with fresh organic matter — including sewage and runoff — so it is used as an early-warning marker for contamination. On some sondes it is uncalibrated (it can read below zero), so look at changes rather than the number itself.</dd>
-      <dt>Turbidity (NTU)</dt><dd>How cloudy the water is, from sediment, algae or other particles. Measured by how much light scatters. Under ~5 NTU looks clear.</dd>
-      <dt>Conductivity</dt><dd>How well the water carries electricity — rises with salt. “Specific” conductivity is corrected to 25 °C so readings at different temperatures can be compared.</dd>
-      <dt>Water level</dt><dd>Height of the tide above average low water (MLLW), from the nearest NOAA gauge as shown on CUMULUS.</dd>
-    </dl></details>
+
     <details><summary>ℹ️ About this data</summary><ul>%%HOWTO%%</ul></details>
   </section>
   <footer>Generated %%GENERATED%% %%FOOTSRC%%. Data: BlueSonde %%DEV%% via CUMULUS (Coastal Measures), University of New England.</footer>

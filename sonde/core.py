@@ -53,10 +53,11 @@ PARAMS = {
 SCIENCE = ['temp_c', 'sal_psu', 'do_mgl', 'do_pct', 'chl_ugl', 'trp_ppb', 'turb_ntu', 'spcond_uscm', 'cond_uscm', 'tds_ppt']
 
 # The "salinity vibe" — the Venice system for estuarine water, in plain words
-SAL_VIBES = [(0.5, '🏞️', 'River water', 'Fresh — the river is in charge.'),
-             (5, '🍃', 'Barely salty', 'Mostly river water with a hint of sea.'),
-             (18, '🌫️', 'Brackish', 'A real mix of river and ocean.'),
-             (30, '🐚', 'Salty', 'Mostly seawater, a little diluted by the river.'),
+FRESH_SRC = CFG.get('freshwater_source')   # e.g. 'the Saco River' — only where a river really reaches the buoy
+SAL_VIBES = [(0.5, '🏞️', 'Fresh water', 'No sea salt — like rain, stream or pond water.'),
+             (5, '🍃', 'Barely salty', 'Mostly fresh water with a hint of sea.'),
+             (18, '🌫️', 'Brackish', 'A real mix of fresh water and seawater.'),
+             (30, '🐚', 'Salty', 'Mostly seawater, slightly diluted by fresh water.'),
              (99, '🌊', 'Seawater', 'Full-strength ocean water.')]
 
 
@@ -273,18 +274,18 @@ def insights(S):
                 out.append(('🌙', f'The tide sets the salt: {rng:.1f} PSU swing',
                             f'On average the water is saltiest about {abs(hi_ph):.1f} h {"after" if hi_ph >= 0 else "before"} high tide '
                             f'({sal.max():.1f} PSU) and freshest about {abs(lo_ph):.1f} h {"after" if lo_ph >= 0 else "before"} high tide '
-                            f'({sal.min():.1f} PSU), when the ebb carries river water past the buoy.'))
+                            f'({sal.min():.1f} PSU), when the falling tide carries fresher water ' + (f'from {FRESH_SRC} ' if FRESH_SRC else 'from closer to shore ') + 'past the buoy.'))
             else:
                 out.append(('🌙', 'Seawater rules here — the tide barely changes the salt',
                             f'Averaged over each tide cycle, salinity only shifts by {rng:.1f} PSU between high and low water. '
-                            'River water mostly reaches the buoy after heavy rain — watch for the dips in the salinity chart.'))
+                            'Fresh water mostly reaches the buoy after heavy rain — watch for the dips in the salinity chart.'))
     # 2) freshest moment
     if 'sal_psu' in st:
         s = st['sal_psu']
         e, n, _ = sal_vibe(s['min'])
         out.append(('💧', f'Freshest moment: {s["min"]:.1f} PSU ({n.lower()})',
                     f'Recorded {fmt_t(s["tmin"])}. Typical salinity is {s["median"]:.1f} PSU '
-                    f'(full seawater is about 32–35). Sharp dips usually follow rain, when the river runs high.'))
+                    f'(full seawater is about 32–35). Sharp dips usually follow heavy rain, when ' + (f'{FRESH_SRC} and runoff carry' if FRESH_SRC else 'streams and runoff carry') + ' fresh water out to the buoy.'))
     # 3) temperature trend
     if 'temp_c' in df:
         T = df['temp_c'].dropna()
@@ -348,7 +349,7 @@ def insights(S):
         t = st['turb_ntu']
         out.append(('🟤', f'Clearest vs. muddiest: {t["median"]:.1f} NTU typical, {t["max"]:.0f} NTU max',
                     f'Turbidity measures how cloudy the water is. Under ~5 NTU is clear coastal water; spikes (highest '
-                    f'{fmt_t(t["tmax"])}) come from storms stirring up sediment, river runoff, or now and then something '
+                    f'{fmt_t(t["tmax"])}) come from storms stirring up sediment, runoff after rain, or now and then something '
                     'drifting past the sensor.'))
     return out
 
@@ -359,7 +360,7 @@ def qc_notes(S):
     notes = [f'Removed as sensor glitches (impossible values, or single-reading spikes far from both neighbours): '
              + (', '.join(f'{PARAMS.get(k, (k,))[0].lower()} {v:,}' for k, v in rm.items()) if rm else 'none so far') + '.',
              f'Out of the water: {oow:,} readings were dropped because conductivity fell below {OUT_OF_WATER_SPCOND:g} µS/cm — '
-             'the sonde reading air (maintenance or recovery), not river water. Readings within 45 minutes either side are dropped too.',
+             'the sonde reading air (maintenance or recovery), not real water. Readings within 45 minutes either side are dropped too.',
              'Small negative chlorophyll and turbidity readings (sensor offset in very clear water) are shown as zero.',
              'CUMULUS publishes the last 7 days at full resolution (about every 15 minutes) and 30 days as ~45-minute averages. '
              'This site saves the full-resolution readings every hour; averages are only used to fill time before the site started.',

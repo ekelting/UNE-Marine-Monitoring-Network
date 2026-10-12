@@ -13,6 +13,7 @@ import buoy_core as bc
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'shared'))
 import mapjs  # noqa: E402
+import explain  # noqa: E402
 
 # palette (validated reference palette from the dataviz method)
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED = (
@@ -450,7 +451,17 @@ def build_html(S, bd, path, plotly_js=None, SS=None, mode='local', plotly_src=No
             span = '; '.join(f'{a:%b %d} – {b:%b %d, %Y}' for a, b in gaps)
             health_note = (' <i>Battery and humidity history only comes in the buoy\'s monthly data files, so there is no record for '
                            f'{span}. New readings are logged every hour.</i>')
-    sisters = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE buoys</a>' + ''.join(f'<a class="btn" href="{esc(x["url"])}">{"🌊" if mapjs.kind_of(x) == "wave" else "🧪"} {esc(x["label"])} →</a>' for x in bc.SISTER_SITES)
+    sisters = mapjs.nav_buttons(bc.SISTER_SITES)
+    here = {'wave_height': f'typically {bc.ft(st["hs_median"]):.1f} ft; biggest so far {bc.ft(st["hs_max"]):.1f} ft.' if 'hs_median' in st else
+            f'biggest so far {bc.ft(st["hs_max"]):.1f} ft.'}
+    here['wave_height'] += f' A "storm event" on this page = waves ≥ {bc.ft(bc.STORM_HS_M):.1f} ft ({bc.STORM_HS_M:g} m) for {bc.STORM_MIN_HOURS}+ hours.'
+    here['wind'] = 'this buoy has no wind vane — it estimates wind from the shape of the waves, so treat it as approximate, especially in light winds.'
+    exp_keys = ['wave_height', 'wave_period', 'wave_dir', 'wave_energy', 'pressure', 'wind']
+    if SS and SS.get('has'):
+        grps = {x['group'] for x in SS['series']}
+        exp_keys += [k for g, k in [('temp', 'water_temp'), ('do_conc', 'do'), ('do_sat', 'do'), ('cur_speed', 'current')] if g in grps]
+    exp_keys += ['tide']
+    explain_html = explain.SECTION.format(cards=explain.cards(exp_keys, here))
     if plotly_src:
         plotly_tag = f'<script src="{plotly_src}"></script>'
     else:
@@ -461,7 +472,7 @@ def build_html(S, bd, path, plotly_js=None, SS=None, mode='local', plotly_src=No
     fig_json = json.dumps(figs, default=str, ensure_ascii=False)
     page = TEMPLATE
     for k, v in {
-        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND,
+        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND, '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html,
         '%%PLOTLY_TAG%%': plotly_tag, '%%FIGS%%': fig_json, '%%SENSORS%%': sensor_block, '%%HOWTO%%': howto,
         '%%DOWNLOADS%%': dl, '%%TIDES%%': json.dumps(tides or []), '%%TIDE_ST%%': json.dumps(str(bc.CFG.get('tide_station') or '')),
         '%%TZ%%': json.dumps(str(bc.LOCAL_TZ)), '%%WHERE%%': where, '%%HEALTH_NOTE%%': health_note, '%%SISTERS%%': sisters,
@@ -551,17 +562,18 @@ footer{color:var(--muted);font-size:13px;margin-top:36px}
 a{color:var(--accent)}
 code{background:var(--chip);padding:1px 5px;border-radius:5px}
 %%MAPCSS%%
+%%EXCSS%%
 @media (max-width:560px){dl{grid-template-columns:1fr}.t-value{font-size:24px}}
 </style></head>
 <body>
 <header class="hero"><div class="wrap">
   <h1>🌊 The %%SHORT%% Wave Buoy</h1>
   <p>What the ocean has been up to off %%SITE%% · Sofar Spotter <b>%%SPOTTER%%</b></p>
+  <div class="toolbar">%%SISTERS%%</div>
   <div class="toolbar">
     <button class="btn" id="u-ft" aria-pressed="true">📏 feet</button>
     <button class="btn" id="u-m" aria-pressed="false">📐 metres</button>
     <button class="btn" id="theme">🌓 light / dark</button>
-    %%SISTERS%%
   </div>
   %%DOWNLOADS%%
 </div>
@@ -588,6 +600,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px}
 
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
     <div class="grid insights">%%CARDS%%</div></section>
+
+  %%EXPLAIN%%
 
   <section><h2>📈 Every wave, every hour</h2>
     <p class="lede">Drag the slider underneath to zoom. Orange bands are storm events (%%STORM_DEF%%).</p>
@@ -626,15 +640,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px}
 
   <section>
     <details><summary>⚠️ Data-quality notes — what was cleaned and why</summary><ul>%%QC%%</ul></details>
-    <details><summary>📖 Glossary — what do these words mean?</summary><dl>
-      <dt>Wave height</dt><dd>“Significant wave height” (Hs): the average height of the biggest third of waves, trough to crest. It's close to what a person on the beach would say the waves are. Single waves can be about twice as big.</dd>
-      <dt>Wave rhythm / period</dt><dd>Seconds between wave crests. Short (under 6 s) = choppy local wind waves. Long (10 s+) = swell that travelled from a distant storm and packs more punch.</dd>
-      <dt>Direction</dt><dd>The compass direction the waves are coming <i>from</i> (like wind). “E” means waves rolling in from the east.</dd>
-      <dt>Wind*</dt><dd>Estimated by the buoy from the shape of the waves (it has no wind vane), so treat it as approximate — especially in light winds.</dd>
-      <dt>hPa</dt><dd>Hectopascals — the unit for air pressure. ~1013 is average; under ~1000 usually means a storm.</dd>
-      <dt>Wave energy</dt><dd>How much energy the waves carried past each metre of coastline. 1 kWh ≈ running a microwave for an hour.</dd>
-      <dt>Storm event</dt><dd>%%STORM_DEF%%.</dd>
-    </dl></details>
+
     <details><summary>ℹ️ About this data</summary><ul>%%HOWTO%%</ul></details>
   </section>
   <footer>Generated %%GENERATED%% %%FOOTSRC%%. Data: Sofar Ocean Spotter %%SPOTTER%%, University of New England.</footer>

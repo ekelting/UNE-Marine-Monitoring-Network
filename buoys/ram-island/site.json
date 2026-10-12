@@ -1,0 +1,227 @@
+{
+  "short_name": "Ram Island",
+  "page_title": "The Ram Island Weather Station",
+  "site_name": "Ram Island, Saco Bay, Maine",
+  "site_phrase": "on Ram Island in Saco Bay, Maine",
+  "station_desc": "UNE coastal weather station",
+  "kind": "wx",
+  "emoji": "🌦️",
+  "slug": "ram-island",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/ram-island",
+  "timezone": "America/New_York",
+  "mooring_lat": 43.467126,
+  "mooring_lon": -70.356328,
+  "arcgis_url": "https://services7.arcgis.com/0vd30ZJwMECKNLFu/arcgis/rest/services/UNE_observations_data_layer_view/FeatureServer/0",
+  "start_utc": "2025-12-01T00:00:00Z",
+  "source_url": "https://www.licor.cloud/dashboards/6a139a1b-c78c-41a9-ab7d-5de23c30df70/true",
+  "archive_url": "https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy/folder/379185961270",
+  "notes": [],
+  "vars": [
+    {
+      "field": "ram_temperature",
+      "key": "air_temp_c",
+      "label": "Air temperature",
+      "emoji": "🌡️",
+      "panel": "Temperature",
+      "tile": true,
+      "daily": true,
+      "color": "#eb6834",
+      "conv": "temp",
+      "unit": "°C",
+      "range": [
+        -40,
+        50
+      ]
+    },
+    {
+      "field": "ram_dew_point",
+      "key": "dewpt_c",
+      "label": "Dew point",
+      "emoji": "🌫️",
+      "panel": "Temperature",
+      "tile": true,
+      "month_range": false,
+      "color": "#2a78d6",
+      "conv": "temp",
+      "unit": "°C",
+      "range": [
+        -40,
+        50
+      ]
+    },
+    {
+      "field": "ram_relative_humidity",
+      "key": "rh_pct",
+      "label": "Humidity",
+      "emoji": "💦",
+      "unit": "%",
+      "range": [
+        0,
+        101
+      ],
+      "panel": "Humidity",
+      "dec": 0,
+      "month_range": false
+    },
+    {
+      "field": "ram_wind_speed",
+      "key": "wind_ms",
+      "label": "Wind",
+      "emoji": "💨",
+      "conv": "speed",
+      "unit": "m/s",
+      "range": [
+        0,
+        75
+      ],
+      "panel": "Wind",
+      "tile": true,
+      "month_range": false,
+      "color": "#1baf7a"
+    },
+    {
+      "field": "ram_wind_gust",
+      "key": "gust_ms",
+      "label": "Gusts",
+      "emoji": "💨",
+      "conv": "speed",
+      "unit": "m/s",
+      "range": [
+        0,
+        90
+      ],
+      "panel": "Wind",
+      "month_range": false,
+      "color": "#4a3aa7"
+    },
+    {
+      "field": "ram_wind_direction",
+      "key": "wind_dir",
+      "label": "Wind direction",
+      "emoji": "🧭",
+      "unit": "°",
+      "range": [
+        0,
+        360
+      ],
+      "agg": "dir"
+    },
+    {
+      "field": "ram_rain_mm",
+      "key": "rain_mm",
+      "label": "Rain",
+      "emoji": "🌧️",
+      "conv": "rain",
+      "unit": "mm",
+      "range": [
+        0,
+        100
+      ],
+      "agg": "sum",
+      "panel": "Rain",
+      "tile": true,
+      "daily": true,
+      "color": "#2a78d6"
+    },
+    {
+      "field": "ram_total_solar",
+      "key": "solar_wm2",
+      "label": "Sunlight",
+      "emoji": "☀️",
+      "unit": "W/m²",
+      "range": [
+        0,
+        2000
+      ],
+      "panel": "Sunlight",
+      "dec": 0,
+      "tile": true,
+      "today_range": false,
+      "month_range": false,
+      "color": "#eda100"
+    },
+    {
+      "field": "ram_par",
+      "key": "par",
+      "label": "Plant-usable light (PAR)",
+      "emoji": "🌿",
+      "unit": "µmol/m²/s",
+      "range": [
+        0,
+        3000
+      ],
+      "panel": "Sunlight",
+      "dec": 0,
+      "month": false,
+      "color": "#008300"
+    }
+  ],
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Wood Island",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Jordan Point",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    },
+    {
+      "label": "363 Acre Woods",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/une-363-woods/",
+      "lat": 43.457447,
+      "lon": -70.411302
+    },
+    {
+      "label": "Biddeford Pool Marsh",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool-marsh/",
+      "lat": 43.453479,
+      "lon": -70.372845
+    },
+    {
+      "label": "Great Pond",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/great-pond/",
+      "lat": 43.44379,
+      "lon": -70.348578
+    }
+  ]
+}
