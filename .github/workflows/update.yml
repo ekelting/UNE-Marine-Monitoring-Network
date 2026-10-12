@@ -8,7 +8,7 @@ on:
   workflow_dispatch:            # "Run workflow" button on the Actions tab
   push:
     branches: [main]
-    paths: ["wave/**", "sonde/**", "station/**", "shared/**", "web/**", "tools/**", "buoys.json", "buoys/*/site.json",
+    paths: ["wave/**", "sonde/**", "station/**", "radar/**", "shared/**", "web/**", "tools/**", "buoys.json", "buoys/*/site.json",
             "requirements.txt", ".github/workflows/**"]
 
 permissions:
@@ -57,6 +57,7 @@ jobs:
           case "${{ matrix.buoy.kind }}" in
             wave)    python wave/fetch.py --max-minutes 40 ;;
             station) python station/fetch.py --max-minutes 40 ;;
+            radar)   python radar/fetch.py --max-minutes 35 ;;
             *)       python sonde/fetch.py ;;
           esac
       - name: 💾 Save new data to the repository

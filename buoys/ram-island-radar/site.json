@@ -1,0 +1,108 @@
+{
+  "sensor_id": 12579,
+  "short_name": "Ram Island Radar",
+  "site_name": "Ram Island, Saco Bay, Maine",
+  "radar_model": "SeaSignals X-Band Radar",
+  "cumulus_url": "https://cumulus.coastalmeasures.com/seasignals-radar/12579",
+  "github_user": "ekelting",
+  "github_repo": "UNE-Marine-Monitoring-Network",
+  "timezone": "America/New_York",
+  "radar_lat": 43.467048,
+  "radar_lon": -70.356464,
+  "index_ring_m": [
+    300,
+    1500
+  ],
+  "max_new_per_run": 60,
+  "full_burst_newest": 3,
+  "light_frames": 24,
+  "recent_strip": 24,
+  "buoy": {
+    "label": "Camp Ellis buoy",
+    "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+    "hourly_csv": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/data/hourly.csv",
+    "lat": 43.4727,
+    "lon": -70.36053
+  },
+  "sister_sites": [
+    {
+      "label": "Camp Ellis",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/",
+      "lat": 43.4727,
+      "lon": -70.36053
+    },
+    {
+      "label": "Biddeford Pool",
+      "kind": "wave",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/",
+      "lat": 43.4376128,
+      "lon": -70.3492272
+    },
+    {
+      "label": "Wood Island",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",
+      "lat": 43.455593,
+      "lon": -70.317699
+    },
+    {
+      "label": "Jordan Point",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/",
+      "lat": 43.460893,
+      "lon": -70.389691
+    },
+    {
+      "label": "Ferry Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/",
+      "lat": 43.497213,
+      "lon": -70.379113
+    },
+    {
+      "label": "Goose Rocks Beach",
+      "kind": "wq",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/goose-rocks-beach/",
+      "lat": 43.396733,
+      "lon": -70.402301
+    },
+    {
+      "label": "Ram Island",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island/",
+      "lat": 43.467126,
+      "lon": -70.356328
+    },
+    {
+      "label": "363 Acre Woods",
+      "kind": "wx",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/une-363-woods/",
+      "lat": 43.457447,
+      "lon": -70.411302
+    },
+    {
+      "label": "Biddeford Pool Marsh",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool-marsh/",
+      "lat": 43.453479,
+      "lon": -70.372845
+    },
+    {
+      "label": "Great Pond",
+      "kind": "env",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/great-pond/",
+      "lat": 43.44379,
+      "lon": -70.348578
+    }
+  ],
+  "tide_station": "8418606",
+  "tide_station_name": "Camp Ellis, Saco River entrance",
+  "slug": "ram-island-radar",
+  "kind": "radar",
+  "site_url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island-radar/",
+  "repo_url": "https://github.com/ekelting/UNE-Marine-Monitoring-Network/tree/main/buoys/ram-island-radar",
+  "mooring_lat": 43.467048,
+  "mooring_lon": -70.356464,
+  "title_name": "Ram Island"
+}

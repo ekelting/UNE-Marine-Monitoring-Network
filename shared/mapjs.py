@@ -61,7 +61,11 @@ const BUOY_SVG = {
     <path d="M20 8v36" stroke="#4d5966" stroke-width="2.4" stroke-linecap="round"/>
     <rect x="13" y="10" width="14" height="10" rx="2" fill="#1baf7a" stroke="#0b5e40" stroke-width="1.2"/>
     <path d="M16 15h8" stroke="#fff" stroke-width="1.3"/><path d="M20 4v4" stroke="#222" stroke-width="1.4"/><circle cx="20" cy="3.5" r="1.4" fill="#222"/></svg>`};
-const KIND_TXT = {wave:'🌊 Wave buoy (Sofar Spotter)', wq:'💧 Water-quality buoy (BlueSonde)', wx:'🌦️ Weather station', env:'🌿 Environmental station'};
+BUOY_SVG.radar = s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true">
+    <ellipse cx="20" cy="43" rx="10" ry="2.5" fill="#000" opacity=".2"/><path d="M20 22v21M20 43l-7 1M20 43l7 1" stroke="#4d5966" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="4" y="13" width="32" height="7" rx="3.5" fill="#c81944" stroke="#7a0e29" stroke-width="1.2"/><rect x="16" y="19" width="8" height="5" fill="#4d5966"/>
+    <path d="M9 8a16 16 0 0 1 22 0M12.5 11a11 11 0 0 1 15 0" fill="none" stroke="#c81944" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg>`;
+const KIND_TXT = {radar:'📡 Wave radar (SeaSignals X-band)', wave:'🌊 Wave buoy (Sofar Spotter)', wq:'💧 Water-quality buoy (BlueSonde)', wx:'🌦️ Weather station', env:'🌿 Environmental station'};
 let LMAP=null, LBASE=null, LBASE_KEY='';
 function buoyIcon(kind, me){
   const s = me? 40 : 28;
@@ -135,13 +139,13 @@ def kind_of(site):
     return site.get('kind') or ('wave' if 'SPOT' in site.get('url', '') else 'wq')
 
 
-KIND_EMOJI = {'wave': '🌊', 'wq': '💧', 'wx': '🌦️', 'env': '🌿'}
+KIND_EMOJI = {'wave': '🌊', 'radar': '📡', 'wq': '💧', 'wx': '🌦️', 'env': '🌿'}
 
 
 def nav_buttons(sisters):
     """Top-row navigation: home + every other station, grouped by kind."""
     import html
-    order = {'wave': 0, 'wq': 1, 'wx': 2, 'env': 3}
+    order = {'wave': 0, 'radar': 1, 'wq': 2, 'wx': 3, 'env': 4}
     out = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE stations</a>'
     for x in sorted(sisters, key=lambda x: order.get(kind_of(x), 9)):
         out += f'<a class="btn" href="{html.escape(x["url"])}">{KIND_EMOJI.get(kind_of(x), "📍")} {html.escape(x["label"])}</a>'

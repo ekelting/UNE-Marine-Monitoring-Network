@@ -8,6 +8,7 @@ This is the public website for the University of New England's coastal monitorin
 |---|---|---|---|
 | Camp Ellis | Wave (Sofar Spotter SPOT-32787C) | [/camp-ellis/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/camp-ellis/) | [`buoys/camp-ellis`](buoys/camp-ellis) |
 | Biddeford Pool | Wave (Sofar Spotter SPOT-32905C) | [/biddeford-pool/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/biddeford-pool/) | [`buoys/biddeford-pool`](buoys/biddeford-pool) |
+| Ram Island Radar | Wave radar (SeaSignals X-band, CUMULUS 12579) | [/ram-island-radar/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island-radar/) | [`buoys/ram-island-radar`](buoys/ram-island-radar) |
 | Wood Island | Water quality (BlueSonde BB1.23) | [/wood-island/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/) | [`buoys/wood-island`](buoys/wood-island) |
 | Jordan Point | Water quality (BlueSonde BB1.12) | [/jordan-point/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/jordan-point/) | [`buoys/jordan-point`](buoys/jordan-point) |
 | Ferry Beach | Water quality (BlueSonde BB1.47) | [/ferry-beach/](https://ekelting.github.io/UNE-Marine-Monitoring-Network/ferry-beach/) | [`buoys/ferry-beach`](buoys/ferry-beach) |
@@ -35,6 +36,7 @@ This is the public website for the University of New England's coastal monitorin
 - **Code:**
   - [`wave/`](wave) builds the Sofar Spotter dashboards.
   - [`sonde/`](sonde) builds the BlueSonde dashboards.
+  - [`radar/`](radar) measures each hourly radar scan from CUMULUS (sea sparkle, boats, whitewater, experimental wave period) and builds the radar page. Images are downloaded fresh each hour and not stored. Offline test: `python radar/tests/run_offline.py`.
   - [`station/`](station) builds the weather, marsh and pond station pages. Each station's measurements are described in its `site.json` (`vars`).
   - [`shared/explain.py`](shared/explain.py) holds the plain-language explanation of every measurement, used on every page.
   - [`shared/mapjs.py`](shared/mapjs.py) is the map with buoy icons, used by both.

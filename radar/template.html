@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%%SHORT%% Wave Radar</title>
+<meta name="description" content="Live X-band wave radar at %%SHORT%%, Saco Bay, Maine — what the sea looks like every hour, explained.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#f5f8fa;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e3e8ec;--accent:#1c5cab;
+--hero1:#0d366b;--hero2:#1d7a8c;--chip:#eef4fb;--chip2:#b7d3f6;--warn:#fff4e0;--warnline:#eda100;--grid:#e8ecef;
+--onaccent:#fff;--radar:#c2410c;--sparkle:#7c3aed;--wave:#1c5cab;--wind:#0f8a6a;--tide:#64748b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111213;--card:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;
+--muted:#8f8e86;--line:#2c2d2e;--accent:#86b6ef;--hero1:#0d2a4d;--hero2:#145a66;--chip:#23282e;--chip2:#1c5cab;--warn:#2d2616;--warnline:#c98500;--grid:#2a2b2c;
+--onaccent:#0b1b33;--radar:#fb923c;--sparkle:#a78bfa;--wave:#86b6ef;--wind:#34d399;--tide:#94a3b8}}
+:root[data-theme="dark"]{--bg:#111213;--card:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;--muted:#8f8e86;--line:#2c2d2e;--accent:#86b6ef;
+--hero1:#0d2a4d;--hero2:#145a66;--chip:#23282e;--chip2:#1c5cab;--warn:#2d2616;--warnline:#c98500;--grid:#2a2b2c;
+--onaccent:#0b1b33;--radar:#fb923c;--sparkle:#a78bfa;--wave:#86b6ef;--wind:#34d399;--tide:#94a3b8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 48px}
+header.hero{background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;padding:36px 16px 70px;position:relative;overflow:hidden}
+header.hero .wrap{padding-bottom:0;position:relative;z-index:1}
+header h1{margin:0;font-size:clamp(26px,4vw,40px);letter-spacing:-.5px}
+header p{margin:6px 0 0;opacity:.88;max-width:760px}
+.sweep{position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;opacity:.22;
+  background:repeating-radial-gradient(circle,rgba(255,255,255,.5) 0 1px,transparent 1px 52px),conic-gradient(from 0deg,rgba(255,255,255,.9),transparent 22%);
+  animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.sweep{animation:none}}
+.waves{position:absolute;left:0;right:0;bottom:-2px;height:60px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit;font-size:14px}
+a.btn{text-decoration:none;display:inline-block}
+.btn[aria-pressed="true"]{background:#fff;color:#0d366b;font-weight:600}
+.seg{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+.seg[aria-pressed="true"]{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.seg:disabled{opacity:.45;cursor:not-allowed}
+section{margin-top:28px}
+h2{font-size:22px;margin:0 0 4px}
+h3{font-size:17px;margin:14px 0 8px}
+.lede{color:var(--ink2);margin:0 0 14px}
+.grid{display:grid;gap:12px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))}
+.tile,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.now{margin-top:-52px;position:relative}
+.t-emoji{font-size:26px;line-height:1.1}
+.t-label{color:var(--ink2);font-size:13px;margin-top:6px}
+.t-value{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.2}
+.t-sub{color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--ink2)}
+.chip b{color:var(--ink)}
+.meter{position:relative;height:14px;border-radius:999px;margin:10px 0 4px;
+  background:linear-gradient(90deg,#bae6fd,#7dd3fc 25%,#a78bfa 55%,#f97316 85%,#ef4444)}
+.meter i{position:absolute;top:-5px;width:4px;height:24px;border-radius:3px;background:var(--ink);box-shadow:0 0 0 2px var(--card)}
+.meter-l{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.insights{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.insight{display:flex;gap:12px}
+.i-emoji{font-size:28px}
+.insight h4{margin:0 0 4px;font-size:15px}
+.insight p{margin:0;color:var(--ink2);font-size:14px}
+.chart{width:100%;min-height:280px}
+.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))}
+.banner{background:var(--warn);border-left:4px solid var(--warnline);border-radius:10px;padding:10px 14px;margin-top:16px;color:var(--ink)}
+.mapcard{padding:0;overflow:hidden}
+.maptools{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;align-items:center}
+.maptools .sp{flex:1}
+#map,#boatmap{height:min(72vh,560px);background:#0e1626}
+#boatmap{height:min(60vh,440px)}
+.mapnote{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;padding:10px 14px 12px;border-top:1px solid var(--line)}
+.mapnote p{margin:0;color:var(--ink2);font-size:14px;flex:1;min-width:240px}
+.legend{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.opac{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2)}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity}
+.thumb{flex:0 0 auto;width:112px;border:2px solid transparent;border-radius:10px;padding:0;background:none;cursor:pointer;font:inherit;color:var(--ink2);scroll-snap-align:start}
+.thumb img{width:108px;height:108px;border-radius:8px;display:block;background:#0e1626}
+.thumb span{display:block;font-size:12px;text-align:center;margin-top:3px}
+.thumb[aria-pressed="true"]{border-color:var(--accent)}
+.thumb[aria-pressed="true"] span{color:var(--ink);font-weight:600}
+.steps{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.step .n{font-size:30px}
+.step h4{margin:6px 0 4px;font-size:16px}
+.step p{margin:0;color:var(--ink2);font-size:14px}
+.chart:has(.empty){min-height:0}.empty{display:flex;align-items:center;justify-content:center;min-height:140px;color:var(--muted);text-align:center;padding:20px}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px}
+summary{cursor:pointer;font-weight:600}
+details li{color:var(--ink2);margin:6px 0;font-size:14px}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:14px}
+dt{font-weight:600}dd{margin:0;color:var(--ink2)}
+footer{color:var(--muted);font-size:13px;margin-top:36px}
+a{color:var(--accent)}
+code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-all}
+.leaflet-container{font:inherit}
+.leaflet-popup-content{font-size:13px;line-height:1.5}
+.lbl{background:rgba(15,23,42,.8);color:#fff;border:0;border-radius:6px;padding:2px 7px;font-size:12px;box-shadow:none}
+.lbl:before{display:none}
+@media (max-width:560px){dl{grid-template-columns:1fr}.t-value{font-size:22px}}
+</style></head>
+<body>
+<header class="hero"><div class="sweep" aria-hidden="true"></div><div class="wrap">
+  <h1>📡 The %%SHORT%% Wave Radar</h1>
+  <p id="sub">An X-band radar watching the sea surface in Saco Bay, Maine. Every hour it records a 5-minute movie of the water. This page turns each movie into pictures and numbers anyone can read.</p>
+  <div class="toolbar">%%NAV%%<span id="sisters" style="display:contents"></span></div>
+  <div class="toolbar">
+    <button class="btn" id="u-ft" aria-pressed="true">📏 feet &amp; mph</button>
+    <button class="btn" id="u-m" aria-pressed="false">📐 metres &amp; m/s</button>
+    <button class="btn" id="theme">🌓 light / dark</button>
+  </div>
+  <div class="chips" id="downloads"></div>
+</div>
+<svg class="waves" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+<path d="M0,30 C150,60 300,0 450,30 C600,60 750,0 900,30 C1050,60 1150,15 1200,30 L1200,60 L0,60 Z" fill="var(--bg)"/></svg>
+</header>
+
+<div class="wrap">
+  <section class="now" style="margin-top:-44px">
+    <div class="grid tiles" id="tiles"></div>
+    <div class="card" style="margin-top:12px">
+      <b>✨ How rough does the sea look to the radar right now?</b>
+      <div class="meter" aria-hidden="true"><i id="needle" style="left:0"></i></div>
+      <div class="meter-l"><span>😴 glassy</span><span>🙂 gentle</span><span>🌬️ choppy</span><span>🌊 rough</span><span>⚡ wild</span></div>
+      <p class="t-sub" id="meter-txt" style="margin:6px 0 0"></p>
+    </div>
+    <div id="stale"></div>
+  </section>
+
+  <section><h2>👀 What the radar sees</h2>
+    <p class="lede">The newest scan, laid over the map. Try the buttons. The coloured image is what the radar picked up; the 📡 marks the radar and 🟠 the Camp Ellis wave buoy, which sits inside the radar's view.</p>
+    <div class="card mapcard">
+      <div class="maptools" id="layerbtns">
+        <button class="seg" data-layer="composite" aria-pressed="true">📸 Snapshot</button>
+        <button class="seg" data-layer="anim" aria-pressed="false">▶️ 5-minute movie</button>
+        <button class="seg" data-layer="variability" aria-pressed="false">🎨 Motion</button>
+        <button class="seg" data-layer="zones" aria-pressed="false">🗺️ Zones</button>
+        <button class="seg" data-layer="tracks" aria-pressed="false" data-toggle="1">🚤 Boat tracks</button>
+        <span class="sp"></span>
+        <button class="seg" data-base="sat" aria-pressed="true">🛰️ Satellite</button>
+        <button class="seg" data-base="map" aria-pressed="false">🗺️ Map</button>
+      </div>
+      <div id="map" role="img" aria-label="Map with the latest radar image"></div>
+      <div class="mapnote"><p id="layernote"></p>
+        <div><div class="legend" id="legend"></div>
+        <label class="opac" style="margin-top:6px">🔆 see-through <input type="range" id="opac" min="20" max="100" value="85" aria-label="Radar image opacity"></label></div></div>
+    </div>
+    <h3>🎞️ The last day, scan by scan</h3>
+    <p class="lede" style="margin-bottom:6px">Tap a picture to put it on the map. Newest on the left.</p>
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers. It changes as new scans arrive.</p>
+    <div class="grid insights" id="cards"></div></section>
+
+  <section><h2>📈 Radar sparkle vs. the waves and wind</h2>
+    <p class="lede">Top: how much of the open water lit up on radar. Middle and bottom: waves and wind measured at the Camp Ellis buoy. When the wind blows, the radar sparkles. Drag across the chart to zoom; double-click to reset.</p>
+    <div class="card"><div id="timeline" class="chart" style="min-height:520px"></div></div></section>
+
+  <section class="grid two">
+    <div><h2>🤝 Does the radar agree with the buoy?</h2><p class="lede" id="corr-lede">Each dot is one hour. If the dots climb from left to right, the radar and the buoy agree.</p>
+      <div class="card"><div class="maptools" style="padding:0 0 8px"><button class="seg" data-sc="buoy_wspd" aria-pressed="true">🌬️ vs wind</button><button class="seg" data-sc="buoy_hs" aria-pressed="false">🌊 vs wave height</button></div>
+      <div id="scatter" class="chart"></div></div></div>
+    <div><h2>🚤 When are boats out?</h2><p class="lede">The average number of moving targets the radar tracks in each scan, by time of day.</p>
+      <div class="card"><div id="hours" class="chart"></div></div></div>
+  </section>
+
+  <section><h2>🛥️ Boat highways: the last 7 days</h2>
+    <p class="lede">Every moving target the radar tracked this week, coloured by speed. Busy lanes show up as bundles of lines.</p>
+    <div class="card mapcard"><div id="boatmap" role="img" aria-label="Map of boat tracks from the last week"></div>
+      <div class="mapnote"><p id="boatnote"></p><div class="legend">
+        <span><i class="sw" style="background:#38bdf8"></i>drifting (0–3 kn)</span><span><i class="sw" style="background:#22c55e"></i>slow (3–8)</span>
+        <span><i class="sw" style="background:#eab308"></i>cruising (8–15)</span><span><i class="sw" style="background:#f97316"></i>fast (15–25)</span><span><i class="sw" style="background:#ef4444"></i>very fast (25+)</span></div></div></div>
+  </section>
+
+  <section class="grid two">
+    <div><h2>💥 Whitewater &amp; the tide</h2><p class="lede">How much breaking, churning water the radar sees along the shore, in football fields, with the tide drawn behind it.</p>
+      <div class="card"><div id="white" class="chart"></div></div></div>
+    <div><h2>📅 Radar diary</h2><p class="lede">How many scans the radar delivered each day. Gaps mean it was offline or being serviced.</p>
+      <div class="card"><div id="diary" class="chart"></div></div></div>
+  </section>
+
+  <section><h2>🎵 Can radar hear the wave rhythm? <span class="chip">🧪 experiment</span></h2>
+    <p class="lede">When the sea is rough, each patch of water flickers on radar in time with the waves passing through. We time that flicker and compare it with the buoy's wave period. Dots on the dashed line mean a perfect match. Only confident readings are shown.</p>
+    <div class="card"><div id="rhythm" class="chart"></div></div></section>
+
+  <section><h2>🧠 How does a wave radar work?</h2>
+    <div class="grid steps">
+      <div class="card step"><div class="n">📡</div><h4>1. Spin and ping</h4><p>The antenna spins about once every 1.3 seconds, firing short microwave pulses. "X-band" means the microwaves are about 3 cm long, roughly the size of a wind ripple.</p></div>
+      <div class="card step"><div class="n">〰️</div><h4>2. Ripples bounce it back</h4><p>Tiny wind ripples act like millions of little mirrors that send the pulse back to the radar. Bigger waves tilt and hide those ripples, which makes bright and dark stripes. A glassy calm sea reflects the beam away like a mirror, so it looks black.</p></div>
+      <div class="card step"><div class="n">🎞️</div><h4>3. Make a movie</h4><p>Each hourly scan stacks 229 sweeps into a 5-minute movie. Things that stay put (land, rocks, moorings) are land; things that move are water and boats.</p></div>
+      <div class="card step"><div class="n">🧮</div><h4>4. Turn pictures into numbers</h4><p>This page measures every scan: how much the sea sparkles, how much it moves, where water is breaking, and what's moving fast. Then it checks those numbers against the wave buoy next door.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <details><summary>📖 Glossary: what do these words mean?</summary><dl>
+      <dt>Scan</dt><dd>One 5-minute burst of radar sweeps, recorded about once an hour. CUMULUS calls it a "collect".</dd>
+      <dt>Sweep</dt><dd>One full turn of the antenna: a single radar picture. A scan has about 229 of them.</dd>
+      <dt>✨ Sea sparkle</dt><dd>The share of open water that lit up on an average sweep, measured in a ring 300–1,500 m from the radar. More wind → more ripples → more sparkle. It's a relative index, not a wave height.</dd>
+      <dt>Rougher than X%</dt><dd>Where today's sparkle ranks among every scan this radar has taken. 90% means rougher-looking than 9 out of 10 scans.</dd>
+      <dt>🎨 Motion</dt><dd>How much each spot's echo changed during the 5 minutes. Open water flickers constantly; land barely changes.</dd>
+      <dt>💥 Whitewater</dt><dd>Water that's bright <i>and</i> moving within 150 m of the shore: mostly breaking surf. (Boat wakes near shore can count too.)</dd>
+      <dt>🚤 Moving target / track</dt><dd>Something the radar followed from sweep to sweep, usually a boat. The tracker is automatic, so it's "probably a boat", not a guaranteed one.</dd>
+      <dt>Knot (kn)</dt><dd>Nautical speed: 1 knot ≈ 1.15 mph ≈ 0.51 m/s.</dd>
+      <dt>Wave height</dt><dd>From the Camp Ellis buoy: the average height of the biggest third of the waves, from trough to crest.</dd>
+      <dt>Wave period / rhythm</dt><dd>Seconds between wave crests. Short = local wind chop. Long (10 s+) = swell from far away.</dd>
+      <dt>r (correlation)</dt><dd>How tightly two things rise and fall together: +1 = in perfect step, 0 = unrelated, −1 = opposites.</dd>
+    </dl></details>
+    <details><summary>ℹ️ About this data &amp; how it's processed</summary><ul id="about"></ul></details>
+  </section>
+  <footer id="foot"></footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script>
+const D = %%DATA%%;
+const L0 = D.latest || {}, C = D.cfg || {}, IMG = D.img || {};
+const M2FT = 3.28084, MS2MPH = 2.23694;
+let unit = 'ft';
+try { unit = localStorage.getItem('buoy-unit') || 'ft'; } catch (e) {}
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtTime = (iso, o) => iso ? new Date(iso).toLocaleString([], Object.assign({timeZone:'America/New_York', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}, o||{})) : '—';
+function ago(iso){ if(!iso) return '—'; const m=(Date.now()-new Date(iso))/60000;
+  if(m<1) return 'just now'; if(m<60) return Math.round(m)+' min ago'; const h=m/60; if(h<36) return Math.round(h)+' h ago'; return Math.round(h/24)+' days ago'; }
+const H = (m) => m==null ? null : (unit==='ft' ? m*M2FT : m);
+const Hu = () => unit==='ft' ? 'ft' : 'm';
+const W = (ms) => ms==null ? null : (unit==='ft' ? ms*MS2MPH : ms);
+const Wu = () => unit==='ft' ? 'mph' : 'm/s';
+const compass = (d) => d==null ? '' : ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(((d%360)+360)%360/22.5)%16];
+function vibe(p){ if(p==null) return ['🤔','Not sure yet']; if(p<15) return ['😴','Glassy']; if(p<40) return ['🙂','Gentle']; if(p<70) return ['🌬️','Choppy']; if(p<90) return ['🌊','Rough']; return ['⚡','Wild']; }
+const speedColor = (s) => s==null?'#94a3b8': s<3?'#38bdf8': s<8?'#22c55e': s<15?'#eab308': s<25?'#f97316':'#ef4444';
+
+/* ---------------- header bits ---------------- */
+(function(){
+  $('sisters').innerHTML = (C.cumulus_url ? `<a class="btn" href="${esc(C.cumulus_url)}">🔗 Raw radar on CUMULUS</a>` : '');
+  $('downloads').innerHTML = `<a class="chip" style="background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)" href="data/collects.csv">⬇️ Every scan (CSV)</a>`
+    + `<a class="chip" style="background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)" href="data/tracks.csv">⬇️ Every boat track (CSV)</a>`;
+})();
+
+/* ---------------- tiles ---------------- */
+function tide(){ const T=D.tide||[]; if(T.length<3) return null; const now=Date.now();
+  let i=T.findIndex(x=>new Date(x.t)>now); if(i<1) return null;
+  const a=T[i-1], b=T[i], f=(now-new Date(a.t))/(new Date(b.t)-new Date(a.t)); const v=a.v+(b.v-a.v)*f;
+  const next=(D.tide_hilo||[]).find(x=>new Date(x.t)>now); return {v, rising:b.v>a.v, next}; }
+function tile(e,label,value,sub){ return `<div class="tile"><div class="t-emoji">${e}</div><div class="t-label">${label}</div><div class="t-value">${value}</div><div class="t-sub">${sub||''}</div></div>`; }
+function renderTiles(){
+  const t=[]; const L=L0;
+  const age=(Date.now()-new Date(L.time_utc))/36e5;
+  t.push(tile('🕒','Last radar scan', esc(ago(L.time_utc)), esc(fmtTime(L.time_utc))));
+  const [ve,vw]=vibe(D.pct.sparkle);
+  t.push(tile(ve,'Sea sparkle', vw, D.pct.sparkle==null?'still learning what normal is':`rougher-looking than ${D.pct.sparkle}% of scans`));
+  if(L.buoy_hs!=null) t.push(tile('🌊','Waves at the buoy', `${H(L.buoy_hs).toFixed(1)} ${Hu()}`, [L.buoy_tp?`every ${L.buoy_tp.toFixed(0)} s`:'', L.buoy_dm!=null?`from the ${compass(L.buoy_dm)}`:''].filter(Boolean).join(' · ')));
+  if(L.buoy_wspd!=null) t.push(tile('🌬️','Wind at the buoy*', `${W(L.buoy_wspd).toFixed(0)} ${Wu()}`, '*estimated by the buoy'));
+  t.push(tile('🚤','Moving targets', L.n_tracks==null?'—':String(L.n_tracks), L.max_speed_kn!=null?`fastest ${L.max_speed_kn.toFixed(0)} kn (${(L.max_speed_kn*1.15078).toFixed(0)} mph)`:'in the last scan'));
+  if(L.whitewater_m2!=null){ const ff=L.whitewater_m2/5351;
+    t.push(tile('💥','Whitewater', ff<0.5?'barely any':`${ff.toFixed(ff<10?1:0)} 🏈`, ff<0.5?'calm along the shore':`football fields of breaking water`)); }
+  const td=tide(); if(td){ const v= unit==='ft'? td.v : td.v/M2FT;
+    t.push(tile(td.rising?'⬆️':'⬇️', `Tide (${td.rising?'rising':'falling'})`, `${v.toFixed(1)} ${Hu()}`, td.next?`${td.next.type==='H'?'high':'low'} at ${fmtTime(td.next.t,{month:undefined,day:undefined})}`:'')); }
+  $('tiles').innerHTML=t.join('');
+  const p=D.pct.sparkle; $('needle').style.left = `calc(${p==null?0:p}% - 2px)`; $('needle').style.display = p==null?'none':'';
+  $('meter-txt').innerHTML = p==null ? 'Not enough scans yet to compare against.' :
+    `${ve} <b>${vw}.</b> In the latest scan ${L.sparkle_ring_pct!=null?L.sparkle_ring_pct.toFixed(1):'—'}% of the nearby open water lit up, which puts it rougher-looking than <b>${p}%</b> of the ${D.n_scans.toLocaleString()} scans so far.`;
+  if(age>3) $('stale').innerHTML = `<div class="banner">⚠️ The newest radar scan is ${esc(ago(L.time_utc))}. The radar may be offline or between deployments; this page updates on its own as soon as new scans arrive.</div>`;
+  else if((D.state.last_errors||[]).length) $('stale').innerHTML = `<div class="banner">⚠️ The last hourly check had a hiccup reading some scans. They'll be retried automatically.</div>`;
+}
+
+/* ---------------- main map ---------------- */
+let map, overlay, baseLayers={}, trackLayer=null, curLayer='composite', curStrip=null, opacity=0.85;
+const NOTES = {
+  composite:'📸 <b>Snapshot.</b> All 5 minutes of sweeps blended into one picture. Brighter = stronger echo. Land, rocks and boats glow; open water only shows up when wind roughens it.',
+  anim:'▶️ <b>5-minute movie.</b> Every other sweep, sped up about 20×. Watch for moving dots (boats) and stripes rolling toward shore (waves).',
+  variability:'🎨 <b>Motion.</b> How much each spot changed during the 5 minutes. Moving water glows; land stays dark, even though it was bright in the snapshot.',
+  zones:'🗺️ <b>Zones.</b> The computer sorts every spot into land, open sea, or "active" water (breaking surf, wakes and boats). It\'s automatic and works from one scan only, so expect the odd mistake.',
+};
+const LEG = {
+  composite:'<span><i class="sw" style="background:#2f0f3e"></i>weak echo</span><span><i class="sw" style="background:#d34a55"></i>medium</span><span><i class="sw" style="background:#feedb0"></i>strong</span>',
+  anim:'<span><i class="sw" style="background:#2f0f3e"></i>weak echo</span><span><i class="sw" style="background:#feedb0"></i>strong</span>',
+  variability:'<span><i class="sw" style="background:#440154"></i>still</span><span><i class="sw" style="background:#21918c"></i>some motion</span><span><i class="sw" style="background:#fde725"></i>lots of motion</span>',
+  zones:'<span><i class="sw" style="background:#f97316"></i>land</span><span><i class="sw" style="background:#fde047"></i>active water</span><span><i class="sw" style="background:#7dd3fc"></i>open sea</span>',
+};
+function initMap(){
+  const lat=C.radar_lat, lon=C.radar_lon;
+  map = L.map('map',{zoomSnap:0.25, scrollWheelZoom:false}).setView([lat,lon],13.5);
+  baseLayers.sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'});
+  baseLayers.map = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors © CARTO'});
+  baseLayers.sat.addTo(map);
+  const lt=IMG.latest; if(lt) map.fitBounds(lt.bounds,{padding:[6,6]});
+  if(lt) L.circle([lat,lon],{radius:lt.range_m||2700,color:'#fff',weight:1,opacity:.6,fill:false,dashArray:'4 6',interactive:false}).addTo(map);
+  const ico=(t,s)=>L.divIcon({html:`<div style="font-size:${s}px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))">${t}</div>`,className:'',iconSize:[s,s],iconAnchor:[s/2,s/2]});
+  L.marker([lat,lon],{icon:ico('📡',24),zIndexOffset:1000}).addTo(map).bindTooltip('Radar on Ram Island',{className:'lbl',direction:'top'});
+  const b=C.buoy; if(b) L.marker([b.lat,b.lon],{icon:ico('🟠',16),zIndexOffset:1000}).addTo(map).bindTooltip(`${esc(b.label)}`,{className:'lbl',direction:'top'})
+    .bindPopup(`<b>${esc(b.label)}</b><br>Waves: ${L0.buoy_hs!=null?H(L0.buoy_hs).toFixed(1)+' '+Hu():'—'}<br><a href="${esc(b.url)}">Open the buoy's page →</a>`);
+  (C.sister_sites||[]).filter(s=>!b||s.label!==b.label).forEach(s=>L.marker([s.lat,s.lon],{icon:ico('⚪',13)}).addTo(map).bindTooltip(esc(s.label),{className:'lbl',direction:'top'}));
+  document.querySelectorAll('[data-base]').forEach(btn=>btn.onclick=()=>{
+    Object.values(baseLayers).forEach(l=>map.removeLayer(l)); baseLayers[btn.dataset.base].addTo(map); baseLayers[btn.dataset.base].bringToBack();
+    document.querySelectorAll('[data-base]').forEach(x=>x.setAttribute('aria-pressed',x===btn));});
+  document.querySelectorAll('[data-layer]').forEach(btn=>{
+    const k=btn.dataset.layer; if(!lt || !lt.layers[k]) { btn.disabled=true; btn.title='Not available for this scan'; return; }
+    btn.onclick=()=>{ if(btn.dataset.toggle){ toggleTracks(btn); return; } curStrip=null; setLayer(k); markStrip(); };});
+  $('opac').oninput=(e)=>{ opacity=e.target.value/100; if(overlay) overlay.setOpacity(opacity); };
+  map.on('click',()=>map.scrollWheelZoom.enable());
+  if(lt) setLayer('composite'); else $('layernote').textContent='No radar imagery could be downloaded this hour. It will be back on the next update.';
+}
+function setLayer(k, src, bnds, label){
+  const lt=IMG.latest; curLayer=k;
+  const url = src || (lt.layers[k] + '?v=' + encodeURIComponent(lt.collect_id));
+  if(overlay) map.removeLayer(overlay);
+  overlay = L.imageOverlay(url, bnds || lt.bounds, {opacity, interactive:false}).addTo(map);
+  if(trackLayer) trackLayer.bringToFront && trackLayer.bringToFront();
+  document.querySelectorAll('[data-layer]:not([data-toggle])').forEach(x=>x.setAttribute('aria-pressed', !src && x.dataset.layer===k));
+  const when = label || `Scan from ${fmtTime(lt.time_utc)} (${ago(lt.time_utc)}).`;
+  $('layernote').innerHTML = NOTES[k] + ` <span class="t-sub">${esc(when)}${k==='anim'&&lt.anim_real_seconds?` ${Math.round(lt.anim_real_seconds/60)} real minutes in about ${lt.anim_play_seconds} s.`:''}</span>`;
+  $('legend').innerHTML = LEG[k]||'';
+}
+async function toggleTracks(btn){
+  const on = btn.getAttribute('aria-pressed')!=='true'; btn.setAttribute('aria-pressed',on);
+  if(!on){ if(trackLayer) map.removeLayer(trackLayer); return; }
+  if(!trackLayer){ try{ const g=await (await fetch(IMG.latest.layers.tracks)).json();
+      trackLayer=L.geoJSON(g,{style:f=>({color:speedColor(f.properties.speed_kn),weight:4,opacity:.95,lineCap:'round'}),
+        onEachFeature:(f,l)=>{const p=f.properties||{}; l.bindPopup(`<b>Moving target #${esc(p.track_id)}</b><br>Speed: ${p.speed_kn!=null?p.speed_kn.toFixed(1)+' kn ('+(p.speed_kn*1.15078).toFixed(0)+' mph)':'—'}`
+          +(p.heading_deg!=null?`<br>Heading: ${Math.round(p.heading_deg)}° (${compass(p.heading_deg)})`:'')+(p.duration_s?`<br>Followed for ${Math.round(p.duration_s)} s`:''));}});
+    }catch(e){ btn.setAttribute('aria-pressed',false); return; } }
+  trackLayer.addTo(map);
+}
+function markStrip(){ document.querySelectorAll('.thumb').forEach((x,i)=>x.setAttribute('aria-pressed', curStrip===i)); }
+function renderStrip(){
+  const S=IMG.strip||[]; if(!S.length){ $('strip').innerHTML='<p class="t-sub">No recent pictures this hour.</p>'; return; }
+  $('strip').innerHTML = S.map((s,i)=>`<button class="thumb" aria-pressed="false" data-i="${i}"><img loading="lazy" src="${esc(s.src)}" alt="Radar snapshot ${esc(fmtTime(s.time_utc))}"><span>${esc(fmtTime(s.time_utc,{month:undefined,day:undefined,weekday:'short'}))}</span></button>`).join('');
+  document.querySelectorAll('.thumb').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i, s=S[i]; curStrip=i;
+    setLayer('composite', s.full||s.src, s.bounds, `Showing the scan from ${fmtTime(s.time_utc)} (${ago(s.time_utc)}).`);
+    document.querySelectorAll('[data-layer]:not([data-toggle])').forEach(x=>x.setAttribute('aria-pressed',false)); markStrip();
+    $('map').scrollIntoView({behavior:'smooth',block:'center'}); });
+}
+
+/* ---------------- insight cards ---------------- */
+$('cards').innerHTML = (D.cards||[]).map(([e,h,p])=>`<div class="card insight"><div class="i-emoji">${e}</div><div><h4>${esc(h)}</h4><p>${esc(p)}</p></div></div>`).join('')
+  || '<div class="card">The first scans are still being measured. Insights appear here after a few hours.</div>';
+
+/* ---------------- charts ---------------- */
+function theme(layout){
+  const ink=css('--ink2'), grid=css('--grid');
+  const base={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:13},
+    margin:{l:56,r:20,t:16,b:44},hoverlabel:{font:{size:13}},showlegend:false};
+  const L=Object.assign(base,layout);
+  Object.keys(L).filter(k=>/^[xy]axis/.test(k)).forEach(k=>{L[k]=Object.assign({gridcolor:grid,zerolinecolor:grid,linecolor:grid,automargin:true},L[k]);});
+  return L;
+}
+const CFGP={displaylogo:false,responsive:true,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
+function empty(id,msg){ $(id).innerHTML=`<div class="empty">${msg}</div>`; }
+const TS=D.ts||{t:[]};
+function drawTimeline(){
+  if(!TS.t.length) return empty('timeline','📭 No scans measured yet.');
+  const x=TS.t, tr=[];
+  tr.push({x,y:TS.sparkle_ring_pct,type:'scatter',mode:'lines+markers',marker:{size:4},line:{color:css('--sparkle'),width:1.5},name:'Sparkle',yaxis:'y3',hovertemplate:'%{y:.1f}% of water lit<extra>✨ radar</extra>'});
+  if(TS.buoy_hs) tr.push({x,y:TS.buoy_hs.map(H),type:'scatter',mode:'lines',line:{color:css('--wave'),width:2},yaxis:'y2',connectgaps:false,hovertemplate:`%{y:.1f} ${Hu()}<extra>🌊 buoy waves</extra>`});
+  if(TS.buoy_wspd) tr.push({x,y:TS.buoy_wspd.map(W),type:'scatter',mode:'lines',line:{color:css('--wind'),width:2},yaxis:'y',hovertemplate:`%{y:.0f} ${Wu()}<extra>🌬️ buoy wind*</extra>`});
+  const end=new Date(x[x.length-1]), start=new Date(end-7*864e5);
+  Plotly.react('timeline',tr,theme({height:520,margin:{l:62,r:20,t:30,b:40},
+    xaxis:{type:'date',range:[start,end],rangeselector:{buttons:[{count:2,label:'2 days',step:'day',stepmode:'backward'},{count:7,label:'week',step:'day',stepmode:'backward'},{step:'all',label:'60 days'}],
+      bgcolor:css('--chip'),activecolor:css('--chip2'),font:{color:css('--ink')}}},
+    yaxis3:{domain:[0.70,1],title:{text:'✨ sparkle %'},rangemode:'tozero'},
+    yaxis2:{domain:[0.36,0.64],title:{text:`🌊 waves (${Hu()})`},rangemode:'tozero'},
+    yaxis:{domain:[0,0.30],title:{text:`🌬️ wind (${Wu()})`},rangemode:'tozero'}}),CFGP);
+}
+let scKey='buoy_wspd';
+function drawScatter(){
+  const S=D.scatter; if(!S||!S.t.length) return empty('scatter','📭 Waiting for scans that match buoy readings.');
+  const xs=(S[scKey]||[]).map(v=>scKey==='buoy_hs'?H(v):W(v)), ys=S.sparkle_ring_pct;
+  const pts=xs.map((x,i)=>[x,ys[i],S.t[i]]).filter(p=>p[0]!=null&&p[1]!=null);
+  if(pts.length<5) return empty('scatter','📭 Not enough matching hours yet.');
+  const c=(D.corr||{})[scKey]||{};
+  const xl = scKey==='buoy_hs' ? `🌊 wave height at the buoy (${Hu()})` : `🌬️ wind at the buoy (${Wu()})`;
+  Plotly.react('scatter',[{x:pts.map(p=>p[0]),y:pts.map(p=>p[1]),text:pts.map(p=>fmtTime(p[2])),type:'scatter',mode:'markers',
+    marker:{size:6,color:css('--sparkle'),opacity:.55},hovertemplate:'%{text}<br>%{x:.1f} → %{y:.1f}% sparkle<extra></extra>'}],
+    theme({height:330,xaxis:{title:{text:xl},rangemode:'tozero'},yaxis:{title:{text:'✨ radar sparkle (%)'},rangemode:'tozero'},
+      annotations:c.r!=null?[{xref:'paper',yref:'paper',x:0.02,y:0.98,xanchor:'left',showarrow:false,text:`<b>r = ${c.r>=0?'+':''}${c.r.toFixed(2)}</b> · ${c.word} linked · ${c.n} hours`,font:{size:13,color:css('--ink')},bgcolor:css('--card')}]:[]}),CFGP);
+  $('corr-lede').textContent = c.r!=null ? `Each dot is one hour. r = ${c.r.toFixed(2)}: the radar's sparkle is ${c.word} linked to the buoy's ${scKey==='buoy_hs'?'wave height':'wind'}.`
+    : 'Each dot is one hour. If the dots climb from left to right, the radar and the buoy agree.';
+}
+document.querySelectorAll('[data-sc]').forEach(b=>b.onclick=()=>{scKey=b.dataset.sc; document.querySelectorAll('[data-sc]').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawScatter();});
+function drawHours(){
+  const h=D.hour||[]; if(!h.length) return empty('hours','📭 No boat tracks yet.');
+  const lab=(x)=>new Date(2000,0,1,x).toLocaleTimeString([], {hour:'numeric'});
+  const mx=Math.max(...h.map(r=>r.mean));
+  Plotly.react('hours',[{x:h.map(r=>lab(r.h)),y:h.map(r=>r.mean),type:'bar',marker:{color:h.map(r=>r.mean===mx?css('--radar'):css('--accent'))},
+    customdata:h.map(r=>r.count),hovertemplate:'%{x}: %{y:.1f} per scan<br>(%{customdata} scans)<extra></extra>'}],
+    theme({height:330,xaxis:{type:'category',tickangle:-45},yaxis:{title:{text:'🚤 moving targets per scan'},rangemode:'tozero'}}),CFGP);
+}
+function drawWhite(){
+  if(!TS.t.length || !TS.whitewater_m2) return empty('white','📭 No whitewater measurements yet.');
+  const end=new Date(TS.t[TS.t.length-1]), start=new Date(end-7*864e5);
+  const tr=[{x:TS.t,y:TS.whitewater_m2.map(v=>v==null?null:v/5351),type:'scatter',mode:'lines',fill:'tozeroy',line:{color:css('--radar'),width:1.5},
+    hovertemplate:'%{y:.1f} football fields<extra>💥 whitewater</extra>'}];
+  if((D.tide||[]).length) tr.unshift({x:D.tide.map(p=>p.t),y:D.tide.map(p=>unit==='ft'?p.v:p.v/M2FT),yaxis:'y2',type:'scatter',mode:'lines',
+    line:{color:css('--tide'),width:1.5,dash:'dot'},hovertemplate:`%{y:.1f} ${Hu()}<extra>🌙 tide</extra>`});
+  Plotly.react('white',tr,theme({height:330,margin:{l:56,r:56,t:16,b:44},xaxis:{type:'date',range:[start,end]},
+    yaxis:{title:{text:'💥 football fields'},rangemode:'tozero'},yaxis2:{title:{text:`🌙 tide (${Hu()})`},overlaying:'y',side:'right',showgrid:false}}),CFGP);
+}
+function drawDiary(){
+  const d=D.daily||[]; if(!d.length) return empty('diary','📭 No scans yet.');
+  Plotly.react('diary',[{x:d.map(r=>r.day),y:d.map(r=>r.scans),type:'bar',marker:{color:d.map(r=>r.scans>=20?css('--accent'):r.scans>=8?css('--chip2'):css('--warnline'))},
+    hovertemplate:'%{x|%a %b %-d}: %{y} scans<extra></extra>'}],
+    theme({height:330,xaxis:{type:'date'},yaxis:{title:{text:'📸 scans per day'},rangemode:'tozero'},bargap:0.15}),CFGP);
+}
+function drawRhythm(){
+  const x=[],y=[],t=[]; (TS.radar_period_q||[]).forEach((q,i)=>{ if(q!=null&&q>=2.2&&TS.buoy_tp&&TS.buoy_tp[i]!=null){x.push(TS.buoy_tp[i]);y.push(TS.radar_period_s[i]);t.push(fmtTime(TS.t[i]));}});
+  if(!x.length) return empty('rhythm','🌫️ No confident radar readings yet. The sea needs some wind and chop before the radar can pick out a rhythm. This fills in by itself after the next blow.');
+  Plotly.react('rhythm',[{x:[3,16],y:[3,16],mode:'lines',line:{dash:'dash',color:css('--muted')},hoverinfo:'skip'},
+    {x,y,text:t,mode:'markers',marker:{size:9,color:css('--sparkle')},hovertemplate:'%{text}<br>buoy %{x:.1f} s · radar %{y:.1f} s<extra></extra>'}],
+    theme({height:330,xaxis:{title:{text:'🌊 buoy wave period (s)'},range:[3,16]},yaxis:{title:{text:'📡 radar rhythm (s)'},range:[3,16]}}),CFGP);
+}
+
+/* ---------------- boat map ---------------- */
+function initBoats(){
+  const T=D.tracks7||[];
+  const bm=L.map('boatmap',{zoomSnap:0.25,scrollWheelZoom:false}).setView([C.radar_lat,C.radar_lon],13.5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors © CARTO'}).addTo(bm);
+  if(IMG.latest) { bm.fitBounds(IMG.latest.bounds,{padding:[6,6]}); L.circle([C.radar_lat,C.radar_lon],{radius:IMG.latest.range_m||2700,color:'#64748b',weight:1,fill:false,dashArray:'4 6',interactive:false}).addTo(bm); }
+  T.forEach(tk=>{ if(tk.p.length>1) L.polyline(tk.p,{color:speedColor(tk.s),weight:2.5,opacity:.7}).addTo(bm).bindTooltip(tk.s!=null?`${tk.s.toFixed(0)} kn`:'',{sticky:true}); });
+  L.marker([C.radar_lat,C.radar_lon],{icon:L.divIcon({html:'<div style="font-size:22px;line-height:1">📡</div>',className:'',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(bm);
+  bm.on('click',()=>bm.scrollWheelZoom.enable());
+  const fast=T.filter(t=>t.s!=null&&t.s>=15).length;
+  $('boatnote').textContent = T.length ? `${T.length.toLocaleString()} tracks in the last 7 days; ${fast} of them going 15 knots or faster.` : 'No tracks recorded in the last 7 days.';
+}
+
+/* ---------------- about / footer ---------------- */
+(function(){
+  const repo = C.site_url || (C.github_user&&C.github_repo ? `https://${C.github_user}.github.io/${C.github_repo}/` : '');
+  const li=[
+    `<b>Where the data comes from:</b> the public <a href="${esc(C.cumulus_url)}">CUMULUS page</a> for this ${esc(C.radar_model||'radar')}. SeaSignals Technology processes each scan into the snapshot, motion map, zones and boat tracks; this page measures them. It checks for new scans every hour.`,
+    `<b>Sea sparkle</b> is the average share of open-water pixels (from the Zones map) that show any echo on each sweep, measured 300–1,500 m from the radar. Older scans were measured from 24 evenly spaced sweeps; new scans use all of them.`,
+    `<b>Whitewater</b> = "active" zone pixels within 150 m of "land" pixels, × pixel area. 1 football field = 5,351 m².`,
+    `<b>Boat tracks</b> are SeaSignals' automatic detections ("auto-derived · not a survey product"). Treat them as moving targets, not a vessel census.`,
+    `<b>Buoy numbers</b> come from the <a href="${esc((C.buoy||{}).url)}">${esc((C.buoy||{}).label||'buoy')}</a>, matched to each scan within 75 minutes. The buoy's wind is estimated from its waves.`,
+    `<b>Wave rhythm (experimental):</b> for patches of sea that light up often, the flicker of the echo over the 5 minutes is turned into a frequency spectrum. A peak between 4 and 16 s is shown only when it stands at least 2.2× above the flat background noise.`,
+    `<b>Tides:</b> NOAA predictions for ${esc(C.tide_station_name||'the nearest station')}, in ${'feet above MLLW (mean lower low water)'}.`,
+    `<b>Use it in Google Sheets:</b> <code>=IMPORTDATA("${repo}data/collects.csv")</code>`,
+    `<b>Times</b> are US Eastern on this page and UTC in the CSV files.`,
+  ];
+  $('about').innerHTML=li.map(x=>`<li>${x}</li>`).join('');
+  $('foot').innerHTML=`Updated ${esc(fmtTime(D.generated_utc))} · ${D.n_scans.toLocaleString()} scans measured${D.first_utc?` since ${esc(fmtTime(D.first_utc,{hour:undefined,minute:undefined,year:'numeric'}))}`:''}. Radar: ${esc(C.radar_model||'')} by SeaSignals Technology via CUMULUS (Coastal Measures), sponsored by the University of New England. Not for navigation.`;
+})();
+
+/* ---------------- units, theme, refresh ---------------- */
+function drawAll(){ renderTiles(); drawTimeline(); drawScatter(); drawHours(); drawWhite(); drawDiary(); drawRhythm(); }
+function setUnit(u){ unit=u; try{localStorage.setItem('buoy-unit',u);}catch(e){} $('u-ft').setAttribute('aria-pressed',u==='ft'); $('u-m').setAttribute('aria-pressed',u==='m'); drawAll(); }
+$('u-ft').onclick=()=>setUnit('ft'); $('u-m').onclick=()=>setUnit('m');
+$('theme').onclick=()=>{ const r=document.documentElement; const dark=matchMedia('(prefers-color-scheme: dark)').matches;
+  const cur=r.dataset.theme||(dark?'dark':'light'); r.dataset.theme=cur==='dark'?'light':'dark'; try{localStorage.setItem('buoy-theme',r.dataset.theme);}catch(e){} drawAll(); };
+try{ const th=localStorage.getItem('buoy-theme'); if(th) document.documentElement.dataset.theme=th; }catch(e){}
+$('u-ft').setAttribute('aria-pressed',unit==='ft'); $('u-m').setAttribute('aria-pressed',unit==='m');
+try { initMap(); renderStrip(); initBoats(); } catch(e) { console.error(e); }
+drawAll();
+setInterval(renderTiles, 60000);
+setInterval(async()=>{ try{ const j=await (await fetch('data/latest.json',{cache:'no-store'})).json();
+  if(j.generated_utc && j.generated_utc!==D.generated_utc) location.reload(); }catch(e){} }, 10*60000);
+</script>
+</body></html>

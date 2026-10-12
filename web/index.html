@@ -132,7 +132,7 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
         </div>
         <div id="map"></div>
         <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);padding:8px 12px 10px">
-          <span><span id="lg-wave"></span> Wave buoy</span><span><span id="lg-wq"></span> Water-quality buoy</span><span><span id="lg-wx"></span> Weather station</span><span><span id="lg-env"></span> Marsh / pond station</span>
+          <span><span id="lg-radar"></span> Wave radar</span><span><span id="lg-wave"></span> Wave buoy</span><span><span id="lg-wq"></span> Water-quality buoy</span><span><span id="lg-wx"></span> Weather station</span><span><span id="lg-env"></span> Marsh / pond station</span>
           <span>Click a buoy or a card to highlight it</span></div>
       </div>
       <div class="stations" id="stations"></div>
@@ -156,7 +156,7 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 
   <section>
     <details><summary>ℹ️ About this network</summary>
-      <p>Each station has its own detailed page that updates every hour: two <b>Sofar Spotter wave buoys</b> (waves, wind estimate, pressure, and Smart Mooring sensors) four <b>BlueSonde water-quality buoys</b> (temperature, salinity, dissolved oxygen, turbidity, and chlorophyll or tryptophan), two <b>weather stations</b> (Ram Island on the coast and the 363 Acre Woods inland, which also measures soil temperature and moisture), and two <b>marsh and pond stations</b> (Biddeford Pool salt marsh and Great Pond). Every page has a "What do these numbers mean?" guide. The complete raw archive is on <a href="https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy">UNE Box</a>. This page reads the latest numbers straight from those dashboards each time it loads and refreshes itself every 10 minutes.</p>
+      <p>Each station has its own detailed page that updates every hour: an <b>X-band wave radar</b> on Ram Island (an hourly 5-minute movie of the sea surface, boats and breaking waves), two <b>Sofar Spotter wave buoys</b> (waves, wind estimate, pressure, and Smart Mooring sensors) four <b>BlueSonde water-quality buoys</b> (temperature, salinity, dissolved oxygen, turbidity, and chlorophyll or tryptophan), two <b>weather stations</b> (Ram Island on the coast and the 363 Acre Woods inland, which also measures soil temperature and moisture), and two <b>marsh and pond stations</b> (Biddeford Pool salt marsh and Great Pond). Every page has a "What do these numbers mean?" guide. The complete raw archive is on <a href="https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy">UNE Box</a>. This page reads the latest numbers straight from those dashboards each time it loads and refreshes itself every 10 minutes.</p>
       <ul id="sitelist"></ul>
       <p>Wave data: Sofar Ocean. Water-quality data: BlueSonde via CUMULUS (Coastal Measures). Tide predictions: NOAA. Built and maintained by the University of New England.</p>
     </details>
@@ -168,6 +168,7 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 const SITES = [   // slug = folder under this site; keep in step with buoys.json
   {slug:'camp-ellis', name:'Camp Ellis', kind:'wave', lat:43.4727, lon:-70.36053, color:'#2a78d6'},
   {slug:'biddeford-pool', name:'Biddeford Pool', kind:'wave', lat:43.43761, lon:-70.34923, color:'#4a3aa7'},
+  {slug:'ram-island-radar', name:'Ram Island Radar', kind:'radar', lat:43.467048, lon:-70.356464, color:'#c81944'},
   {slug:'wood-island', name:'Wood Island', kind:'wq', lat:43.455593, lon:-70.317699, color:'#1baf7a'},
   {slug:'jordan-point', name:'Jordan Point', kind:'wq', lat:43.460893, lon:-70.389691, color:'#eb6834'},
   {slug:'ferry-beach', name:'Ferry Beach', kind:'wq', lat:43.497213, lon:-70.379113, color:'#e87ba4'},
@@ -177,7 +178,11 @@ const SITES = [   // slug = folder under this site; keep in step with buoys.json
   {slug:'biddeford-pool-marsh', name:'Biddeford Pool Marsh', kind:'env', lat:43.453479, lon:-70.372845, color:'#16a0a0'},
   {slug:'great-pond', name:'Great Pond', kind:'env', lat:43.443790, lon:-70.348578, color:'#b5559b'},
 ];
-const KINDS = {wave:'Wave buoy · Sofar Spotter', wq:'Water quality · BlueSonde', wx:'Weather station', env:'Marsh / pond station'};
+BUOY_SVG.radar = s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true">
+    <ellipse cx="20" cy="43" rx="10" ry="2.5" fill="#000" opacity=".2"/><path d="M20 22v21M20 43l-7 1M20 43l7 1" stroke="#4d5966" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="4" y="13" width="32" height="7" rx="3.5" fill="#c81944" stroke="#7a0e29" stroke-width="1.2"/><rect x="16" y="19" width="8" height="5" fill="#4d5966"/>
+    <path d="M9 8a16 16 0 0 1 22 0M12.5 11a11 11 0 0 1 15 0" fill="none" stroke="#c81944" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg>`;
+const KINDS = {radar:'Wave radar · SeaSignals X-band', wave:'Wave buoy · Sofar Spotter', wq:'Water quality · BlueSonde', wx:'Weather station', env:'Marsh / pond station'};
 const REPO = 'https://github.com/ekelting/UNE-Marine-Monitoring-Network';
 const BUOY_SVG = {
   wave: s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="40" rx="17" ry="4.5" fill="#1c5cab" opacity=".28"/>
@@ -266,7 +271,7 @@ function renderStations(){
   const el=document.getElementById('stations'); let h='';
   let lastGrp='';
   for (const s of SITES){
-    const grp = (s.kind==='wave'||s.kind==='wq') ? '🛟 Buoys in the water' : '🌦️ Weather, marsh & pond stations';
+    const grp = (s.kind==='wave'||s.kind==='wq'||s.kind==='radar') ? '🌊 Ocean: buoys & wave radar' : '🌦️ Weather, marsh & pond stations';
     if (grp!==lastGrp){ h += `<div class="grp">${grp}</div>`; lastGrp=grp; }
     const d=DATA[s.slug]; const [a,col]= d? ago(d.last_obs) : ['no data', css('--bad')];
     let vals='';
@@ -274,6 +279,10 @@ function renderStations(){
       if (s.kind==='wave'){ vals += vbox('Waves', Hs(n.hs_m)) + vbox('Period', fin(n.tp_s)? n.tp_s.toFixed(0):'—','s') + vbox('From', escH(n.wave_dir||'—'));
         if (fin(n.water_temp_c)) vals += vbox('Water', T(n.water_temp_c));
         if (fin(n.wind_ms)) vals += vbox('Wind*', unit==='us'? (n.wind_ms*2.23694).toFixed(0):(n.wind_ms).toFixed(1), unit==='us'?'mph':'m/s');
+      } else if (s.kind==='radar'){ const sp=n.sparkle_ring_pct, rk=(d.pct||{}).sparkle;
+        const look = !fin(rk)? '—' : rk<20?'Glassy':rk<45?'Gentle':rk<70?'Choppy':rk<90?'Rough':'Wild';
+        vals += vbox('Sea looks', look) + vbox('Sparkle', fin(sp)? sp.toFixed(1):'—', '%') + vbox('Boats', fin(n.n_tracks)? n.n_tracks.toFixed(0):'—')
+          + (fin(n.whitewater_m2)? vbox('Whitewater', (n.whitewater_m2/5351).toFixed(0), '🏈 fields') : '');
       } else if (s.kind==='wx'){ vals += vbox('Air', T(n.air_temp_c)) + vbox('Wind', Wd(n.wind_ms).split(' ')[0], unit==='us'?'mph':'m/s')
           + vbox('From', compass(n.wind_dir)||'—') + vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
         if (fin(n.rh_pct)) vals += vbox('Humidity', n.rh_pct.toFixed(0), '%');
@@ -300,10 +309,10 @@ function renderStations(){
   el.innerHTML=h;
   el.querySelectorAll('.st').forEach(c=>{ const f=()=>select(c.dataset.repo, true); c.onclick=f; c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); f();} }; });
   for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent) continue;
-    const key = s.kind==='wave' ? 'hs_m' : s.kind==='wx' ? 'air_temp_c' : (d.recent.water_temp_c ? 'water_temp_c' : 'air_temp_c'), conv = s.kind==='wave' ? Hn : Tn;
+    const key = s.kind==='radar' ? 'sparkle_ring_pct' : s.kind==='wave' ? 'hs_m' : s.kind==='wx' ? 'air_temp_c' : (d.recent.water_temp_c ? 'water_temp_c' : 'air_temp_c'), conv = s.kind==='wave' ? Hn : s.kind==='radar' ? (v=>v) : Tn;
     const t=d.recent.t.slice(-168), y=(d.recent[key]||[]).slice(-168).map(conv);
     Plotly.react('sp-'+s.slug.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
-      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':key==='air_temp_c'?'air temp':'water temp')+'</extra>'}],
+      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):s.kind==='radar'?'%':(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':s.kind==='radar'?'sea sparkle %':key==='air_temp_c'?'air temp':'water temp')+'</extra>'}],
       {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false},yaxis:{visible:false,
        range: (()=>{const v=y.filter(fin); if(!v.length) return undefined; const lo=Math.min(...v), hi=Math.max(...v); return [lo-(hi-lo)*.15, hi+(hi-lo)*.1+1e-6];})()},showlegend:false},
       {displayModeBar:false,responsive:true,staticPlot:false});
@@ -322,6 +331,7 @@ function labelText(s){ const n=(DATA[s.slug]||{}).now||{}; let v='';
   return escH(s.name) + (v? ` · <span class="val">${v}</span>`:''); }
 function popupHtml(s){ const d=DATA[s.slug]; const n=(d||{}).now||{};
   const rows = s.kind==='wave' ? [['Waves',Hs(n.hs_m)],['Period',fin(n.tp_s)?n.tp_s.toFixed(0)+' s':'—'],['From',n.wave_dir||'—'],['Water',T(n.water_temp_c)]]
+    : s.kind==='radar' ? [['Sea sparkle',fin(n.sparkle_ring_pct)?n.sparkle_ring_pct.toFixed(1)+'% of open water':'—'],['Boats in last scan',fin(n.n_tracks)?n.n_tracks.toFixed(0):'—']]
     : s.kind==='wx' ? [['Air',T(n.air_temp_c)],['Wind',Wd(n.wind_ms)+(fin(n.wind_dir)?' from the '+compass(n.wind_dir):'')],['Humidity',fin(n.rh_pct)?n.rh_pct.toFixed(0)+'%':'—'],['Rain, last 24 h',Rs(n.rain_24h_mm)]]
     : s.kind==='env' ? [['Water level',Lv(n.water_level_m)],['Water',T(n.water_temp_c)],...(fin(n.do_mgl)?[['Oxygen',n.do_mgl.toFixed(1)+' mg/L'],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—']]:[['Air',T(n.air_temp_c)]])]
     : [['Water',T(n.water_temp_c)],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—'],['Oxygen',fin(n.do_mgl)?n.do_mgl.toFixed(1)+' mg/L':'—'],['Turbidity',fin(n.turb_ntu)?n.turb_ntu.toFixed(1)+' NTU':'—']];
@@ -393,7 +403,7 @@ function renderAll(){
   document.getElementById('u-us').setAttribute('aria-pressed', unit==='us'); document.getElementById('u-si').setAttribute('aria-pressed', unit==='si');
   document.getElementById('maplabel').value = labelMode;
 }
-for (const k of ['wave','wq','wx','env']) document.getElementById('lg-'+k).innerHTML = BUOY_SVG[k](16);
+for (const k of ['radar','wave','wq','wx','env']) document.getElementById('lg-'+k).innerHTML = BUOY_SVG[k](16);
 document.querySelectorAll('[id^="lg-"] svg').forEach(s=>s.style.verticalAlign='middle');
 document.getElementById('sitelist').innerHTML = SITES.map(s=>`<li><a href="./${s.slug}/">${escH(s.name)}</a> — ${s.kind==='wave'?'wave buoy':'water-quality buoy'} (<a href="${REPO}/tree/main/buoys/${s.slug}">code &amp; raw data</a>)</li>`).join('');
 document.getElementById('foot').innerHTML = `Live from ${SITES.length} buoy dashboards · <a href="https://github.com/ekelting/UNE-Marine-Monitoring-Network">ekelting/UNE-Marine-Monitoring-Network</a> on GitHub`;

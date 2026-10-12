@@ -175,6 +175,13 @@
       "lon": -70.3492272
     },
     {
+      "label": "Ram Island Radar",
+      "kind": "radar",
+      "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/ram-island-radar/",
+      "lat": 43.467048,
+      "lon": -70.356464
+    },
+    {
       "label": "Wood Island",
       "kind": "wq",
       "url": "https://ekelting.github.io/UNE-Marine-Monitoring-Network/wood-island/",

@@ -18,6 +18,15 @@
     "legacy_repo": "UNE-Biddeford-Pool-SPOT-32905C"
   },
   {
+    "slug": "ram-island-radar",
+    "kind": "radar",
+    "name": "Ram Island Radar",
+    "lat": 43.467048,
+    "lon": -70.356464,
+    "color": "#c81944",
+    "legacy_repo": null
+  },
+  {
     "slug": "wood-island",
     "kind": "wq",
     "name": "Wood Island",

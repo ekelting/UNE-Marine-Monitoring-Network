@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CODE = {'wave': 'wave', 'wq': 'sonde', 'station': 'station'}
+CODE = {'wave': 'wave', 'wq': 'sonde', 'station': 'station', 'radar': 'radar'}
 
 
 def main():
