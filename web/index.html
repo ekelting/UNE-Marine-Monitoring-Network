@@ -261,7 +261,7 @@ async function load(){
 function val(s, k){ const d=DATA[s.slug]; return d && d.now ? d.now[k] : null; }
 
 function renderKPIs(){
-  const live = SITES.filter(s=>DATA[s.slug]);
+  const live = SITES.filter(s=>DATA[s.slug] && Date.now()-Date.parse(DATA[s.slug].last_obs) < 6*3600e3);   // "now" numbers only from stations heard from in the last 6 h
   const by = (k, pick) => { const xs=live.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
   const wlive = live.filter(s=>s.kind==='wave'||s.kind==='wq'), byw = (k, pick) => { const xs=wlive.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
   const warm=byw('water_temp_c',(a,b)=>a>=b), cold=byw('water_temp_c',(a,b)=>a<=b), big=by('hs_m',(a,b)=>a>=b),
@@ -277,7 +277,7 @@ function renderKPIs(){
                   air===aircold? `at <b>${escH(air.name)}</b>` : `coolest <b>${escH(aircold.name)}</b> · warmest <b>${escH(air.name)}</b>`);
   if (windy) h += k('💨','Wind now', Wd(val(windy,'wind_ms')), `at <b>${escH(windy.name)}</b>${fin(val(windy,'gust_ms'))?' · gusting '+Wd(val(windy,'gust_ms')):''}${fin(val(windy,'wind_dir'))?' from the '+compass(val(windy,'wind_dir')):''}`);
   if (wet) h += k('🌧️','Rain, last 24 h', Rs(val(wet,'rain_24h_mm')), `most at <b>${escH(wet.name)}</b>`);
-  const fresh3 = live.filter(s=>Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length;
+  const fresh3 = SITES.filter(s=>DATA[s.slug] && Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length;
   h += k('📡','Stations reporting', `${fresh3} / ${SITES.length}`, 'sent data in the last 3 hours');
   document.getElementById('kpis').innerHTML = h;
 }
