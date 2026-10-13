@@ -38,7 +38,6 @@ _PAL = np.array(FRAME_PALETTE, dtype=np.int32)
 _PAL_KEYS = (_PAL[:, 0] << 16) | (_PAL[:, 1] << 8) | _PAL[:, 2]
 
 ZONE_LAND, ZONE_ACTIVE, ZONE_SEA, ZONE_SEA_RETURN, ZONE_SHADOW = 1, 2, 3, 4, 5
-FOOTBALL_FIELD_M2 = 5351.0          # US football field incl. end zones (360 ft × 160 ft)
 
 
 # ------------------------------------------------------------------ HTTP --

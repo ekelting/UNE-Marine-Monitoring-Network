@@ -298,7 +298,7 @@ function renderStations(){
       } else if (s.kind==='radar'){ const sp=n.sparkle_ring_pct, rk=(d.pct||{}).sparkle;
         const look = !fin(rk)? '—' : rk<20?'Glassy':rk<45?'Gentle':rk<70?'Choppy':rk<90?'Rough':'Wild';
         vals += vbox('Sea looks', look) + vbox('Sparkle', fin(sp)? sp.toFixed(1):'—', '%') + vbox('Boats', fin(n.n_tracks)? n.n_tracks.toFixed(0):'—')
-          + (fin(n.whitewater_m2)? vbox('Whitewater', (n.whitewater_m2/5351).toFixed(0), '🏈 fields') : '');
+          + (fin(n.whitewater_m2)? vbox('Whitewater', (unit==='us'? n.whitewater_m2/4046.86 : n.whitewater_m2/10000).toFixed(0), unit==='us'?'acres':'ha') : '');
       } else if (s.kind==='wx'){ vals += vbox('Air', T(n.air_temp_c)) + vbox('Wind', Wd(n.wind_ms).split(' ')[0], unit==='us'?'mph':'m/s')
           + vbox('From', compass(n.wind_dir)||'—') + vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
         if (fin(n.rh_pct)) vals += vbox('Humidity', n.rh_pct.toFixed(0), '%');

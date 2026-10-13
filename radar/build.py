@@ -243,8 +243,8 @@ def insights(df, tracks, buoy_ok):
     if 'whitewater_m2' in ok and ok['whitewater_m2'].notna().any():
         top = ok.loc[ok['whitewater_m2'].idxmax()]
         cards.append(('💥', 'Biggest whitewater day so far',
-                      f'{top["t"].tz_convert(TZ):%B %-d at %-I %p}: about {top["whitewater_m2"] / core.FOOTBALL_FIELD_M2:.0f} '
-                      'football fields of churning, breaking water along the shore.'))
+                      f'{top["t"].tz_convert(TZ):%B %-d at %-I %p}: about {top["whitewater_m2"] / 4046.86:.0f} acres '
+                      f'({top["whitewater_m2"] / 10000:.0f} hectares) of churning, breaking water along the shore.'))
     if 'radar_period_q' in ok:
         good = ok[ok['radar_period_q'] >= 2.2]
         if len(good):
