@@ -98,6 +98,52 @@ E = {
                 'How fast and in which direction the water itself is moving, measured below the buoy.',
                 'Currents carry larvae, nutrients, sediment and pollution, and matter for swimmers and boaters.',
                 'Tidal currents here typically reach a few tenths of a knot; 10 cm/s ≈ 0.2 knots.'),
+    # ---------------- wave radar ----------------
+    'radar_scan': ('📡', 'Scans and sweeps',
+                   'The radar antenna spins about once every 1.3 seconds; each turn is one "sweep" — a single radar picture of everything '
+                   'within about 2.7 km (1.7 miles). About once an hour the radar records a "scan": roughly 229 sweeps in a row, a 5-minute movie '
+                   'of the sea surface.',
+                   'Watching the same water for 5 minutes lets the radar tell what stays still (land, rocks, moorings) from what moves (waves, '
+                   'breaking surf, boats) — day or night, in fog or rain.',
+                   'One scan ≈ every hour. Gaps in the "Radar diary" chart mean the radar was offline or being serviced.'),
+    'radar_rough': ('🌬️', 'Surface roughness (radar echo)',
+                    'The share of nearby open water (300–1,500 m from the radar) that bounces the radar signal back on a typical sweep. '
+                    'The radar\'s microwaves are about 3 cm long — the size of tiny wind ripples. Ripples scatter the signal back to the radar, so '
+                    'rough, wind-blown water shows up bright; flat, glassy water reflects the signal away like a mirror and looks dark.',
+                    'It shows how wind-roughened the whole bay surface is, not just one spot — a picture between the buoys, at night and in fog. '
+                    'It rises with wind first, and with waves as they build.',
+                    'Shown as a rank against every scan this radar has taken: Glassy (calmest 15%), Gentle, Choppy, Rough, Wild (roughest 10%). '
+                    'The raw % depends on the radar\'s settings, so only compare it with this radar — and it is not a wave height.'),
+    'radar_motion': ('🎨', 'Motion',
+                     'How much each spot\'s radar echo changes during the 5-minute scan. Moving water flickers constantly; land and rocks barely change.',
+                     'Motion is how the radar maps where the water is active, and it feeds the "Zones" map and the whitewater measurement.',
+                     'On the Motion map, warm colours = lots of change (waves, surf, boats); cool or clear = steady (land, sheltered water).'),
+    'radar_zones': ('🗺️', 'Zones',
+                    'SeaSignals sorts every spot the radar can see into land, open sea, "active" water (bright and moving — like breaking waves), '
+                    'and shadow (places hidden behind islands or the shore, which the radar cannot see).',
+                    'The zones decide which pixels count as "open water" for surface roughness and which count as breaking water near the shore.',
+                    'Shadows are normal: radar travels in straight lines, so it cannot see behind Ram Island or headlands.'),
+    'radar_white': ('💥', 'Whitewater',
+                    'The area of "active" water within 150 m (500 ft) of the shoreline — mostly breaking, churning surf. Shown in square metres or '
+                    'square feet.',
+                    'Breaking waves are what move sand and erode beaches and dunes, so more whitewater along the shore means more work being done on the coast. '
+                    'It also tracks surf conditions.',
+                    'Rises with wave height and changes with the tide: some sandbars and ledges only break at low water. Boat wakes near shore can add a little.'),
+    'radar_boats': ('🚤', 'Moving targets (boats)',
+                    'Things the radar followed from sweep to sweep during a scan — usually boats. Speed is in knots (1 knot ≈ 1.15 mph ≈ 0.51 m/s).',
+                    'Shows how busy the bay is, when, and along which routes ("boat highways").',
+                    'The tracker is automatic, so a track is "probably a boat": occasionally a bird flock, a big wave crest or a buoy swinging on its mooring.'),
+    'radar_rhythm': ('🎵', 'Wave rhythm from radar (experimental)',
+                     'When the sea is rough, each patch of water flickers on radar in time with the waves passing through. Timing that flicker gives an '
+                     'estimate of the wave period — seconds between wave crests.',
+                     'If it works, a radar could measure waves over a whole area, not just at a single buoy.',
+                     'Only shown when the flicker signal is clear enough (quality ≥ 2.2) — usually in rougher seas. Compare it with the buoy\'s period: '
+                     'dots on the dashed line mean a perfect match.'),
+    'radar_vs_buoy': ('🤝', 'Checking the radar against the buoy',
+                      'The Camp Ellis wave buoy sits about 700 m (2,300 ft) from the radar, inside its view. Every hour we pair the radar scan with '
+                      'the buoy\'s wave height and wind, and measure how closely they rise and fall together ("r", the correlation).',
+                      'If the radar\'s roughness follows the buoy, we can trust it to describe the rest of the bay where there is no buoy.',
+                      'r = +1: in perfect step. Around 0.5: clearly related. Near 0: unrelated.'),
     # ---------------- weather & land ----------------
     'air_temp': ('🌡️', 'Air temperature',
                  'How warm the air is, measured in a shaded, ventilated shield about 2 m (6 ft) above the ground.',

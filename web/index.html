@@ -297,8 +297,9 @@ function renderStations(){
         if (fin(n.wind_ms)) vals += vbox('Wind*', unit==='us'? (n.wind_ms*2.23694).toFixed(0):(n.wind_ms).toFixed(1), unit==='us'?'mph':'m/s');
       } else if (s.kind==='radar'){ const sp=n.sparkle_ring_pct, rk=(d.pct||{}).sparkle;
         const look = !fin(rk)? '—' : rk<20?'Glassy':rk<45?'Gentle':rk<70?'Choppy':rk<90?'Rough':'Wild';
-        vals += vbox('Sea looks', look) + vbox('Sparkle', fin(sp)? sp.toFixed(1):'—', '%') + vbox('Boats', fin(n.n_tracks)? n.n_tracks.toFixed(0):'—')
-          + (fin(n.whitewater_m2)? vbox('Whitewater', (unit==='us'? n.whitewater_m2/4046.86 : n.whitewater_m2/10000).toFixed(0), unit==='us'?'acres':'ha') : '');
+        const ww = fin(n.whitewater_m2) ? (unit==='us'? n.whitewater_m2*10.7639 : n.whitewater_m2) : null;
+        vals += vbox('Surface', look) + vbox('Radar echo', fin(sp)? sp.toFixed(1):'—', '%') + vbox('Boats', fin(n.n_tracks)? n.n_tracks.toFixed(0):'—')
+          + (fin(ww)? vbox('Whitewater', ww>=1e6 ? (ww/1e6).toFixed(1)+'M' : Math.round(ww).toLocaleString(), unit==='us'?'ft²':'m²') : '');
       } else if (s.kind==='wx'){ vals += vbox('Air', T(n.air_temp_c)) + vbox('Wind', Wd(n.wind_ms).split(' ')[0], unit==='us'?'mph':'m/s')
           + vbox('From', compass(n.wind_dir)||'—') + vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
         if (fin(n.rh_pct)) vals += vbox('Humidity', n.rh_pct.toFixed(0), '%');
@@ -329,7 +330,7 @@ function renderStations(){
     const key = s.kind==='radar' ? 'sparkle_ring_pct' : s.kind==='wave' ? 'hs_m' : s.kind==='wx' ? 'air_temp_c' : (d.recent.water_temp_c ? 'water_temp_c' : 'air_temp_c'), conv = s.kind==='wave' ? Hn : s.kind==='radar' ? (v=>v) : Tn;
     const t=d.recent.t.slice(-168), y=(d.recent[key]||[]).slice(-168).map(conv);
     Plotly.react('sp-'+s.slug.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
-      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):s.kind==='radar'?'%':(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':s.kind==='radar'?'sea sparkle %':key==='air_temp_c'?'air temp':'water temp')+'</extra>'}],
+      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):s.kind==='radar'?'%':(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':s.kind==='radar'?'radar roughness %':key==='air_temp_c'?'air temp':'water temp')+'</extra>'}],
       {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false},yaxis:{visible:false,
        range: (()=>{const v=y.filter(fin); if(!v.length) return undefined; const lo=Math.min(...v), hi=Math.max(...v); return [lo-(hi-lo)*.15, hi+(hi-lo)*.1+1e-6];})()},showlegend:false},
       {displayModeBar:false,responsive:true,staticPlot:false});
@@ -348,7 +349,7 @@ function labelText(s){ const n=(DATA[s.slug]||{}).now||{}; let v='';
   return escH(s.name) + (v? ` · <span class="val">${v}</span>`:''); }
 function popupHtml(s){ const d=DATA[s.slug]; const n=(d||{}).now||{};
   const rows = s.kind==='wave' ? [['Waves',Hs(n.hs_m)],['Period',fin(n.tp_s)?n.tp_s.toFixed(0)+' s':'—'],['From',n.wave_dir||'—'],['Water',T(n.water_temp_c)]]
-    : s.kind==='radar' ? [['Sea sparkle',fin(n.sparkle_ring_pct)?n.sparkle_ring_pct.toFixed(1)+'% of open water':'—'],['Boats in last scan',fin(n.n_tracks)?n.n_tracks.toFixed(0):'—']]
+    : s.kind==='radar' ? [['Surface roughness',fin(n.sparkle_ring_pct)?n.sparkle_ring_pct.toFixed(1)+'% of open water echoes the radar':'—'],['Boats in last scan',fin(n.n_tracks)?n.n_tracks.toFixed(0):'—']]
     : s.kind==='wx' ? [['Air',T(n.air_temp_c)],['Wind',Wd(n.wind_ms)+(fin(n.wind_dir)?' from the '+compass(n.wind_dir):'')],['Humidity',fin(n.rh_pct)?n.rh_pct.toFixed(0)+'%':'—'],['Rain, last 24 h',Rs(n.rain_24h_mm)]]
     : s.kind==='env' ? [['Water level',Lv(n.water_level_m)],['Water',T(n.water_temp_c)],...(fin(n.do_mgl)?[['Oxygen',n.do_mgl.toFixed(1)+' mg/L'],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—']]:[['Air',T(n.air_temp_c)]])]
     : [['Water',T(n.water_temp_c)],['Salinity',fin(n.sal_psu)?n.sal_psu.toFixed(1)+' PSU':'—'],['Oxygen',fin(n.do_mgl)?n.do_mgl.toFixed(1)+' mg/L':'—'],['Turbidity',fin(n.turb_ntu)?n.turb_ntu.toFixed(1)+' NTU':'—']];

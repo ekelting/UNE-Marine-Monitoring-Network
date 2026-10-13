@@ -107,6 +107,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 .segctl button[aria-pressed="true"]{color:#14304d;opacity:1}
 .segctl .knob{position:absolute;z-index:0;top:3px;bottom:3px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .25s ease,width .25s ease}
 @media (prefers-reduced-motion:reduce){.segctl .knob{transition:none}}
+%%EXCSS%%
+a.ti{text-decoration:none;font-size:12px;opacity:.75;margin-left:2px;color:inherit}
 </style></head>
 <body>
 <header class="hero"><div class="sweep" aria-hidden="true"></div><div class="wrap">
@@ -161,8 +163,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers. It changes as new scans arrive.</p>
     <div class="grid insights" id="cards"></div></section>
 
-  <section><h2>📈 Radar sparkle vs. the waves and wind</h2>
-    <p class="lede">Top: how much of the open water lit up on radar. Middle and bottom: waves and wind measured at the Camp Ellis buoy. When the wind blows, the radar sparkles. Drag across the chart to zoom; double-click to reset.</p>
+  <section><h2>📈 Radar roughness vs. the waves and wind</h2>
+    <p class="lede">Top: how much of the open water bounced the radar signal back (surface roughness). Middle and bottom: waves and wind measured at the Camp Ellis buoy. When the wind picks up, the water gets rougher and more of it shows up on radar. Drag across the chart to zoom; double-click to reset.</p>
     <div class="card"><div id="timeline" class="chart" style="min-height:520px"></div></div></section>
 
   <section class="grid two">
@@ -182,7 +184,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   </section>
 
   <section class="grid two">
-    <div><h2>💥 Whitewater &amp; the tide</h2><p class="lede">How much breaking, churning water the radar sees along the shore, in acres (or hectares), with the tide drawn behind it.</p>
+    <div><h2>💥 Whitewater &amp; the tide</h2><p class="lede">How much breaking, churning water the radar sees along the shore, in square feet (or square metres), with the tide drawn behind it.</p>
       <div class="card"><div id="white" class="chart"></div></div></div>
     <div><h2>📅 Radar diary</h2><p class="lede">How many scans the radar delivered each day. Gaps mean it was offline or being serviced.</p>
       <div class="card"><div id="diary" class="chart"></div></div></div>
@@ -197,24 +199,14 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
       <div class="card step"><div class="n">📡</div><h4>1. Spin and ping</h4><p>The antenna spins about once every 1.3 seconds, firing short microwave pulses. "X-band" means the microwaves are about 3 cm long, roughly the size of a wind ripple.</p></div>
       <div class="card step"><div class="n">〰️</div><h4>2. Ripples bounce it back</h4><p>Tiny wind ripples act like millions of little mirrors that send the pulse back to the radar. Bigger waves tilt and hide those ripples, which makes bright and dark stripes. A glassy calm sea reflects the beam away like a mirror, so it looks black.</p></div>
       <div class="card step"><div class="n">🎞️</div><h4>3. Make a movie</h4><p>Each hourly scan stacks 229 sweeps into a 5-minute movie. Things that stay put (land, rocks, moorings) are land; things that move are water and boats.</p></div>
-      <div class="card step"><div class="n">🧮</div><h4>4. Turn pictures into numbers</h4><p>This page measures every scan: how much the sea sparkles, how much it moves, where water is breaking, and what's moving fast. Then it checks those numbers against the wave buoy next door.</p></div>
+      <div class="card step"><div class="n">🧮</div><h4>4. Turn pictures into numbers</h4><p>This page measures every scan: how rough the water surface is, how much it moves, where water is breaking, and what's moving fast. Then it checks those numbers against the wave buoy next door.</p></div>
     </div>
   </section>
 
+  %%EXPLAIN%%
+
   <section>
-    <details><summary>📖 Glossary: what do these words mean?</summary><dl>
-      <dt>Scan</dt><dd>One 5-minute burst of radar sweeps, recorded about once an hour. CUMULUS calls it a "collect".</dd>
-      <dt>Sweep</dt><dd>One full turn of the antenna: a single radar picture. A scan has about 229 of them.</dd>
-      <dt>✨ Sea sparkle</dt><dd>The share of open water that lit up on an average sweep, measured in a ring 300–1,500 m from the radar. More wind → more ripples → more sparkle. It's a relative index, not a wave height.</dd>
-      <dt>Rougher than X%</dt><dd>Where today's sparkle ranks among every scan this radar has taken. 90% means rougher-looking than 9 out of 10 scans.</dd>
-      <dt>🎨 Motion</dt><dd>How much each spot's echo changed during the 5 minutes. Open water flickers constantly; land barely changes.</dd>
-      <dt>💥 Whitewater</dt><dd>Water that's bright <i>and</i> moving within 150 m of the shore: mostly breaking surf. (Boat wakes near shore can count too.)</dd>
-      <dt>🚤 Moving target / track</dt><dd>Something the radar followed from sweep to sweep, usually a boat. The tracker is automatic, so it's "probably a boat", not a guaranteed one.</dd>
-      <dt>Knot (kn)</dt><dd>Nautical speed: 1 knot ≈ 1.15 mph ≈ 0.51 m/s.</dd>
-      <dt>Wave height</dt><dd>From the Camp Ellis buoy: the average height of the biggest third of the waves, from trough to crest.</dd>
-      <dt>Wave period / rhythm</dt><dd>Seconds between wave crests. Short = local wind chop. Long (10 s+) = swell from far away.</dd>
-      <dt>r (correlation)</dt><dd>How tightly two things rise and fall together: +1 = in perfect step, 0 = unrelated, −1 = opposites.</dd>
-    </dl></details>
+
     <details><summary>ℹ️ About this data &amp; how it's processed</summary><ul id="about"></ul></details>
   </section>
   <footer id="foot"></footer>
@@ -238,8 +230,9 @@ const H = (m) => m==null ? null : (unit==='ft' ? m*M2FT : m);
 const Hu = () => unit==='ft' ? 'ft' : 'm';
 const W = (ms) => ms==null ? null : (unit==='ft' ? ms*MS2MPH : ms);
 const Wu = () => unit==='ft' ? 'mph' : 'm/s';
-const A = (m2) => m2==null ? null : (unit==='ft' ? m2/4046.86 : m2/10000);      // area: acres or hectares
-const Au = () => unit==='ft' ? 'acres' : 'hectares';
+const A = (m2) => m2==null ? null : (unit==='ft' ? m2*10.7639 : m2);      // area: square feet or square metres
+const Au = () => unit==='ft' ? 'ft²' : 'm²';
+const Afmt = (m2) => { const v=A(m2); return v>=1e6 ? (v/1e6).toFixed(v>=1e7?0:1)+' million '+Au() : Math.round(v).toLocaleString()+' '+Au(); };
 const compass = (d) => d==null ? '' : ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(((d%360)+360)%360/22.5)%16];
 function vibe(p){ if(p==null) return ['🤔','Not sure yet']; if(p<15) return ['😴','Glassy']; if(p<40) return ['🙂','Gentle']; if(p<70) return ['🌬️','Choppy']; if(p<90) return ['🌊','Rough']; return ['⚡','Wild']; }
 const speedColor = (s) => s==null?'#94a3b8': s<3?'#38bdf8': s<8?'#22c55e': s<15?'#eab308': s<25?'#f97316':'#ef4444';
@@ -262,18 +255,18 @@ function renderTiles(){
   const age=(Date.now()-new Date(L.time_utc))/36e5;
   t.push(tile('🕒','Last radar scan', esc(ago(L.time_utc)), esc(fmtTime(L.time_utc))));
   const [ve,vw]=vibe(D.pct.sparkle);
-  t.push(tile(ve,'Sea sparkle', vw, D.pct.sparkle==null?'still learning what normal is':`rougher-looking than ${D.pct.sparkle}% of scans`));
+  t.push(tile(ve,'Surface roughness <a class="ti" href="#ex-radar_rough" title="What is this?">ⓘ</a>', vw, D.pct.sparkle==null?'still learning what normal is':`rougher than ${D.pct.sparkle}% of scans`));
   if(L.buoy_hs!=null) t.push(tile('🌊','Waves at the buoy', `${H(L.buoy_hs).toFixed(1)} ${Hu()}`, [L.buoy_tp?`every ${L.buoy_tp.toFixed(0)} s`:'', L.buoy_dm!=null?`from the ${compass(L.buoy_dm)}`:''].filter(Boolean).join(' · ')));
   if(L.buoy_wspd!=null) t.push(tile('🌬️','Wind at the buoy*', `${W(L.buoy_wspd).toFixed(0)} ${Wu()}`, '*estimated by the buoy'));
   t.push(tile('🚤','Moving targets', L.n_tracks==null?'—':String(L.n_tracks), L.max_speed_kn!=null?`fastest ${L.max_speed_kn.toFixed(0)} kn (${(L.max_speed_kn*1.15078).toFixed(0)} mph)`:'in the last scan'));
   if(L.whitewater_m2!=null){ const a=A(L.whitewater_m2), small=L.whitewater_m2<2500;
-    t.push(tile('💥','Whitewater', small?'barely any':`${a.toFixed(a<10?1:0)} ${Au()}`, small?'calm along the shore':`of breaking water along the shore`)); }
+    t.push(tile('💥','Whitewater <a class="ti" href="#ex-radar_white" title="What is this?">ⓘ</a>', small?'barely any':Afmt(L.whitewater_m2), small?'calm along the shore':`of breaking water along the shore`)); }
   const td=tide(); if(td){ const v= unit==='ft'? td.v : td.v/M2FT;
     t.push(tile(td.rising?'⬆️':'⬇️', `Tide (${td.rising?'rising':'falling'})`, `${v.toFixed(1)} ${Hu()}`, td.next?`${td.next.type==='H'?'high':'low'} at ${fmtTime(td.next.t,{month:undefined,day:undefined})}`:'')); }
   $('tiles').innerHTML=t.join('');
   const p=D.pct.sparkle; $('needle').style.left = `calc(${p==null?0:p}% - 2px)`; $('needle').style.display = p==null?'none':'';
   $('meter-txt').innerHTML = p==null ? 'Not enough scans yet to compare against.' :
-    `${ve} <b>${vw}.</b> In the latest scan ${L.sparkle_ring_pct!=null?L.sparkle_ring_pct.toFixed(1):'—'}% of the nearby open water lit up, which puts it rougher-looking than <b>${p}%</b> of the ${D.n_scans.toLocaleString()} scans so far.`;
+    `${ve} <b>${vw}.</b> In the latest scan ${L.sparkle_ring_pct!=null?L.sparkle_ring_pct.toFixed(1):'—'}% of the nearby open water bounced the radar back, which makes it rougher than <b>${p}%</b> of the ${D.n_scans.toLocaleString()} scans so far.`;
   if(age>3) $('stale').innerHTML = `<div class="banner">⚠️ The newest radar scan is ${esc(ago(L.time_utc))}. The radar may be offline or between deployments; this page updates on its own as soon as new scans arrive.</div>`;
   else if((D.state.last_errors||[]).length) $('stale').innerHTML = `<div class="banner">⚠️ The last hourly check had a hiccup reading some scans. They'll be retried automatically.</div>`;
 }
@@ -365,14 +358,14 @@ const TS=D.ts||{t:[]};
 function drawTimeline(){
   if(!TS.t.length) return empty('timeline','📭 No scans measured yet.');
   const x=TS.t, tr=[];
-  tr.push({x,y:TS.sparkle_ring_pct,type:'scatter',mode:'lines+markers',marker:{size:4},line:{color:css('--sparkle'),width:1.5},name:'Sparkle',yaxis:'y3',hovertemplate:'%{y:.1f}% of water lit<extra>✨ radar</extra>'});
+  tr.push({x,y:TS.sparkle_ring_pct,type:'scatter',mode:'lines+markers',marker:{size:4},line:{color:css('--sparkle'),width:1.5},name:'Roughness',yaxis:'y3',hovertemplate:'%{y:.1f}% of open water echoed<extra>🌬️ radar</extra>'});
   if(TS.buoy_hs) tr.push({x,y:TS.buoy_hs.map(H),type:'scatter',mode:'lines',line:{color:css('--wave'),width:2},yaxis:'y2',connectgaps:false,hovertemplate:`%{y:.1f} ${Hu()}<extra>🌊 buoy waves</extra>`});
   if(TS.buoy_wspd) tr.push({x,y:TS.buoy_wspd.map(W),type:'scatter',mode:'lines',line:{color:css('--wind'),width:2},yaxis:'y',hovertemplate:`%{y:.0f} ${Wu()}<extra>🌬️ buoy wind*</extra>`});
   const end=new Date(x[x.length-1]), start=new Date(end-7*864e5);
   Plotly.react('timeline',tr,theme({height:520,margin:{l:62,r:20,t:30,b:40},
     xaxis:{type:'date',range:[start,end],rangeselector:{buttons:[{count:2,label:'2 days',step:'day',stepmode:'backward'},{count:7,label:'week',step:'day',stepmode:'backward'},{step:'all',label:'60 days'}],
       bgcolor:css('--chip'),activecolor:css('--chip2'),font:{color:css('--ink')}}},
-    yaxis3:{domain:[0.70,1],title:{text:'✨ sparkle %'},rangemode:'tozero'},
+    yaxis3:{domain:[0.70,1],title:{text:'🌬️ radar echo %'},rangemode:'tozero'},
     yaxis2:{domain:[0.36,0.64],title:{text:`🌊 waves (${Hu()})`},rangemode:'tozero'},
     yaxis:{domain:[0,0.30],title:{text:`🌬️ wind (${Wu()})`},rangemode:'tozero'}}),CFGP);
 }
@@ -385,10 +378,10 @@ function drawScatter(){
   const c=(D.corr||{})[scKey]||{};
   const xl = scKey==='buoy_hs' ? `🌊 wave height at the buoy (${Hu()})` : `🌬️ wind at the buoy (${Wu()})`;
   Plotly.react('scatter',[{x:pts.map(p=>p[0]),y:pts.map(p=>p[1]),text:pts.map(p=>fmtTime(p[2])),type:'scatter',mode:'markers',
-    marker:{size:6,color:css('--sparkle'),opacity:.55},hovertemplate:'%{text}<br>%{x:.1f} → %{y:.1f}% sparkle<extra></extra>'}],
-    theme({height:330,xaxis:{title:{text:xl},rangemode:'tozero'},yaxis:{title:{text:'✨ radar sparkle (%)'},rangemode:'tozero'},
+    marker:{size:6,color:css('--sparkle'),opacity:.55},hovertemplate:'%{text}<br>%{x:.1f} → %{y:.1f}% radar echo<extra></extra>'}],
+    theme({height:330,xaxis:{title:{text:xl},rangemode:'tozero'},yaxis:{title:{text:'🌬️ radar roughness (% echo)'},rangemode:'tozero'},
       annotations:c.r!=null?[{xref:'paper',yref:'paper',x:0.02,y:0.98,xanchor:'left',showarrow:false,text:`<b>r = ${c.r>=0?'+':''}${c.r.toFixed(2)}</b> · ${c.word} linked · ${c.n} hours`,font:{size:13,color:css('--ink')},bgcolor:css('--card')}]:[]}),CFGP);
-  $('corr-lede').textContent = c.r!=null ? `Each dot is one hour. r = ${c.r.toFixed(2)}: the radar's sparkle is ${c.word} linked to the buoy's ${scKey==='buoy_hs'?'wave height':'wind'}.`
+  $('corr-lede').textContent = c.r!=null ? `Each dot is one hour. r = ${c.r.toFixed(2)}: the radar's roughness is ${c.word} linked to the buoy's ${scKey==='buoy_hs'?'wave height':'wind'}.`
     : 'Each dot is one hour. If the dots climb from left to right, the radar and the buoy agree.';
 }
 document.querySelectorAll('[data-sc]').forEach(b=>b.onclick=()=>{scKey=b.dataset.sc; document.querySelectorAll('[data-sc]').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawScatter();});
@@ -404,7 +397,7 @@ function drawWhite(){
   if(!TS.t.length || !TS.whitewater_m2) return empty('white','📭 No whitewater measurements yet.');
   const end=new Date(TS.t[TS.t.length-1]), start=new Date(end-7*864e5);
   const tr=[{x:TS.t,y:TS.whitewater_m2.map(v=>v==null?null:A(v)),type:'scatter',mode:'lines',fill:'tozeroy',line:{color:css('--radar'),width:1.5},
-    hovertemplate:'%{y:.1f} '+Au()+'<extra>💥 whitewater</extra>'}];
+    hovertemplate:'%{y:,.0f} '+Au()+'<extra>💥 whitewater</extra>'}];
   if((D.tide||[]).length) tr.unshift({x:D.tide.map(p=>p.t),y:D.tide.map(p=>unit==='ft'?p.v:p.v/M2FT),yaxis:'y2',type:'scatter',mode:'lines',
     line:{color:css('--tide'),width:1.5,dash:'dot'},hovertemplate:`%{y:.1f} ${Hu()}<extra>🌙 tide</extra>`});
   Plotly.react('white',tr,theme({height:330,margin:{l:56,r:56,t:16,b:44},xaxis:{type:'date',range:[start,end]},
@@ -442,8 +435,8 @@ function initBoats(){
   const repo = C.site_url || (C.github_user&&C.github_repo ? `https://${C.github_user}.github.io/${C.github_repo}/` : '');
   const li=[
     `<b>Where the data comes from:</b> the public <a href="${esc(C.cumulus_url)}">CUMULUS page</a> for this ${esc(C.radar_model||'radar')}. SeaSignals Technology processes each scan into the snapshot, motion map, zones and boat tracks; this page measures them. It checks for new scans every hour.`,
-    `<b>Sea sparkle</b> is the average share of open-water pixels (from the Zones map) that show any echo on each sweep, measured 300–1,500 m from the radar. Older scans were measured from 24 evenly spaced sweeps; new scans use all of them.`,
-    `<b>Whitewater</b> = "active" zone pixels within 150 m of "land" pixels, × pixel area. 1 acre = 4,047 m²; 1 hectare = 10,000 m².`,
+    `<b>Surface roughness</b> ("sparkle_ring_pct" in the data) is the average share of open-water pixels (from the Zones map) that show any echo on each sweep, measured 300–1,500 m from the radar. Older scans were measured from 24 evenly spaced sweeps; new scans use all of them.`,
+    `<b>Whitewater</b> = "active" zone pixels within 150 m of "land" pixels, × pixel area. 1 m² = 10.76 ft².`,
     `<b>Boat tracks</b> are SeaSignals' automatic detections ("auto-derived · not a survey product"). Treat them as moving targets, not a vessel census.`,
     `<b>Buoy numbers</b> come from the <a href="${esc((C.buoy||{}).url)}">${esc((C.buoy||{}).label||'buoy')}</a>, matched to each scan within 75 minutes. The buoy's wind is estimated from its waves.`,
     `<b>Wave rhythm (experimental):</b> for patches of sea that light up often, the flicker of the echo over the 5 minutes is turned into a frequency spectrum. A peak between 4 and 16 s is shown only when it stands at least 2.2× above the flat background noise.`,

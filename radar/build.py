@@ -177,6 +177,12 @@ def attach_buoy(df, buoy):
     return m
 
 
+def area_txt(m2):
+    """'12,300 ft² (1,140 m²)' — big areas in millions."""
+    f = lambda v, u: (f'{v / 1e6:.1f} million {u}' if v >= 1e6 else f'{v:,.0f} {u}')  # noqa: E731
+    return f'{f(m2 * 10.7639, "ft²")} ({f(m2, "m²")})'
+
+
 def pct_rank(series, x):
     s = series.dropna()
     if len(s) < 10 or x is None or pd.isna(x):
@@ -237,14 +243,13 @@ def insights(df, tracks, buoy_ok):
             if r2 is not None:
                 parts.append(f'wave height (r = {r2:+.2f}, {describe_r(r2)} linked)')
             cards.append(('🤝', 'Does the radar agree with the buoy?',
-                          'We compared how much the sea "sparkles" on radar with the Camp Ellis buoy, 700 m away, using '
-                          f'{max(n, n2):,} matching hours. Sparkle vs ' + ' and '.join(parts) + '. '
+                          'We compared the radar\'s surface roughness (how much of the water bounces the radar back) with the Camp Ellis buoy, 700 m away, using '
+                          f'{max(n, n2):,} matching hours. Roughness vs ' + ' and '.join(parts) + '. '
                           'Radar sees wind ripples best, so wind usually wins.'))
     if 'whitewater_m2' in ok and ok['whitewater_m2'].notna().any():
         top = ok.loc[ok['whitewater_m2'].idxmax()]
         cards.append(('💥', 'Biggest whitewater day so far',
-                      f'{top["t"].tz_convert(TZ):%B %-d at %-I %p}: about {top["whitewater_m2"] / 4046.86:.0f} acres '
-                      f'({top["whitewater_m2"] / 10000:.0f} hectares) of churning, breaking water along the shore.'))
+                      f'{top["t"].tz_convert(TZ):%B %-d at %-I %p}: about {area_txt(top["whitewater_m2"])} of churning, breaking water along the shore.'))
     if 'radar_period_q' in ok:
         good = ok[ok['radar_period_q'] >= 2.2]
         if len(good):
@@ -354,6 +359,25 @@ def main():
     blob = json.dumps(D, separators=(',', ':'), default=str).replace('</', '<\\/')
     sys.path.insert(0, os.path.join(core.HERE, '..', 'shared'))
     import mapjs
+    import explain
+    here = {}
+    if len(ok):
+        n_days = max(1, (ok['t'].max() - ok['t'].min()).days)
+        here['radar_scan'] = f'{len(ok):,} scans measured so far, over {n_days} day{"s" if n_days != 1 else ""}.'
+        if 'sparkle_ring_pct' in ok and ok['sparkle_ring_pct'].notna().any():
+            q = ok['sparkle_ring_pct'].quantile([0.15, 0.5, 0.9])
+            here['radar_rough'] = (f'a typical scan echoes from {q.iloc[1]:.1f}% of the nearby open water; the calmest 15% of scans are under '
+                                   f'{q.iloc[0]:.1f}% and the roughest 10% are over {q.iloc[2]:.1f}%.')
+        if 'whitewater_m2' in ok and ok['whitewater_m2'].notna().any():
+            here['radar_white'] = f'typically {area_txt(ok["whitewater_m2"].median())}; the most so far was {area_txt(ok["whitewater_m2"].max())}.'
+        if 'n_tracks' in ok and ok['n_tracks'].notna().any():
+            here['radar_boats'] = f'about {ok["n_tracks"].mean():.0f} moving targets per scan on average; fastest so far {ok["max_speed_kn"].max():.0f} knots.' \
+                if 'max_speed_kn' in ok else f'about {ok["n_tracks"].mean():.0f} moving targets per scan on average.'
+        c = D.get('corr', {}).get('buoy_wspd') or {}
+        if c.get('r') is not None:
+            here['radar_vs_buoy'] = f'roughness vs. wind at the buoy: r = {c["r"]:.2f} ({c.get("word", "")} linked), from {c.get("n", 0):,} matching hours.'
+    keys = ['radar_scan', 'radar_rough', 'radar_motion', 'radar_zones', 'radar_white', 'radar_boats', 'radar_rhythm', 'radar_vs_buoy']
+    page = page.replace('%%EXCSS%%', explain.CSS).replace('%%EXPLAIN%%', explain.SECTION.format(cards=explain.cards(keys, here)))
     page = page.replace('%%NAV%%', mapjs.nav_buttons(CFG.get('sister_sites', [])))
     page = page.replace('%%DATA%%', blob).replace('%%SHORT%%', CFG.get('title_name') or CFG.get('short_name', 'Radar'))
     with open(os.path.join(a.out, 'index.html'), 'w', encoding='utf-8') as fh:
