@@ -12,6 +12,7 @@ on:
             "requirements.txt", ".github/workflows/**"]
 
 permissions:
+  actions: write                # to start the backup hourly heartbeat (heartbeat.yml)
   contents: write               # to commit new data into buoys/<slug>/data
   pages: write                  # to publish the website
   id-token: write
@@ -123,3 +124,13 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  heartbeat:
+    # backup for GitHub's unreliable cron: line up the next hourly run (see heartbeat.yml)
+    needs: [build]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run heartbeat.yml --repo "${{ github.repository }}" --ref main

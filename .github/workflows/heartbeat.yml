@@ -1,0 +1,36 @@
+# ⏰ Backup clock. GitHub's built-in hourly schedule ("cron") is known to skip runs, sometimes for hours.
+# After every update run, update.yml starts this workflow. It waits until the next hh:17 UTC and then starts
+# the next update — unless an update has already started recently (e.g. the cron did fire), in which case it skips.
+name: Hourly heartbeat
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: heartbeat
+  cancel-in-progress: true      # only the newest waiting heartbeat matters
+
+jobs:
+  wait-and-trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: ⏳ Wait until the next hh:17 UTC
+        run: |
+          now=$(date -u +%s)
+          next=$(( (now / 3600) * 3600 + 17*60 ))
+          while [ $next -le $((now + 300)) ]; do next=$((next + 3600)); done
+          echo "Sleeping $(( (next - now) / 60 )) minutes, until $(date -u -d @$next +%H:%M) UTC"
+          sleep $((next - now))
+      - name: ▶️ Start the next update (unless one already started)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          recent=$(gh api "repos/${{ github.repository }}/actions/workflows/update.yml/runs?per_page=5" \
+            --jq "[.workflow_runs[] | select((now - (.created_at | fromdateiso8601)) < 1800)] | length")
+          if [ "$recent" -gt 0 ]; then echo "An update started in the last 30 min — nothing to do."; exit 0; fi
+          gh workflow run update.yml --repo "${{ github.repository }}" --ref main
+          echo "Started the next hourly update."
