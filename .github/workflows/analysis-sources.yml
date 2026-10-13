@@ -2,8 +2,9 @@ name: Analysis sources (one-off)
 on:
   push:
     branches: [analysis-sources]
+    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py"]
 permissions:
-  contents: read
+  contents: write
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -14,8 +15,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: python tools/fetch_sources.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ext
-          path: ext
-          retention-days: 3
+      - name: Save the downloads on this branch (compressed)
+        run: |
+          gzip -9 ext/*.txt ext/*.csv ext/*.rdb || true
+          gunzip ext/LOG.txt.gz || true
+          git config user.name "buoy-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ext
+          git commit -q -m "Reference data download $(date -u +%F)"
+          git push -q
