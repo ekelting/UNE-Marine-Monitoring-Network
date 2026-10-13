@@ -178,9 +178,9 @@ def attach_buoy(df, buoy):
 
 
 def area_txt(m2):
-    """'12,300 ft² (1,140 m²)' — big areas in millions."""
-    f = lambda v, u: (f'{v / 1e6:.1f} million {u}' if v >= 1e6 else f'{v:,.0f} {u}')  # noqa: E731
-    return f'{f(m2 * 10.7639, "ft²")} ({f(m2, "m²")})'
+    """'0.42 mi² (1.1 km²)'."""
+    f = lambda v, u: f'{v:.2f} {u}' if v < 1 else f'{v:.1f} {u}'  # noqa: E731
+    return f'{f(m2 / 2589988, "mi²")} ({f(m2 / 1e6, "km²")})'
 
 
 def pct_rank(series, x):

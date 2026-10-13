@@ -598,7 +598,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px}
     %%STALE%%
   </section>
 
-  <section><h2>📍 Where is the buoy?</h2><p class="lede">Updates every hour. This buoy is highlighted in orange, at its latest position; the blue line is where it has drifted around its anchor (⚓) over the last week. The others are UNE's nearby wave buoys (yellow) and water-quality buoys (orange floats) — click one to visit its page.</p>
+  <section><h2>📍 Where is the buoy?</h2><p class="lede">Updates every hour. This buoy is highlighted in orange, at its latest position; the blue line is where it has drifted around its anchor (⚓) over the last week. The others are UNE's nearby wave buoys (yellow) and water-quality buoys (orange floats) — hover over one for its name, click to visit its page.</p>
     <div class="grid two"><div class="card mapcard" style="padding:0;overflow:hidden">
       <div class="maptools"><button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button><button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart (depths &amp; contours)</button></div>
       <div id="map"></div>%%LEGEND%%

@@ -383,7 +383,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
     %%STALE%%
   </section>
 
-  <section><h2>📍 Where is the station?</h2><p class="lede">This station is highlighted in orange. Click any other icon to visit UNE's nearby buoys and stations.</p>
+  <section><h2>📍 Where is the station?</h2><p class="lede">This station is highlighted in orange. Hover over any other icon for its name, or click it to visit UNE's nearby buoys and stations.</p>
     <div class="grid two"><div class="card mapcard" style="padding:0;overflow:hidden">
       <div class="maptools"><button class="seg" data-map="street" aria-pressed="true">🗺️ Map</button><button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart</button></div>
       <div id="map"></div>%%LEGEND%%</div>

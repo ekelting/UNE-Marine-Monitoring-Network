@@ -134,16 +134,17 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
           <button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button>
           <button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart</button>
           <span class="sp"></span>
-          <label for="maplabel" style="font-size:13px;color:var(--ink2)">Labels show</label>
+          <label for="maplabel" style="font-size:13px;color:var(--ink2)">Labels</label>
           <select id="maplabel" class="seg" style="padding:4px 8px">
-            <option value="temp">Water temperature</option><option value="air">Air temperature</option><option value="wind">Wind</option><option value="sal">Salinity</option>
-            <option value="do">Dissolved oxygen</option><option value="hs">Wave height</option><option value="name">Names only</option>
+            <option value="hover">Names on hover</option><option value="name">Show names</option>
+            <option value="temp">Water temperature</option><option value="air">Air temperature</option><option value="wind">Wind</option>
+            <option value="sal">Salinity</option><option value="do">Dissolved oxygen</option><option value="hs">Wave height</option>
           </select>
         </div>
         <div id="map"></div>
         <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);padding:8px 12px 10px">
           <span><span id="lg-radar"></span> Wave radar</span><span><span id="lg-wave"></span> Wave buoy</span><span><span id="lg-wq"></span> Water-quality buoy</span><span><span id="lg-wx"></span> Weather station</span><span><span id="lg-env"></span> Marsh / pond station</span>
-          <span>Click a buoy or a card to highlight it</span></div>
+          <span>Hover over an icon for its name · click a buoy or card to highlight it</span></div>
       </div>
       <div class="stations" id="stations"></div>
     </div>
@@ -222,8 +223,8 @@ BUOY_SVG.radar = s => `<svg width="${s}" height="${s*1.15}" viewBox="0 0 40 46" 
     <ellipse cx="20" cy="43" rx="10" ry="2.5" fill="#000" opacity=".2"/><path d="M20 22v21M20 43l-7 1M20 43l7 1" stroke="#4d5966" stroke-width="2.2" stroke-linecap="round"/>
     <rect x="4" y="13" width="32" height="7" rx="3.5" fill="#c81944" stroke="#7a0e29" stroke-width="1.2"/><rect x="16" y="19" width="8" height="5" fill="#4d5966"/>
     <path d="M9 8a16 16 0 0 1 22 0M12.5 11a11 11 0 0 1 15 0" fill="none" stroke="#c81944" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg>`;
-let unit='us', mapMode='street', labelMode='temp', selected=null, DATA={}, LMAP=null, LBASE=null, LBASE_KEY='', MARKERS={};
-try{ unit=localStorage.getItem('net-unit')||'us'; mapMode=localStorage.getItem('net-map')||'street'; labelMode=localStorage.getItem('net-label')||'temp';
+let unit='us', mapMode='street', labelMode='hover', selected=null, DATA={}, LMAP=null, LBASE=null, LBASE_KEY='', MARKERS={};
+try{ unit=localStorage.getItem('net-unit')||'us'; mapMode=localStorage.getItem('net-map')||'street'; labelMode=localStorage.getItem('net-label2')||'hover';
      const t=localStorage.getItem('buoy-theme'); if(t) document.documentElement.dataset.theme=t; }catch(e){}
 const hidden = {};
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -297,9 +298,9 @@ function renderStations(){
         if (fin(n.wind_ms)) vals += vbox('Wind*', unit==='us'? (n.wind_ms*2.23694).toFixed(0):(n.wind_ms).toFixed(1), unit==='us'?'mph':'m/s');
       } else if (s.kind==='radar'){ const sp=n.sparkle_ring_pct, rk=(d.pct||{}).sparkle;
         const look = !fin(rk)? '—' : rk<20?'Glassy':rk<45?'Gentle':rk<70?'Choppy':rk<90?'Rough':'Wild';
-        const ww = fin(n.whitewater_m2) ? (unit==='us'? n.whitewater_m2*10.7639 : n.whitewater_m2) : null;
+        const ww = fin(n.whitewater_m2) ? (unit==='us'? n.whitewater_m2/2589988 : n.whitewater_m2/1e6) : null;
         vals += vbox('Surface', look) + vbox('Radar echo', fin(sp)? sp.toFixed(1):'—', '%') + vbox('Boats', fin(n.n_tracks)? n.n_tracks.toFixed(0):'—')
-          + (fin(ww)? vbox('Whitewater', ww>=1e6 ? (ww/1e6).toFixed(1)+'M' : Math.round(ww).toLocaleString(), unit==='us'?'ft²':'m²') : '');
+          + (fin(ww)? vbox('Whitewater', ww<1 ? ww.toFixed(2) : ww.toFixed(1), unit==='us'?'mi²':'km²') : '');
       } else if (s.kind==='wx'){ vals += vbox('Air', T(n.air_temp_c)) + vbox('Wind', Wd(n.wind_ms).split(' ')[0], unit==='us'?'mph':'m/s')
           + vbox('From', compass(n.wind_dir)||'—') + vbox('Rain 24 h', Rs(n.rain_24h_mm).split(' ')[0], unit==='us'?'in':'mm');
         if (fin(n.rh_pct)) vals += vbox('Humidity', n.rh_pct.toFixed(0), '%');
@@ -339,7 +340,8 @@ function renderStations(){
 
 function icon(kind, sel){ const s= sel? 40:30;
   return L.divIcon({className:'buoy-ic'+(sel?' me':''), html:(sel?'<div class="ring"></div>':'')+BUOY_SVG[kind](s), iconSize:[s,s*1.15], iconAnchor:[s/2,s*.87], tooltipAnchor:[4,-s*.55], popupAnchor:[0,-s*.75]}); }
-function labelText(s){ const n=(DATA[s.slug]||{}).now||{}; let v='';
+function labelText(s, hover){ const n=(DATA[s.slug]||{}).now||{}; let v='';
+  if (hover) return escH(s.name) + ` <span style="font-weight:500;color:#555">· ${KINDS[s.kind]||''}</span>`;
   if (labelMode==='temp' && fin(n.water_temp_c)) v=T(n.water_temp_c);
   if (labelMode==='sal' && fin(n.sal_psu)) v=n.sal_psu.toFixed(1)+' PSU';
   if (labelMode==='do' && fin(n.do_mgl)) v=n.do_mgl.toFixed(1)+' mg/L';
@@ -377,7 +379,7 @@ function renderMap(){
   for (const s of SITES){ const sel = selected===s.slug;
     if (MARKERS[s.slug]) LMAP.removeLayer(MARKERS[s.slug]);
     MARKERS[s.slug] = L.marker([s.lat,s.lon],{icon:icon(s.kind,sel),zIndexOffset:sel?1000:0,title:s.name}).addTo(LMAP)
-      .bindTooltip(labelText(s),{permanent:true,direction:'right',className:'blabel'+(sel?' sel':'')}).bindPopup(popupHtml(s))
+      .bindTooltip(labelMode==='hover' ? labelText(s,true) : labelText(s),{permanent:labelMode!=='hover',direction:'right',className:'blabel'+(sel?' sel':'')}).bindPopup(popupHtml(s))
       .on('click',()=>select(s.slug,false)); }
   document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.map===mapMode));
   setTimeout(()=>{ LMAP.invalidateSize(); declutter(); },80);
@@ -440,7 +442,7 @@ window.addEventListener('resize',slideKnobs);
 setTimeout(syncTheme,0);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{mapMode=b.dataset.map; try{localStorage.setItem('net-map',mapMode)}catch(e){} renderMap();});
-document.getElementById('maplabel').onchange=e=>{labelMode=e.target.value; try{localStorage.setItem('net-label',labelMode)}catch(e){} renderMap();};
+document.getElementById('maplabel').onchange=e=>{labelMode=e.target.value; try{localStorage.setItem('net-label2',labelMode)}catch(e){} renderMap();};
 load(); setInterval(load, 10*60e3);
 </script>
 </body></html>

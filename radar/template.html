@@ -230,9 +230,9 @@ const H = (m) => m==null ? null : (unit==='ft' ? m*M2FT : m);
 const Hu = () => unit==='ft' ? 'ft' : 'm';
 const W = (ms) => ms==null ? null : (unit==='ft' ? ms*MS2MPH : ms);
 const Wu = () => unit==='ft' ? 'mph' : 'm/s';
-const A = (m2) => m2==null ? null : (unit==='ft' ? m2*10.7639 : m2);      // area: square feet or square metres
-const Au = () => unit==='ft' ? 'ft²' : 'm²';
-const Afmt = (m2) => { const v=A(m2); return v>=1e6 ? (v/1e6).toFixed(v>=1e7?0:1)+' million '+Au() : Math.round(v).toLocaleString()+' '+Au(); };
+const A = (m2) => m2==null ? null : (unit==='ft' ? m2/2589988 : m2/1e6);   // area: square miles or square kilometres
+const Au = () => unit==='ft' ? 'mi²' : 'km²';
+const Afmt = (m2) => { const v=A(m2); return (v<1 ? v.toFixed(2) : v.toFixed(1))+' '+Au(); };
 const compass = (d) => d==null ? '' : ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(((d%360)+360)%360/22.5)%16];
 function vibe(p){ if(p==null) return ['🤔','Not sure yet']; if(p<15) return ['😴','Glassy']; if(p<40) return ['🙂','Gentle']; if(p<70) return ['🌬️','Choppy']; if(p<90) return ['🌊','Rough']; return ['⚡','Wild']; }
 const speedColor = (s) => s==null?'#94a3b8': s<3?'#38bdf8': s<8?'#22c55e': s<15?'#eab308': s<25?'#f97316':'#ef4444';
@@ -397,7 +397,7 @@ function drawWhite(){
   if(!TS.t.length || !TS.whitewater_m2) return empty('white','📭 No whitewater measurements yet.');
   const end=new Date(TS.t[TS.t.length-1]), start=new Date(end-7*864e5);
   const tr=[{x:TS.t,y:TS.whitewater_m2.map(v=>v==null?null:A(v)),type:'scatter',mode:'lines',fill:'tozeroy',line:{color:css('--radar'),width:1.5},
-    hovertemplate:'%{y:,.0f} '+Au()+'<extra>💥 whitewater</extra>'}];
+    hovertemplate:'%{y:.2f} '+Au()+'<extra>💥 whitewater</extra>'}];
   if((D.tide||[]).length) tr.unshift({x:D.tide.map(p=>p.t),y:D.tide.map(p=>unit==='ft'?p.v:p.v/M2FT),yaxis:'y2',type:'scatter',mode:'lines',
     line:{color:css('--tide'),width:1.5,dash:'dot'},hovertemplate:`%{y:.1f} ${Hu()}<extra>🌙 tide</extra>`});
   Plotly.react('white',tr,theme({height:330,margin:{l:56,r:56,t:16,b:44},xaxis:{type:'date',range:[start,end]},
@@ -436,7 +436,7 @@ function initBoats(){
   const li=[
     `<b>Where the data comes from:</b> the public <a href="${esc(C.cumulus_url)}">CUMULUS page</a> for this ${esc(C.radar_model||'radar')}. SeaSignals Technology processes each scan into the snapshot, motion map, zones and boat tracks; this page measures them. It checks for new scans every hour.`,
     `<b>Surface roughness</b> ("sparkle_ring_pct" in the data) is the average share of open-water pixels (from the Zones map) that show any echo on each sweep, measured 300–1,500 m from the radar. Older scans were measured from 24 evenly spaced sweeps; new scans use all of them.`,
-    `<b>Whitewater</b> = "active" zone pixels within 150 m of "land" pixels, × pixel area. 1 m² = 10.76 ft².`,
+    `<b>Whitewater</b> = "active" zone pixels within 150 m of "land" pixels, × pixel area. 1 km² = 0.386 mi².`,
     `<b>Boat tracks</b> are SeaSignals' automatic detections ("auto-derived · not a survey product"). Treat them as moving targets, not a vessel census.`,
     `<b>Buoy numbers</b> come from the <a href="${esc((C.buoy||{}).url)}">${esc((C.buoy||{}).label||'buoy')}</a>, matched to each scan within 75 minutes. The buoy's wind is estimated from its waves.`,
     `<b>Wave rhythm (experimental):</b> for patches of sea that light up often, the flicker of the echo over the 5 minutes is turned into a frequency spectrum. A peak between 4 and 16 s is shown only when it stands at least 2.2× above the flat background noise.`,

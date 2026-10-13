@@ -94,12 +94,12 @@ function renderMap(){
         .addTo(LMAP).bindTooltip('Mooring (anchor)');
     for (const o of (MAPDATA.others||[])){
       L.marker([o.lat, o.lon], {icon:buoyIcon(o.kind, false), title:o.label}).addTo(LMAP)
-        .bindTooltip(esc(o.label), {permanent:true, direction:'right', offset:[4,-12], className:'blabel'})
+        .bindTooltip(esc(o.label), {direction:'right', offset:[4,-12], className:'blabel'})
         .bindPopup(`<b>${esc(o.label)}</b><br>${KIND_TXT[o.kind]||''}<br><a href="${esc(o.url)}">Open its dashboard →</a>`);
     }
     const me = MAPDATA.me;
     L.marker([me.lat, me.lon], {icon:buoyIcon(me.kind, true), zIndexOffset:1000, title:me.label}).addTo(LMAP)
-      .bindTooltip(esc(me.label), {permanent:true, direction:'top', className:'blabel me'})
+      .bindTooltip(esc(me.label) + ' · you are here', {direction:'top', className:'blabel me'})
       .bindPopup(`<b>${esc(me.label)}</b><br>${esc(me.sub||'')}`);
     LMAP.on('zoomend moveend', declutter);
     const pts = [[me.lat, me.lon]].concat((MAPDATA.others||[]).map(o=>[o.lat, o.lon])).concat(MAPDATA.track||[]);
@@ -132,7 +132,7 @@ LEGEND = ('<div class="maplegend"><span><svg width="18" height="20" viewBox="0 0
           '<path d="M10 18l3-7h14l3 7z" fill="#1f2a3a"/></svg>Water-quality buoy</span>'
           '<span><svg width="16" height="18" viewBox="0 0 40 46"><path d="M20 12v31" stroke="#4d5966" stroke-width="3"/><circle cx="20" cy="6" r="5" fill="#2a78d6"/></svg>Weather station</span>'
           '<span><svg width="16" height="18" viewBox="0 0 40 46"><path d="M20 8v36" stroke="#4d5966" stroke-width="3"/><rect x="12" y="10" width="16" height="11" rx="2" fill="#1baf7a"/></svg>Marsh / pond station</span>'
-          '<span>Click any icon to visit its page</span></div>')
+          '<span>Hover over an icon for its name; click to visit its page</span></div>')
 
 
 def kind_of(site):
