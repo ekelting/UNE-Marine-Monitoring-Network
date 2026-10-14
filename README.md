@@ -32,6 +32,8 @@ Every station page has:
 - **"What do these numbers mean?"**: a short guide to every measurement, with what's typical at that station
 - **charts** of every reading, day-by-day summaries, a month-by-month table, and downloads
 
+The **📊 What the data say** page puts the stations side by side with long public records (NOAA's Portland tide gauge since 1912, NOAA buoy 44007 since 1990, the USGS Saco River gauge since 1916, and Portland airport weather). It covers sea-level rise, storm tides and surge, sea and air temperature against normal, river flow, tides in the marsh and estuary, ocean layering, soil heat, chlorophyll, littoral drift, seabed movement, bottom currents and estuary mixing. Each analysis is explained in plain words, with its method and assumptions one click away.
+
 Use the **Units** switch (Metric / Imperial) and the **Theme** switch (Light / Dark) at the top of any page. Your choice is remembered across the site.
 
 ## Getting the data
@@ -97,6 +99,7 @@ If one station has trouble, the others still update. The wave buoys need the `SO
 | [`shared/mapjs.py`](shared/mapjs.py) | The map, station icons and navigation buttons |
 | [`shared/explain.py`](shared/explain.py) | The "What do these numbers mean?" text |
 | [`web/index.html`](web/index.html) | The home page; it reads each station's `latest.json` in the browser |
+| [`analysis/`](analysis) | The "What the data say" page: `compute.py` runs every analysis, `cards.py` writes the text, `fetch_ext.py` refreshes the NOAA/USGS records daily (`analysis-data.yml`) |
 
 **Settings:** each station has its own `buoys/<station>/site.json` (device ID, names, location, links to the other stations). [`buoys.json`](buoys.json) lists every station.
 

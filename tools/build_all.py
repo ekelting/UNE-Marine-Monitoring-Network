@@ -45,6 +45,11 @@ def main():
                     f'<meta http-equiv="refresh" content="0; url=../{b["slug"]}/"><link rel="canonical" href="../{b["slug"]}/">'
                     f'<p>This buoy is now called <b>{b["name"]}</b>: <a href="../{b["slug"]}/">go to its page</a>.</p>')
             open(os.path.join(a.out, old, 'index.html'), 'w').write(page)
+    if not a.only and os.path.exists(os.path.join(ROOT, 'analysis', 'build.py')):   # the network-wide Analysis page
+        print('\n===== Analysis page =====', flush=True)
+        r = subprocess.run([sys.executable, os.path.join(ROOT, 'analysis', 'build.py'), '--site', a.out])
+        if r.returncode:
+            print('::warning::the Analysis page failed to build; its previous version is not updated this hour')
     shutil.copy(os.path.join(ROOT, 'web', 'index.html'), os.path.join(a.out, 'index.html'))
     shutil.copy(os.path.join(ROOT, 'buoys.json'), os.path.join(a.out, 'buoys.json'))
     open(os.path.join(a.out, '.nojekyll'), 'w').close()

@@ -8,7 +8,7 @@ on:
   workflow_dispatch:            # "Run workflow" button on the Actions tab
   push:
     branches: [main]
-    paths: ["wave/**", "sonde/**", "station/**", "radar/**", "shared/**", "web/**", "tools/**", "buoys.json", "buoys/*/site.json",
+    paths: ["wave/**", "sonde/**", "station/**", "radar/**", "shared/**", "web/**", "tools/**", "analysis/*.py", "analysis/*.js", "analysis/*.css", "buoys.json", "buoys/*/site.json",
             "requirements.txt", ".github/workflows/**"]
 
 permissions:

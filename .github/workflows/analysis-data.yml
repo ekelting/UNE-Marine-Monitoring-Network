@@ -1,0 +1,37 @@
+# 📊 Once a day: refresh the outside reference records (NOAA, USGS) used by the Analysis page.
+# The hourly "Update all stations" run rebuilds the page from them.
+name: Update analysis reference data
+
+on:
+  schedule:
+    - cron: "37 10 * * *"      # daily, 10:37 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 🌐 Download NOAA and USGS records
+        run: python analysis/fetch_ext.py
+      - name: 💾 Save them
+        run: |
+          git config user.name  "buoy-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add analysis/ext
+          if git diff --cached --quiet; then echo "No changes."; exit 0; fi
+          git commit -q -m "📊 analysis reference data $(date -u +%F)"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase origin main && git push -q && exit 0
+            sleep $((i * 10))
+          done
+          exit 1
