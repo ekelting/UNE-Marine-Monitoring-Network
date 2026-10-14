@@ -2,7 +2,7 @@ name: Analysis sources (one-off)
 on:
   push:
     branches: [analysis-sources]
-    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py"]
+    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py", "tools/fetch_coast.py"]
 permissions:
   contents: write
 jobs:
@@ -14,10 +14,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: python tools/fetch_sources.py
+      - run: python tools/fetch_coast.py
       - name: Save the downloads on this branch (compressed)
         run: |
-          gzip -9 ext/*.txt ext/*.csv ext/*.rdb || true
+          true
           gunzip ext/LOG.txt.gz || true
           git config user.name "buoy-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
