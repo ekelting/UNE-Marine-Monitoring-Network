@@ -83,7 +83,7 @@ def build(R):
                       else f'It met the standard definition of a <b>marine heatwave</b> on {s["mhw"]} days (5+ days in a row above the warmest 10% for that date).'),
                      f'Since 1990 the yearly average has {"warmed" if s["slope"] > 0 else "cooled"} about {dTb(abs(s["slope"])*10)} <b>per decade</b>. The Gulf of Maine is one of the fastest-warming ocean areas.'],
             v=OK, math=f'''<p>Daily means of NOAA buoy 44007 water temperature (about 1 m deep). Normal: 1991–2020 values within ±5 days of each date, smoothed over 31 days; band = 10th to 90th percentile. Marine-heatwave test follows Hobday et al. (2016). Trend: least squares on yearly averages for the {s["nyears"]} years with at least 330 days of data (p = {pv(s["p"])}).</p>
-<p>Camp Ellis is shown for shape only: its sensor is inshore and below the surface, so it runs cooler in summer.</p>''',
+<p>Camp Ellis is shown for comparison: its water is shallow and close to shore, so it heats up more in summer (about 0.5–1.3 °C warmer than the NOAA buoy) and cools more in winter (about 1–1.5 °C colder).</p>''',
             charts=[('psst', ''), ('psstyr', 'sm')], cap='Top: daily sea temperature vs normal. Bottom: yearly average at buoy 44007, with its trend.', src='NOAA NDBC buoy 44007')
     if 'flow' in R:
         f = R['flow']
@@ -102,7 +102,7 @@ def build(R):
             read='The grey line is the normal temperature for each date. Blue is Portland over the past year, dotted is Ram Island. Above grey means warmer than normal.',
             found=[f'Coldest month compared with normal: <b>{a["cold"]}</b>, about {dTb(abs(a["coldv"]))} {"below" if a["coldv"] < 0 else "above"} normal.',
                    f'Warmest compared with normal: <b>{a["warm"]}</b>, about {dTb(abs(a["warmv"]))} {"above" if a["warmv"] > 0 else "below"} normal.',
-                   f'Ram Island and Portland rise and fall almost identically (correlation {a["r"]:.2f}). Ram Island averages {dTs(abs(a["diff"]))} {"warmer" if a["diff"] > 0 else "cooler"}: it is surrounded by water.'],
+                   f'Ram Island and Portland rise and fall almost identically (correlation {a["r"]:.2f}). Ram Island is milder: warmer in winter and cooler in summer, because it is surrounded by the sea, which changes temperature more slowly than land.'],
             v=OK, math='<p>Daily mean = (max + min) / 2 from GHCN-Daily station USW00014764. Normal = the 1991–2020 average within ±7 days of each date. Chart shows 7-day averages.</p>',
             charts=[('pair', '')], cap='Daily air temperature (7-day average) vs the 1991–2020 normal.', src='NOAA GHCN-Daily, Portland International Jetport')
 
@@ -156,7 +156,7 @@ def build(R):
                  ('🦞 Lobster-stress hours', f'{h["lob"]}', f'water above <span data-temp="20"></span> at Camp Ellis' + (f', mostly {lm}' if lm else '')),
                  ('🌱 Growing degree-days', f'<span data-gdd="{h["gdd"]:.0f}"></span>', f'363 Acre Woods since April 1, {h["gdd_year"]}'),
                  ('🐟 Low-oxygen hours', pct(h['gp_low']), f'Great Pond below 2 mg/L in {h["gp_month"]}'),
-                 ('🌊 Highest water this year', f'<span data-len="{h["hw"]:.3f}"></span>', f'Portland, {h["hw_t"]}' + ('' if h['hw_storm'] else ': a "king tide" (very high tide), not a storm')),
+                 ('🌊 Highest water this year', f'<span data-len="{h["hw"]:.3f}"></span>', f'Portland, {h["hw_t"]}' + ('' if h['hw_storm'] else ': mostly a "king tide" (one of the year\'s highest predicted tides), not a storm')),
                  ('🌪️ Biggest waves at Camp Ellis', f'<span data-len="{h["wave"]:.3f}"></span>', h['wave_t'])]
         add(g='one', t='Days that matter', w='Several stations · the past 12 months', c=[ME, MS], plain='The headline numbers from the past year.', read='', found=[], tiles=tiles,
             v=CARE, math='''<p>Swim days: daily mean at the Camp Ellis upper mooring sensor ≥ 18.3 °C (65 °F); that sensor is below the surface, so the true count is likely a bit higher. Lobster stress: hours above 20 °C, a commonly used threshold for American lobster. Growing degree-days: sum of max(0, (Tmax + Tmin)/2 − 10 °C) since April 1. Low oxygen: share of hours below 2 mg/L (hypoxic) in the worst month.</p>
@@ -274,9 +274,9 @@ def build(R):
             read='Top: the path the dye would follow (km). Middle: how often the current flows toward each direction. Bottom: each dot is a day, comparing the along-shore wind with the along-shore bottom current.',
             found=[f'Net drift is slow and toward the <b>{compass(c["dir"])}</b>: about <b>{c["speed"]*100:.1f} cm/s</b>, roughly {c["speed"]*86.4:.1f} km a day, adding up to {c["km"]:.0f} km over {c["days"]} days.',
                    f'Tidal currents run mostly <b>{compass(c["axis"])}–{compass(c["axis"]+180)}</b>, at about {c["mean_speed"]*100:.0f} cm/s.',
-                   (f'<b>Worth a closer look:</b> on days when wind blows north along the shore, the bottom current tends to flow south (correlation {c["r_wind"]:.2f}). That can happen in a bay (the surface goes with the wind and the bottom returns), but it is worth confirming the current meter\'s direction convention with Sofar.'
+                   (f'Near the bottom, on days when wind blows north along the shore, the current tends to flow south (correlation {c["r_wind"]:.2f}). That is typical of a bay: wind pushes surface water one way and deeper water returns the other way. It is also why this offshore bottom drift can run opposite to the sand moving along the beach.'
                     if c['r_wind'] < -0.3 else f'Along-shore bottom current and along-shore wind correlate at {c["r_wind"]:.2f}.')],
-            v=CARE, math='''<p>Hourly speed and direction (rotated from magnetic to true north, declination −14.6°) are converted to east/north components and summed: x(t) = Σ u·Δt, y(t) = Σ v·Δt. This assumes the current at the buoy represents a wider area, a standard caveat for these diagrams. Direction is taken as the direction the current flows toward (the usual oceanographic convention); Sofar's documentation doesn't say which convention its meter uses.</p>''',
+            v=CARE, math='''<p>Hourly speed and direction (rotated from magnetic to true north, declination −14.6°) are converted to east/north components and summed: x(t) = Σ u·Δt, y(t) = Σ v·Δt. This assumes the current at the buoy represents a wider area, a standard caveat for these diagrams. Direction is the direction the current flows toward, as labelled in the NERACOOS data catalogue for this buoy (CF standard name direction_of_sea_water_velocity).</p>''',
             charts=[('p15', ''), ('p15b', ''), ('p15c', 'sm')], cap='Top: path of a bottom water parcel. Middle: share of hours the current flowed toward each direction. Bottom: daily along-shore wind vs along-shore current (+ = toward north-northeast).')
     if 'ode' in R:
         o = R['ode']; p = o['par']; se = p['se']
