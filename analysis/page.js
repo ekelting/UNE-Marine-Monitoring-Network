@@ -33,13 +33,13 @@ function texts(){
 }
 
 const CH = {};
-CH.msl=()=>{ const m=R.msl; if(!m) return; const fit=m.yr.map(y=>m.inter+m.slope*y);
-  P('pmsl',[{x:m.yr,y:m.v.map(Lm),type:'scatter',mode:'markers',marker:{size:6,color:css('--ce'),opacity:.8},hovertemplate:'%{x}: %{y:.2f} '+Lu()+'<extra>yearly average</extra>'},
-    {x:m.yr,y:fit.map(Lm),type:'scatter',mode:'lines',line:{color:css('--jp'),width:2.4},hoverinfo:'skip'}],
-    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:'average sea level ('+Lu()+' above MLLW)'}}})); };
+CH.msl=()=>{ const m=R.msl; if(!m) return; const b=m.inter+m.slope*1912, cv=x=>unit==='us'? x*39.37 : x*100, u=unit==='us'?'inches':'cm';
+  P('pmsl',[{x:m.yr,y:m.v.map(v=>cv(v-b)),type:'scatter',mode:'markers',marker:{size:6,color:css('--ce'),opacity:.8},hovertemplate:'%{x}: %{y:+.1f} '+u+' vs 1912<extra>yearly average</extra>'},
+    {x:m.yr,y:m.yr.map(y=>cv(m.slope*(y-1912))),type:'scatter',mode:'lines',line:{color:css('--jp'),width:2.4},hoverinfo:'skip'}],
+    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:u+' higher than in 1912'},zeroline:true,zerolinecolor:css('--muted')}})); };
 CH.amax=()=>{ const a=R.amax; if(!a) return; const rl=a.rl, H=[hline(Lm(rl['10']),css('--ink2'),'dash','1-in-10-year'),hline(Lm(rl['100']),css('--ink2'),'dash','1-in-100-year'),hline(Lm(a.mhhw),css('--muted'),'dot','ordinary high tide')];
-  P('pamax',[{x:a.yr,y:a.v.map(Lm),type:'bar',marker:{color:a.v.map(v=>v>=rl['10']?css('--jp'):css('--ce'))},hovertemplate:'%{x}: %{y:.2f} '+Lu()+'<extra>highest water</extra>'}],
-    base({showlegend:false,bargap:.15,xaxis:{title:{text:'year'}},yaxis:{title:{text:'highest water ('+Lu()+' above MLLW)'},range:[Lm(a.mhhw-0.1),Lm(Math.max(...a.v)+0.12)]},shapes:H.map(h=>h.shape),annotations:H.filter(h=>h.ann).map(h=>h.ann)})); };
+  P('pamax',[{x:a.yr,y:a.v.map(Lm),type:'scatter',mode:'markers',marker:{size:a.v.map(v=>v>=rl['10']?11:7),color:a.v.map(v=>v>=rl['10']?css('--jp'):css('--ce')),line:{color:css('--card'),width:1}},hovertemplate:'%{x}: %{y:.2f} '+Lu()+'<extra>highest water</extra>'}],
+    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:'highest water ('+Lu()+' above MLLW)'}},shapes:H.map(h=>h.shape),annotations:H.filter(h=>h.ann).map(h=>h.ann)})); };
 CH.surge=()=>{ const s=R.surge; if(!s) return;
   P('psurge',[{x:s.t,y:s.v.map(Lm),type:'scatter',mode:'lines',line:{color:css('--ce'),width:1.6},hovertemplate:'%{x|%b %d}: %{y:+.2f} '+Lu()+'<extra>surge (daily average)</extra>'}],
     base({showlegend:false,xaxis:{type:'date'},yaxis:{title:{text:'storm surge, daily average ('+Lu()+')'},zeroline:true,zerolinecolor:css('--muted')},shapes:bands(s.storms)})); };
@@ -49,12 +49,15 @@ CH.sst=()=>{ const s=R.sst; if(!s) return; const di=s.t.map(doyOf);
     {x:s.t,y:c10,type:'scatter',mode:'lines',line:{width:0},fill:'tonexty',fillcolor:'rgba(140,140,140,.22)',name:'Normal range',hoverinfo:'skip'},
     {x:s.t,y:c50,type:'scatter',mode:'lines',line:{color:css('--muted'),width:1.4},name:'Normal',hovertemplate:'%{x|%b %d} normal: %{y:.1f} '+Tu()+'<extra></extra>'},
     {x:s.t,y:roll(s.v,3).map(T),type:'scatter',mode:'lines',line:{color:css('--ce'),width:2.4},name:'NOAA buoy 44007',hovertemplate:'%{x|%b %d}: %{y:.1f} '+Tu()+'<extra>44007</extra>'},
-    {x:s.ce_t,y:roll(s.ce,3).map(T),type:'scatter',mode:'lines',line:{color:css('--jp'),width:1.6,dash:'dot'},name:'Camp Ellis (below surface)',hovertemplate:'%{x|%b %d}: %{y:.1f} '+Tu()+'<extra>Camp Ellis</extra>'}],
+    {x:s.ce_t,y:roll(s.ce,3).map(T),type:'scatter',mode:'lines',line:{color:css('--jp'),width:1.6,dash:'dot'},name:'Camp Ellis (near shore)',hovertemplate:'%{x|%b %d}: %{y:.1f} '+Tu()+'<extra>Camp Ellis</extra>'}],
     base({xaxis:{type:'date'},yaxis:{title:{text:'sea temperature ('+Tu()+')'}}}));
-  const n=s.yr.length, mx=s.yr.reduce((p,c)=>p+c,0)/n, my=s.yv.reduce((p,c)=>p+c,0)/n;
-  P('psstyr',[{x:s.yr,y:s.yv.map(T),type:'scatter',mode:'markers',marker:{size:8,color:css('--ce')},hovertemplate:'%{x}: %{y:.1f} '+Tu()+'<extra>yearly average</extra>'},
-    {x:[s.yr[0],s.yr[n-1]],y:[my+s.slope*(s.yr[0]-mx),my+s.slope*(s.yr[n-1]-mx)].map(T),type:'scatter',mode:'lines',line:{color:css('--jp'),width:2.2},hoverinfo:'skip'}],
-    base({showlegend:false,margin:{l:56,r:12,t:6,b:30},yaxis:{title:{text:'yearly avg ('+Tu()+')'}}})); };
+  // warming stripes: one band per year, coloured by difference from the 1991-2020 average
+  const base9120=s.yr.map((y,i)=>[y,s.yv[i]]).filter(p=>p[0]>=1991&&p[0]<=2020).map(p=>p[1]), ref=base9120.reduce((a,b)=>a+b,0)/base9120.length;
+  const yrs=[]; for(let y=s.yr[0]; y<=s.yr[s.yr.length-1]; y++) yrs.push(y);
+  const an=yrs.map(y=>{ const i=s.yr.indexOf(y); return i<0?null:s.yv[i]-ref; }), mx=Math.max(...an.filter(v=>v!=null).map(Math.abs));
+  P('psstyr',[{z:[an.map(v=>v==null?null:dT(v))],x:yrs,y:['sea'],type:'heatmap',zmin:-dT(mx),zmax:dT(mx),colorscale:[[0,'#2166ac'],[.5,'#f2f2f2'],[1,'#b2182b']],showscale:false,xgap:1,
+      hovertemplate:'%{x}: %{z:+.2f} '+Tu()+' vs 1991–2020<extra></extra>'}],
+    base({showlegend:false,margin:{l:12,r:12,t:6,b:30},yaxis:{visible:false},xaxis:{dtick:5}})); };
 CH.flow=()=>{ const f=R.flow; if(!f) return;
   P('pflow',[{x:f.t,y:f.pct,type:'scatter',mode:'lines',line:{color:css('--jp'),width:2},fill:'tozeroy',fillcolor:'rgba(235,104,52,.12)',customdata:f.rank,
       hovertemplate:'%{x|%b %d}: %{y:.0f}% of normal (%{customdata:.0f}th percentile)<extra></extra>'}],
@@ -62,11 +65,11 @@ CH.flow=()=>{ const f=R.flow; if(!f) return;
       shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:100,y1:100,line:{color:css('--ink2'),width:1.5,dash:'dash'}},{type:'rect',xref:'paper',x0:0,x1:1,y0:0,y1:50,fillcolor:css('--grb'),opacity:.13,line:{width:0},layer:'below'}],
       annotations:[{xref:'paper',x:.01,y:100,yshift:9,xanchor:'left',text:'normal (median since '+f.start+')',showarrow:false,font:{size:11,color:css('--ink2')},bgcolor:css('--card')},
                    {xref:'paper',x:.01,y:25,xanchor:'left',text:'less than half of normal',showarrow:false,font:{size:11,color:css('--ink2')}}]})); };
-CH.air=()=>{ const a=R.air; if(!a) return;
-  P('pair',[{x:a.t,y:a.t.map(t=>T(a.norm[doyOf(t)-1])),type:'scatter',mode:'lines',line:{color:css('--muted'),width:2},name:'Normal (1991–2020)',hovertemplate:'%{x|%b %d} normal: %{y:.1f} '+Tu()+'<extra></extra>'},
-    {x:a.t,y:roll(a.v,7).map(T),type:'scatter',mode:'lines',line:{color:css('--ce'),width:2.2},name:'Portland',hovertemplate:'%{x|%b %d}: %{y:.1f} '+Tu()+'<extra>Portland</extra>'},
-    {x:a.ri_t,y:roll(a.ri,7).map(T),type:'scatter',mode:'lines',line:{color:css('--jp'),width:1.6,dash:'dot'},name:'Ram Island',hovertemplate:'%{x|%b %d}: %{y:.1f} '+Tu()+'<extra>Ram Island</extra>'}],
-    base({xaxis:{type:'date'},yaxis:{title:{text:'air temperature ('+Tu()+')'}}})); };
+CH.air=()=>{ const a=R.air; if(!a) return; const wk={}, wr={};
+  a.t.forEach((t,i)=>{ if(a.v[i]==null) return; const d=new Date(t+'T12:00'); const k=new Date(d-((d.getDay()+6)%7)*864e5).toISOString().slice(0,10); (wk[k]=wk[k]||[]).push(a.v[i]-a.norm[doyOf(t)-1]); });
+  const ks=Object.keys(wk).sort(), av=ks.map(k=>dT(wk[k].reduce((p,c)=>p+c,0)/wk[k].length));
+  P('pair',[{x:ks,y:av,type:'bar',marker:{color:av.map(v=>v>=0?'#d6604d':'#4393c3')},hovertemplate:'week of %{x|%b %d}: %{y:+.1f} '+Tu()+' vs normal<extra></extra>'}],
+    base({showlegend:false,bargap:.1,xaxis:{type:'date'},yaxis:{title:{text:'warmer (+) or colder (−) than normal ('+Tu()+')'},zeroline:true,zerolinecolor:css('--ink2')}})); };
 CH.marsh=()=>{ const m=R.marsh; if(!m) return;
   P('p1',[{x:m.t,y:m.obs.map(Lm),name:'Measured',type:'scatter',mode:'lines',line:{color:css('--ce'),width:2},hovertemplate:'%{y:.2f} '+Lu()+'<extra>measured</extra>'},
     {x:m.t,y:m.fit.map(Lm),name:'Tide-only prediction',type:'scatter',mode:'lines',line:{color:css('--jp'),width:2,dash:'dot'},hovertemplate:'%{y:.2f} '+Lu()+'<extra>tide only</extra>'}],
@@ -78,12 +81,14 @@ CH.tideclock=()=>{ const h=R.tideclock; if(!h) return;
   P('p3',[{z:h.z,x:[...Array(24).keys()].map(i=>new Date(2000,0,1,i).toLocaleTimeString([],{hour:'numeric'})),y:h.dates,type:'heatmap',
     colorscale:[[0,css('--seq0')],[.5,css('--seq1')],[1,css('--seq2')]],colorbar:{title:{text:'PSU',side:'right'},thickness:10,len:.9},hovertemplate:'%{y}, %{x}: %{z:.1f} PSU<extra></extra>',xgap:1,ygap:1}],
     base({margin:{l:84,r:12,t:6,b:44},yaxis:{autorange:'reversed',type:'category',nticks:10},xaxis:{type:'category',tickangle:-45,nticks:12}})); };
-CH.strat=()=>{ const s=R.strat; if(!s) return;
-  P('pstrat',[['t1','Upper sensor','--jp'],['t2','Middle sensor','--wi'],['t3','Deepest sensor','--ce']].map(([k,nm,c])=>({x:s.t,y:s[k].map(T),name:nm,type:'scatter',mode:'lines',line:{color:css(c),width:2},hovertemplate:'%{x|%b %d}: %{y:.1f} '+Tu()+'<extra>'+nm+'</extra>'})),
-    base({xaxis:{type:'date'},yaxis:{title:{text:'water temperature ('+Tu()+')'}}})); };
-CH.soil=()=>{ const s=R.soil; if(!s) return; const w=s.wk;
-  P('p5',[['d4','4 cm','--jp'],['d10','10 cm','--grb'],['d20','20 cm','--wi'],['d45','45 cm','--ce']].map(([k,n,c])=>({x:w.t,y:w[k].map(T),name:n,type:'scatter',mode:'lines',line:{color:css(c),width:2},hovertemplate:'%{x|%a %I %p}: %{y:.2f} '+Tu()+'<extra>'+n+'</extra>'})),
-    base({xaxis:{type:'date'},yaxis:{title:{text:'soil temperature ('+Tu()+')'}}})); };
+CH.strat=()=>{ const s=R.strat; if(!s) return; const dd=s.t1.map((v,i)=>v==null||s.t3[i]==null?null:dT(v-s.t3[i]));
+  P('pstrat',[{x:s.t,y:dd,type:'scatter',mode:'lines',line:{color:css('--jp'),width:1.8},fill:'tozeroy',fillcolor:'rgba(235,104,52,.22)',hovertemplate:'%{x|%b %d}: top is %{y:.1f} '+Tu()+' warmer than bottom<extra></extra>'}],
+    base({showlegend:false,xaxis:{type:'date'},yaxis:{title:{text:'top minus bottom ('+Tu()+')'},rangemode:'tozero'},
+      annotations:[{xref:'paper',yref:'paper',x:.02,y:.95,xanchor:'left',text:'big gap = layered · near zero = mixed',showarrow:false,font:{size:11,color:css('--ink2')}}]})); };
+CH.soil=()=>{ const s=R.soil; if(!s||!s.dev) return; const z=s.dev.z.map(r=>r.map(v=>v==null?null:dT(v))), mx=dT(Math.max(...s.dev.z[0].filter(v=>v!=null).map(Math.abs)));
+  P('p5',[{z,x:s.wk.t,y:s.dev.depths.map(d=>d+' cm'),type:'heatmap',zmin:-mx,zmax:mx,colorscale:[[0,'#2166ac'],[.5,'#f2f2f2'],[1,'#b2182b']],colorbar:{title:{text:Tu(),side:'right'},thickness:10},
+      hovertemplate:'%{y}, %{x|%a %I %p}: %{z:+.2f} '+Tu()+' vs that day\'s average<extra></extra>'}],
+    base({margin:{l:56,r:12,t:6,b:40},xaxis:{type:'date'},yaxis:{autorange:'reversed',type:'category',title:{text:'depth'}}})); };
 CH.wrose=()=>{ const w=R.wrose; if(!w) return; const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'], cols=['#cde2fb','#86b6ef','#2a78d6','#104281'];
   const nm={'0–3':'0–7','3–6':'7–13','6–9':'13–20','9+':'20+'};
   P('pwrose',Object.keys(w.rose).map((k,i)=>({type:'barpolar',r:w.rose[k],theta:dirs,name:unit==='us'?nm[k]+' mph':k+' m/s',marker:{color:cols[i],line:{color:css('--card'),width:1}},hovertemplate:'from %{theta}: %{r:.1f}% of hours<extra>%{fullData.name}</extra>'})),
@@ -100,24 +105,28 @@ CH.chl=()=>{ const C=R.chl; if(!C) return; const hl=[...Array(24).keys()].map(h=
     base({xaxis:{type:'date'},yaxis:{title:{text:'night-time chlorophyll (µg/L)'},range:[0,top*1.05]},
       shapes:[[0,5],[5,20],[20,60]].map(([a,b],i)=>({type:'rect',xref:'paper',x0:0,x1:1,y0:a,y1:b,fillcolor:[css('--wi'),css('--grb'),css('--jp')][i],opacity:.08,line:{width:0},layer:'below'})),
       annotations:[[2.5,'low (under 5)'],[12.5,'medium (5–20)']].map(([y,t])=>({xref:'paper',x:.99,xanchor:'right',y,text:t,showarrow:false,font:{size:11,color:css('--ink2')}}))}));
-  const sc=C['Jordan Point'].sc;
-  P('pchlsal',[{x:sc.s,y:sc.c,type:'scatter',mode:'markers',marker:{size:6,color:css('--jp'),opacity:.55},hovertemplate:'%{x:.1f} PSU: %{y:.1f} µg/L<extra></extra>'}],
-    base({showlegend:false,xaxis:{title:{text:'salinity (PSU) → saltier, more ocean water'}},yaxis:{title:{text:'chlorophyll (µg/L)'},rangemode:'tozero'}})); };
+  const sc=C['Jordan Point'].sc, edges=[[0,15,'under 15'],[15,20,'15–20'],[20,25,'20–25'],[25,30,'25–30'],[30,40,'over 30']];
+  P('pchlsal',edges.map(([lo,hi,l])=>({y:sc.c.filter((c,i)=>sc.s[i]!=null&&sc.s[i]>=lo&&sc.s[i]<hi),name:l,type:'box',boxpoints:false,marker:{color:css('--jp')},line:{color:css('--jp'),width:1.6},fillcolor:'rgba(235,104,52,.18)',
+      hovertemplate:'%{y:.1f} µg/L<extra>salinity '+l+'</extra>'})),
+    base({showlegend:false,xaxis:{title:{text:'salinity (PSU) → saltier, more ocean water'},type:'category'},yaxis:{title:{text:'night-time chlorophyll (µg/L)'},rangemode:'tozero'}})); };
 let v8='sal_psu';
-CH.anova=()=>{ const A=R.anova&&R.anova[v8]; if(!A) return; const conv=v8==='temp_c'?T:(x=>x), u=v8==='temp_c'?Tu():v8==='sal_psu'?'PSU':'mg/L';
-  P('p8',Object.keys(A.daily).map(n=>({y:A.daily[n].map(conv),name:n,type:'box',boxpoints:'all',jitter:.4,pointpos:0,marker:{color:css(SITE[n]),size:5},line:{color:css(SITE[n]),width:1.6},fillcolor:'rgba(0,0,0,0)',hovertemplate:'%{y:.2f} '+u+'<extra>'+n+'</extra>'})),
-    base({showlegend:false,yaxis:{title:{text:'daily average ('+u+')'}},xaxis:{type:'category'}}));
-  const fp=p=>p<0.001?'< 0.001':p.toFixed(3), dv=x=>v8==='temp_c'?dT(x).toFixed(2)+' '+Tu():x.toFixed(2)+' '+u;
-  document.getElementById('t8').innerHTML='<tr><th>Pair</th><th>Average difference</th><th>Independent days</th><th>p (adjusted)</th><th>Verdict</th></tr>'+
-    A.pairs.map(p=>`<tr><td>${p[0]} vs ${p[1]}</td><td>${dv(p[2])}</td><td>${p[3].toFixed(1)}</td><td>${fp(p[4])}</td><td>${p[4]<0.05?'<span class="verdict ok">✓ different</span>':'<span class="verdict care">not shown</span>'}</td></tr>`).join('');
+CH.anova=()=>{ const A=R.anova&&R.anova[v8]; if(!A) return; const u=v8==='temp_c'?Tu():v8==='sal_psu'?'PSU':'mg/L', cv=v8==='temp_c'?dT:(x=>x);
+  const pr=A.pairs.slice().sort((a,b)=>Math.abs(b[2])-Math.abs(a[2])), lab=pr.map(p=>p[0]+' − '+p[1]), sig=pr.map(p=>p[4]<0.05);
+  P('p8',[{x:pr.map(p=>cv(p[2])),y:lab,type:'scatter',mode:'markers',marker:{size:11,color:sig.map(s=>s?css('--jp'):css('--muted'))},
+      error_x:{type:'data',array:pr.map(p=>cv(p[5]||0)),color:css('--ink2'),thickness:1.6,width:6},
+      customdata:pr.map(p=>p[4]<0.001?'< 0.001':p[4].toFixed(3)),hovertemplate:'%{y}: %{x:+.2f} '+u+' (p = %{customdata})<extra></extra>'}],
+    base({showlegend:false,margin:{l:230,r:16,t:10,b:40},yaxis:{autorange:'reversed',type:'category'},xaxis:{title:{text:'average difference ('+u+')'},zeroline:true,zerolinecolor:css('--ink'),zerolinewidth:2}}));
+  const t8=document.getElementById('t8'); if(t8) t8.innerHTML='';
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v8)); };
 CH.rain=()=>{ const r=R.rain; if(!r) return; const rng=[r.t[0],r.t[r.t.length-1]];
   P('p10a',[{x:r.t,y:r.rain.map(Rm),type:'bar',marker:{color:css('--ce')},hovertemplate:'%{x|%b %d}: %{y:.2f} '+Ru()+'<extra>rain</extra>'}],base({showlegend:false,margin:{l:56,r:12,t:6,b:24},xaxis:{type:'date',range:rng},yaxis:{title:{text:'rain ('+Ru()+')'}}}));
   P('p10q',[{x:r.qt,y:r.q.map(Qc),type:'scatter',mode:'lines+markers',line:{color:css('--wi'),width:2},marker:{size:5},hovertemplate:'%{x|%b %d}: %{y:,.0f} '+Qu()+'<extra>Saco River</extra>'}],base({showlegend:false,margin:{l:56,r:12,t:6,b:24},xaxis:{type:'date',range:rng},yaxis:{title:{text:'river ('+Qu()+')'}}}));
   P('p10b',[{x:r.st,y:r.s,type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:2},marker:{size:6},hovertemplate:'%{x|%b %d}: %{y:.1f} PSU<extra>Jordan Point</extra>'}],base({showlegend:false,margin:{l:56,r:12,t:6,b:30},xaxis:{type:'date',range:rng},yaxis:{title:{text:'salinity (PSU)'}}})); };
-CH.radar=()=>{ const r=R.radar; if(!r) return;
-  P('p11',[{x:r.x.map(Wm),y:r.y,type:'scattergl',mode:'markers',marker:{size:6,color:css('--ri'),opacity:.5},hovertemplate:'wind %{x:.1f} '+Wu()+', roughness %{y:.1f}%<extra></extra>'}],
-    base({showlegend:false,xaxis:{title:{text:'wind at Ram Island ('+Wu()+')'}},yaxis:{title:{text:'surface roughness (% echoing)'}}})); };
+CH.radar=()=>{ const r=R.radar; if(!r) return; const bins={}; r.x.forEach((x,i)=>{ if(x==null||r.y[i]==null) return; const k=Math.floor(x); (bins[k]=bins[k]||[]).push(r.y[i]); });
+  const ks=Object.keys(bins).map(Number).filter(k=>bins[k].length>=8).sort((a,b)=>a-b), med=ks.map(k=>{ const a=bins[k].slice().sort((p,q)=>p-q); return a[Math.floor(a.length/2)]; });
+  P('p11',[{x:r.x.map(Wm),y:r.y,type:'scattergl',mode:'markers',marker:{size:5,color:css('--ri'),opacity:.35},hovertemplate:'wind %{x:.1f} '+Wu()+', roughness %{y:.1f}%<extra></extra>',name:'one radar scan'},
+    {x:ks.map(k=>Wm(k+.5)),y:med,type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:3},marker:{size:6},name:'typical (median)',hovertemplate:'wind ≈ %{x:.0f} '+Wu()+': typical roughness %{y:.1f}%<extra></extra>'}],
+    base({xaxis:{title:{text:'wind at Ram Island ('+Wu()+')'}},yaxis:{title:{text:'surface roughness (% echoing)'}}})); };
 CH.drift=()=>{ const d=R.drift; if(!d) return; const ND=d.net_dir, OD=d.other_dir;
   const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'], ang=dirs.map((_,i)=>i*22.5), N=R.cfg.normal;
   const rel=a=>((a-N+540)%360)-180, rmax=Math.max(...d.erose)*1.12;   // rel>0: south of straight-on -> pushes north
@@ -141,10 +150,9 @@ CH.drift=()=>{ const d=R.drift; if(!d) return; const ND=d.net_dir, OD=d.other_di
     {x:d.sens.map(r=>r[0]),y:d.sens.map(r=>r[1]/1000),name:'CERC',type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:2,dash:'dot'},marker:{size:7},hovertemplate:'%{x}°: %{y:+,.0f} thousand m³/yr<extra>CERC (+ north)</extra>'}],
     base({margin:{l:56,r:12,t:24,b:40},xaxis:{title:{text:'direction the beach faces (°)'}},yaxis:{title:{text:'thousand m³/yr (+ north, − south)'},zeroline:true,zerolinecolor:css('--ink2')},
       shapes:[{type:'line',x0:N,x1:N,yref:'paper',y0:0,y1:1,line:{color:css('--grb'),width:2,dash:'dot'}}],annotations:[{x:N,yref:'paper',y:.04,xanchor:'left',xshift:4,text:'Camp Ellis beach (est.)',showarrow:false,font:{size:11,color:css('--ink2')},bgcolor:css('--card')}]})); };
-CH.shields=()=>{ const s=R.shields; if(!s) return;
-  P('p14',[{x:s.t,y:s.v,type:'scatter',mode:'lines',line:{color:css('--ce'),width:1.6},hovertemplate:'%{x|%b %d}: %{y:.2f}<extra>daily max Shields</extra>'}],
-    base({showlegend:false,xaxis:{type:'date'},yaxis:{title:{text:'Shields number'},rangemode:'tozero'},shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:s.cr,y1:s.cr,line:{color:css('--wi'),width:1.5,dash:'dash'}}],
-      annotations:[{xref:'paper',x:.01,y:s.cr,yshift:9,xanchor:'left',text:'above this line, fine sand moves',showarrow:false,font:{size:11,color:css('--ink2')},bgcolor:css('--card')}]})); };
+CH.shields=()=>{ const s=R.shields; if(!s) return; const m=s.month||{m:[],pct:[]}, ml=m.m.map(x=>new Date(x+'-15').toLocaleDateString([],{month:'short'})+' ’'+x.slice(2,4));
+  P('p14',[{x:ml,y:m.pct,type:'bar',marker:{color:css('--ce')},text:m.pct.map(v=>v==null?'':v.toFixed(0)+'%'),textposition:'outside',cliponaxis:false,textfont:{color:css('--ink'),size:11},hovertemplate:'%{x}: sand moving %{y:.0f}% of hours<extra></extra>'}],
+    base({showlegend:false,margin:{l:56,r:12,t:18,b:40},xaxis:{type:'category'},yaxis:{title:{text:'% of hours sand moves'},rangemode:'tozero'}})); };
 CH.currents=()=>{ const c=R.currents; if(!c) return; const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'], tot=c.rose.reduce((a,b)=>a+b,0);
   P('p15',[{x:c.x,y:c.y,text:c.t,type:'scatter',mode:'lines',line:{color:css('--ce'),width:2.2},hovertemplate:'%{text}: %{x:.0f} km E, %{y:.0f} km N<extra></extra>'},
     {x:[0],y:[0],type:'scatter',mode:'markers+text',text:['start'],textposition:'middle right',marker:{size:9,color:css('--ink2')},textfont:{color:css('--ink2')},hoverinfo:'skip'}],
@@ -169,6 +177,19 @@ CH.ode=()=>{ const o=R.ode; if(!o) return; const rng=[o.t[0],o.t[o.t.length-1]];
   if(li) li.innerHTML=[`τ = <b>${p.tau.toFixed(1)} ± ${se[0].toFixed(1)} days</b> (how fast salinity adjusts)`,`S_eq = <b>${p.Seq.toFixed(1)} ± ${se[1].toFixed(1)} PSU</b> at average flow and tide`,
     `b_Q = <b>${p.bq.toFixed(2)} ± ${se[2].toFixed(2)} PSU per m³/s</b> of Cornish flow (Q̄ = ${p.Q0.toFixed(1)} m³/s)`,`b_T = <b>${p.bt>=0?'+':''}${p.bt.toFixed(1)} ± ${se[3].toFixed(1)} PSU per m</b> of tidal range (T̄R = ${p.TR0.toFixed(2)} m)`,
     `Fit: R² = ${p.R2.toFixed(2)}, typical error ${p.rmse.toFixed(1)} PSU. The ± values are honest error bars, widened because each step is so similar to the last.`].map(x=>'<li>'+x+'</li>').join(''); };
+CH.map=()=>{ if(!document.getElementById('pmap')||!R.coast) return; const k=Math.cos(43.46*Math.PI/180), tr=[];
+  R.coast.lines.forEach(l=>tr.push({x:l.map(p=>p[0]),y:l.map(p=>p[1]),type:'scatter',mode:'lines',line:{color:css('--ink2'),width:1.3},hoverinfo:'skip',showlegend:false}));
+  const B=R.coast.buoys, sal=B.map(b=>b.sal);
+  tr.push({x:[-70.3605],y:[43.4727],text:['Camp Ellis wave buoy'],type:'scatter',mode:'markers+text',textposition:'middle right',marker:{size:10,color:css('--muted'),symbol:'diamond'},textfont:{color:css('--ink2'),size:11},hoverinfo:'text',showlegend:false});
+  tr.push({x:B.map(b=>b.lon),y:B.map(b=>b.lat),text:B.map(b=>`<b>${b.name}</b>`),type:'scatter',mode:'markers+text',textposition:B.map(b=>({'Jordan Point':'middle left','Wood Island':'bottom center','Ferry Beach':'middle right','Goose Rocks Beach':'middle right'})[b.name]||'top right'),
+    textfont:{color:css('--ink'),size:12},marker:{size:20,color:sal,colorscale:[[0,'#c6dbef'],[1,'#08306b']],cmin:Math.min(...sal)-1,cmax:Math.max(...sal)+.5,line:{color:css('--card'),width:2},
+    colorbar:{title:{text:'salinity (PSU)',side:'right'},thickness:10,len:.55,y:.3}},customdata:sal,hovertemplate:'%{text}: average salinity %{customdata:.1f} PSU<extra></extra>',showlegend:false});
+  P('pmap',tr,base({margin:{l:4,r:4,t:4,b:4},xaxis:{visible:false,range:[-70.45,-70.29]},yaxis:{visible:false,range:[43.385,43.555],scaleanchor:'x',scaleratio:1/k},
+    annotations:[{x:-70.3878,y:43.4835,ax:-70.3832,ay:43.4655,xref:'x',yref:'y',axref:'x',ayref:'y',showarrow:true,arrowhead:3,arrowsize:1.3,arrowwidth:3.5,arrowcolor:'#eb6834',text:''},
+      {x:-70.4,y:43.49,text:'sand drifts<br>north',showarrow:false,font:{size:12,color:'#eb6834'},xanchor:'right'},
+      {x:-70.33,y:43.505,text:'Saco Bay',showarrow:false,font:{size:13,color:css('--muted')}},{x:-70.415,y:43.452,text:'Saco River',showarrow:false,font:{size:11,color:css('--ink2')}},
+      {x:-70.322,y:43.433,text:'Biddeford Pool',showarrow:false,font:{size:11,color:css('--ink2')}},{x:-70.398,y:43.522,text:'Old Orchard Beach',xanchor:'right',showarrow:false,font:{size:11,color:css('--ink2')}},
+      {x:-70.292,y:43.389,text:'coastline © OpenStreetMap',showarrow:false,font:{size:9,color:css('--muted')},xanchor:'right'}]})); };
 function calc(){ const out=document.getElementById('calcout'); if(!out) return; const v=id=>parseFloat(document.getElementById(id).value);
   const W=v('c-w'),h=v('c-h'),U=v('c-u'),Q=v('c-q'),S=v('c-s'),dS=v('c-ds'),So=v('c-so'), om=2*Math.PI/(12.4206*3600), gg=9.81;
   if([W,h,U,Q,S,dS,So].some(x=>!isFinite(x)||x<=0)){ out.innerHTML='<tr><td>Enter a positive number in every box.</td></tr>'; return; }

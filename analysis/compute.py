@@ -248,8 +248,12 @@ def a_soil(C):
     damp_p = 1 / (lag_h_per_m * 2 * np.pi / 24)
     kappa = damp_a ** 2 * (2 * np.pi / 86400) / 2
     wk = w[f'{yr}-07-15':f'{yr}-07-21']
+    dev = {}
+    for dd in [4, 10, 20, 30, 40, 45]:
+        col = w[f'soil_t_{dd}']; dv = (col - col.rolling(24, center=True, min_periods=12).mean())[f'{yr}-07-15':f'{yr}-07-21']
+        dev[dd] = lst(dv, 3)
     return dict(depth=[r[0] for r in res], amp=[r[1] for r in res], peak=[r[2] for r in res], damp_a=damp_a, damp_p=damp_p, kappa=kappa,
-                lag10=lag_h_per_m / 10, year=yr, wk=dict(t=wk.index.strftime('%Y-%m-%dT%H:%M').tolist(), **{f'd{d}': lst(wk[f'soil_t_{d}'], 2) for d in [4, 10, 20, 45]}))
+                lag10=lag_h_per_m / 10, year=yr, dev=dict(depths=[4, 10, 20, 30, 40, 45], z=[dev[k] for k in [4, 10, 20, 30, 40, 45]]), wk=dict(t=wk.index.strftime('%Y-%m-%dT%H:%M').tolist(), **{f'd{d}': lst(wk[f'soil_t_{d}'], 2) for d in [4, 10, 20, 45]}))
 
 
 def a_headlines(C, surge):
@@ -317,7 +321,8 @@ def a_anova(C):
             for j in range(i + 1, 4):
                 dd = D[names[i]] - D[names[j]]; r1 = dd.autocorr(1) if len(dd) > 3 else 0; r1 = 0 if not np.isfinite(r1) else max(r1, 0)
                 neff = max(len(dd) * (1 - r1) / (1 + r1), 2); t = dd.mean() / (dd.std() / np.sqrt(neff)); pp = 2 * stats.t.sf(abs(t), neff - 1)
-                pairs.append([names[i], names[j], float(dd.mean()), float(neff), float(pp)])
+                hw = float(stats.t.ppf(1 - 0.05 / 12, neff - 1) * dd.std() / np.sqrt(neff))
+                pairs.append([names[i], names[j], float(dd.mean()), float(neff), float(pp), hw])
         # Holm correction: six pairwise tests per measurement
         order = sorted(range(len(pairs)), key=lambda i: pairs[i][4]); m = len(pairs); run_max = 0
         for rank, i in enumerate(order):
@@ -437,7 +442,7 @@ def a_shields(C, D50=0.0002, s=2.65, nu=1.36e-6):
     fw = 1.39 * (A / (2.5 * D50 / 30)) ** -0.52; th = pd.Series(0.5 * fw * ub ** 2 / ((s - 1) * g * D50), index=d.index)
     dm = th.resample('D').max(); mo = (th > thcr).resample('ME').mean() * 100
     win = mo[mo.index.month.isin([12, 1, 2, 3])].mean(); summ = mo[mo.index.month.isin([6, 7, 8])].mean()
-    return dict(t=dm.index.strftime('%Y-%m-%d').tolist(), v=lst(dm, 4), cr=thcr, move=float((th > thcr).mean() * 100), sheet=float((th > 0.8).mean() * 100),
+    return dict(month=dict(m=[x.strftime('%Y-%m') for x in mo.index], pct=lst(mo, 1)), t=dm.index.strftime('%Y-%m-%d').tolist(), v=lst(dm, 4), cr=thcr, move=float((th > thcr).mean() * 100), sheet=float((th > 0.8).mean() * 100),
                 winter=float(win), summer=float(summ), top=[k.strftime('%B') for k in mo.sort_values(ascending=False).index[:2]])
 
 
@@ -492,9 +497,22 @@ def a_ode(C):
                 S_ocean=float(C.H('wood-island').sal_psu.dropna().iloc[-24 * 30:].mean()))
 
 
+def a_coast(C):
+    """Saco Bay coastline (OpenStreetMap) plus each water-quality buoy's recent average salinity, for the map."""
+    co = json.load(open(os.path.join(EXT, 'saco_coast.json')))
+    pos = {'wood-island': ((43.455593, -70.317699), 'bottom center'), 'jordan-point': ((43.460893, -70.389691), 'bottom left'),
+           'ferry-beach': ((43.497213, -70.379113), 'top right'), 'goose-rocks-beach': ((43.396733, -70.402301), 'bottom right')}
+    buoys = []
+    for slug, name in SONDES.items():
+        s = C.H(slug).sal_psu.dropna(); s = s[s.index > s.index.max() - pd.Timedelta(days=30)]
+        (lat, lon), tp = pos[slug]
+        buoys.append(dict(name=name, lat=lat, lon=lon, sal=float(s.mean()), pos=tp))
+    return dict(lines=co['lines'], buoys=buoys, source=co['source'])
+
+
 ANALYSES = [('msl', a_msl), ('amax', None), ('surge', a_surge), ('sst', a_sst), ('flow', a_flow), ('air', a_air),
             ('marsh', a_marsh), ('tideclock', a_tideclock), ('strat', a_strat), ('soil', a_soil), ('head', None), ('wrose', a_wrose),
-            ('chl', a_chl), ('anova', a_anova), ('rain', a_rain), ('radar', a_radar),
+            ('chl', a_chl), ('anova', a_anova), ('coast', a_coast), ('rain', a_rain), ('radar', a_radar),
             ('drift', a_drift), ('shields', a_shields), ('currents', a_currents), ('ode', a_ode)]
 
 

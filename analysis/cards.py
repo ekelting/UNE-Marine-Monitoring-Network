@@ -41,7 +41,7 @@ def build(R):
         m = R['msl']
         add(g='past', t='Sea level is rising', w='NOAA tide gauge, Portland · yearly averages since 1912', c=[OC, GE, ME],
             plain=f'The ocean at Portland is higher than it used to be. The tide gauge has measured it every month since {m["first"]}, so the trend shows clearly through all the ups and downs.',
-            read='Each dot is one year\'s average sea level. The straight line is the long-term trend. Look at how the dots climb from left to right.',
+            read='Each dot is one year\'s average sea level, measured as how much higher it was than in 1912. The orange line is the long-term trend. Watch the dots climb.',
             found=[f'Sea level at Portland has risen about <b>{m["slope"]*1000:.1f} mm per year</b> on average since {m["first"]}. That adds up to about {Lb(m["rise"])} so far.',
                    f'Over the last 30 years it has risen <b>{m["slope30"]*1000:.1f} mm per year</b>, about {m["slope30"]/m["slope"]:.1f}× the long-term pace.',
                    'Every high tide, storm and flood now starts from that higher level, which matters for beach and dune erosion.'],
@@ -53,7 +53,7 @@ def build(R):
         a = R['amax']; rl = a['rl']; t = a['top']
         add(g='past', t='How high can the water get?', w='NOAA tide gauge, Portland · highest water each year · extreme-value fit', c=[OC, ME, MA],
             plain='Each year has one highest water level, usually a big storm on top of a high tide. With more than a century of these, we can estimate how high the water gets once every 10 or 100 years at today\'s sea level.',
-            read='Bars are each year\'s highest water, adjusted to today\'s sea level. Orange bars reached the 1-in-10-year level. The dashed lines are the 10- and 100-year levels; the dotted line is an ordinary high tide.',
+            read='Each dot is one year\'s highest water, adjusted to today\'s sea level. Big orange dots reached the 1-in-10-year level. Dashed lines are the 10- and 100-year levels; the dotted line is an ordinary high tide.',
             found=[f'The record is {Lb(t[0][1])} above the low-tide datum, set in <b>{t[0][0]}</b>. Next highest: {t[1][0]} and {t[2][0]}.',
                    f'At today\'s sea level, a <b>1-in-10-year</b> storm tide reaches about {Lb(rl["10"])} and a <b>1-in-100-year</b> one about {Lb(rl["100"])} (likely range {Ls(a["ci100"][0])} to {Ls(a["ci100"][1])}).',
                    f'A 1-in-10-year storm tide is about {Lb(rl["10"]-a["mhhw"])} above an ordinary high tide.'],
@@ -76,7 +76,7 @@ def build(R):
         warm = ' and '.join(w[0] for w in s['warm'])
         add(g='past', t='Was the sea warmer than normal?', w='NOAA buoy 44007 (off Portland) · daily water temperature vs the 1991–2020 normal', c=[MS, OC, ME],
             plain='"Normal" here means the average for each date from 1991 to 2020, measured by a NOAA buoy off Portland. Comparing the past year with that shows whether the water was unusually warm or cold, which matters for lobsters, algae and fish.',
-            read='The grey band is the normal range for each date (the middle 80% of past years). Blue is the NOAA buoy over the past year; the dotted line is Camp Ellis. Above the band means unusually warm. The bottom chart shows the long-term warming.',
+            read='Top: the grey band is the normal range for each date (the middle 80% of past years). Blue is the NOAA buoy over the past year; the dotted line is Camp Ellis, close to shore. Above the band means unusually warm. Bottom: one stripe per year, blue cooler and red warmer than the 1991–2020 average; gaps are years with too little data.',
             found=[f'Over the past year the sea off Portland averaged {dTb(abs(s["meanan"]))} <b>{"warmer" if s["meanan"] >= 0 else "cooler"}</b> than normal. Warmest compared with normal: {warm}.']
                   + ([f'{" and ".join(c[0] for c in s["cold"])} ran a little cooler than normal.'] if s['cold'] else [])
                   + [('It did <b>not</b> meet the standard definition of a marine heatwave (5+ days in a row above the warmest 10% for that date).' if s['mhw'] == 0
@@ -84,7 +84,7 @@ def build(R):
                      f'Since 1990 the yearly average has {"warmed" if s["slope"] > 0 else "cooled"} about {dTb(abs(s["slope"])*10)} <b>per decade</b>. The Gulf of Maine is one of the fastest-warming ocean areas.'],
             v=OK, math=f'''<p>Daily means of NOAA buoy 44007 water temperature (about 1 m deep). Normal: 1991–2020 values within ±5 days of each date, smoothed over 31 days; band = 10th to 90th percentile. Marine-heatwave test follows Hobday et al. (2016). Trend: least squares on yearly averages for the {s["nyears"]} years with at least 330 days of data (p = {pv(s["p"])}).</p>
 <p>Camp Ellis is shown for comparison: its water is shallow and close to shore, so it heats up more in summer (about 0.5–1.3 °C warmer than the NOAA buoy) and cools more in winter (about 1–1.5 °C colder).</p>''',
-            charts=[('psst', ''), ('psstyr', 'sm')], cap='Top: daily sea temperature vs normal. Bottom: yearly average at buoy 44007, with its trend.', src='NOAA NDBC buoy 44007')
+            charts=[('psst', ''), ('psstyr', 'xs')], cap='Top: daily sea temperature vs normal. Bottom: "warming stripes", one per year at buoy 44007.', src='NOAA NDBC buoy 44007')
     if 'flow' in R:
         f = R['flow']
         add(g='past', t=f'The Saco River {"is running low" if f["med_rank"] < 40 else "compared with normal"}', w=f'USGS gauge, Saco River at Cornish · daily flow vs every year since {f["start"]}', c=[GE, MS, ME],
@@ -99,12 +99,12 @@ def build(R):
         a = R['air']
         add(g='past', t='Was the air warmer than normal?', w='NOAA, Portland Jetport normals · with the Ram Island station', c=[ME, GE],
             plain='Same idea for the air. Portland\'s airport has daily records, so each day can be compared with its 1991–2020 normal. Ram Island tracks Portland closely, which also shows our station is measuring well.',
-            read='The grey line is the normal temperature for each date. Blue is Portland over the past year, dotted is Ram Island. Above grey means warmer than normal.',
+            read='Each bar is one week: red bars were warmer than the 1991–2020 normal for those dates, blue bars colder. Taller bars mean a bigger difference.',
             found=[f'Coldest month compared with normal: <b>{a["cold"]}</b>, about {dTb(abs(a["coldv"]))} {"below" if a["coldv"] < 0 else "above"} normal.',
                    f'Warmest compared with normal: <b>{a["warm"]}</b>, about {dTb(abs(a["warmv"]))} {"above" if a["warmv"] > 0 else "below"} normal.',
                    f'Ram Island and Portland rise and fall almost identically (correlation {a["r"]:.2f}). Ram Island is milder: warmer in winter and cooler in summer, because it is surrounded by the sea, which changes temperature more slowly than land.'],
             v=OK, math='<p>Daily mean = (max + min) / 2 from GHCN-Daily station USW00014764. Normal = the 1991–2020 average within ±7 days of each date. Chart shows 7-day averages.</p>',
-            charts=[('pair', '')], cap='Daily air temperature (7-day average) vs the 1991–2020 normal.', src='NOAA GHCN-Daily, Portland International Jetport')
+            charts=[('pair', '')], cap='Weekly difference from the 1991–2020 normal, Portland Jetport.', src='NOAA GHCN-Daily, Portland International Jetport')
 
     # ------------------------------------------------------------------ ONE STATION
     if 'marsh' in R:
@@ -131,24 +131,24 @@ def build(R):
         s = R['strat']
         add(g='one', t='Layers in the sea', w='Camp Ellis mooring · temperature at three depths', c=[OC, MS],
             plain='In summer the sun warms the top of the sea, and that warm, light water floats on colder, heavier water below, like oil on vinegar. In fall, storms and cooling stir the layers back together.',
-            read='Three lines, one per sensor depth. When the lines spread apart, the sea is layered. When they come together, it is mixed from top to bottom.',
+            read='The shaded area shows how much warmer the top of the sea is than the bottom. A big gap means the sea is layered; near zero means it is mixed from top to bottom.',
             found=([f'Fully mixed (all depths within a fraction of a degree) in: <b>{", ".join(s["mixed"])}</b>.'] if s['mixed'] else [])
                   + [f'Most layered in <b>{s["maxm"]}</b>: the upper sensor averaged {dTb(s["maxd"])} warmer than the deepest one.',
                      'Layering matters for oxygen near the bottom and for how storms move heat and sediment.'],
             v=CARE, math='<p>Daily means of the three temperature sensors on the Camp Ellis smart mooring (positions 1, 2 and 3, shallowest to deepest). Their exact depths aren\'t recorded in the data. Temperature sets most of the density here, but salinity also matters near the river plume.</p>',
-            charts=[('pstrat', '')], cap='Daily mean temperature at the three mooring sensors, Camp Ellis.')
+            charts=[('pstrat', '')], cap='Daily temperature difference between the top and bottom mooring sensors, Camp Ellis.')
     if 'soil' in R:
         s = R['soil']
         hr = lambda h: f'{int(h) % 12 or 12} {"am" if int(h) % 24 < 12 else "pm"}'  # noqa: E731
         add(g='one', t='How fast heat sinks into the forest soil', w='363 Acre Woods · soil temperature at six depths · heat-equation fit', c=[MA, GE],
             plain='Every sunny day sends a pulse of warmth into the ground. The pulse gets weaker and later the deeper it goes, like a ripple fading in thick honey. How fast it fades tells us how easily heat moves through that soil.',
-            read='Each line is a depth. The top (orange) line swings a lot every day; the deepest (blue) is almost flat. The peaks also arrive later at depth.',
+            read='Each row is a depth and time runs left to right. Red means warmer than that depth\'s daily average, blue cooler. Follow a red patch downward: it fades and shifts to the right, because the warmth arrives later and weaker deeper down.',
             found=[f'The daily swing shrinks from {dTb(2*s["amp"][0])} at 4 cm to almost nothing ({dTs(2*s["amp"][-1])}) at 45 cm.',
                    f'The daily peak arrives about <b>{s["lag10"]:.1f} hours later for every 10 cm</b> deeper: about {hr(s["peak"][0])} at 4 cm, {hr(s["peak"][2])} at 20 cm, {hr(s["peak"][-1])} at 45 cm.',
                    f'Two independent methods (shrinking and delay) give damping depths of {s["damp_a"]*100:.1f} and {s["damp_p"]*100:.1f} cm. Thermal diffusivity is about <b>{s["kappa"]*1e7:.1f} × 10⁻⁷ m²/s</b>, typical of moist forest soil.'],
             v=OK, math=f'''<p>The heat equation ∂T/∂t = κ ∂²T/∂z², driven by a daily sine wave at the surface, predicts amplitude A(z) = A₀e^(−z/d) and delay Δt = z/(ωd), with damping depth d = √(2κ/ω). Daily cycles were fitted at each depth for June 1 – September 15, {s["year"]}, after removing the 24-hour running mean.</p>
 <div class="formula">κ = ω d² / 2</div><p>Assumes uniform soil and steady moisture, with no rain carrying heat downward. The deepest sensors' swings are below the 0.1 °C reporting step, so 40 and 45 cm are shown but not used in the fit.</p>''',
-            charts=[('p5', '')], cap=f'One week in July {s["year"]}. The deeper the sensor, the smaller and later the daily bump.')
+            charts=[('p5', '')], cap=f'One week in July {s["year"]}: each depth\'s temperature minus its own daily average.')
     if 'head' in R:
         h = R['head']
         lm = calendar.month_name[int(h['lob_month'])] if h.get('lob_month') else ''
@@ -184,14 +184,14 @@ def build(R):
         bins = [b for b in J['bins'] if b is not None]
         add(g='one', t='Chlorophyll: how much algae, and where does it come from?', w='Wood Island and Jordan Point · night-time chlorophyll · chlorophyll vs salinity', c=[MS, ME, GE],
             plain='Using only night-time readings, we can track algae day by day and rate it on the scale NOAA uses for estuaries. Plotting chlorophyll against saltiness at Jordan Point also shows whether the algae ride in with the ocean or come down the river.',
-            read='Top: one dot per night; the coloured strips are NOAA\'s "low" (under 5 µg/L) and "medium" (5–20) levels. Bottom: each dot is one night-time hour at Jordan Point. Further right is saltier (more ocean water); higher is more algae.',
+            read='Top: one dot per night; the coloured strips are NOAA\'s "low" (under 5 µg/L) and "medium" (5–20) levels. Bottom: each box shows Jordan Point\'s night-time chlorophyll for water of a given saltiness; boxes further right are saltier (more ocean water).',
             found=[f'Wood Island: low on {W["cls"][0]} of {W["nn"]} nights, medium on {W["cls"][1]}, high on {W["cls"][2]}. Jordan Point: low on {J["cls"][0]} of {J["nn"]}, medium on {J["cls"][1]}, high on {J["cls"][2]}.',
                    (f'At Jordan Point the <b>saltiest water carries the most algae</b> (median {bins[-1]:.1f} µg/L in the saltiest vs {bins[0]:.1f} in the freshest), so the algae are coming in with the tide from the bay.'
                     if len(bins) > 1 and bins[-1] > 1.5 * bins[0] else
                     (f'At Jordan Point the <b>freshest water carries the most algae</b> (median {bins[0]:.1f} µg/L vs {bins[-1]:.1f} in the saltiest), so the algae are coming down the river.'
                      if len(bins) > 1 and bins[0] > 1.5 * bins[-1] else 'At Jordan Point algae levels are similar in fresh and salty water.'))],
             v=CARE, math=f'<p>Nightly medians (10 pm – 4 am), last 60 days. NOAA ASSETS / National Estuarine Eutrophication Assessment levels: low ≤ 5, medium 5–20, high 20–60, very high > 60 µg/L. NOAA\'s ratings use the 90th percentile over a whole season, so this is an early look. Chlorophyll–salinity correlation (night) r = {J["r"]:.2f}.</p>',
-            charts=[('pchlnight', ''), ('pchlsal', '')], cap='Top: night-time chlorophyll at each buoy. Bottom: chlorophyll vs salinity at Jordan Point, night-time hours.')
+            charts=[('pchlnight', ''), ('pchlsal', '')], cap='Top: night-time chlorophyll at each buoy. Bottom: night-time chlorophyll at Jordan Point, grouped by how salty the water was.')
 
     # ------------------------------------------------------------------ COMPARE
     if 'anova' in R:
@@ -202,12 +202,12 @@ def build(R):
         jp = [p for p in A['temp_c']['pairs'] if 'Jordan Point' in p[:2] and p[4] < 0.05]
         add(g='compare', t='Are the four water-quality buoys really different?', w='Wood Island, Jordan Point, Ferry Beach, Goose Rocks Beach · statistical tests', c=[MA, MS, OC],
             plain='We want to know whether places truly differ, or whether we are just seeing random wiggles. The catch: each day\'s reading is a lot like the day before, so the data hold less independent evidence than their count suggests. Ignoring that makes tiny differences look "highly significant." These tests account for it.',
-            read='Each box shows a buoy\'s daily averages: the box is the middle half of days and the dots are individual days. Boxes that do not overlap at all are clearly different. The table compares every pair. Use the buttons to switch measurement.',
+            read='The map shows each buoy coloured by its average saltiness (darker = saltier). Below, each dot is how different two buoys are on average, and its line is the range we are confident in. If the line crosses the dark zero line, we cannot say those two differ; orange dots are clearly different. Use the buttons to switch measurement.',
             found=[verdict('sal_psu', 'Salinity'), verdict('temp_c', 'Temperature'), verdict('do_mgl', 'Oxygen'),
                    f'Why it matters: a naive test on hourly oxygen data gives p = {sci(A["do_mgl"]["pn"])}, a "highly significant" difference that mostly disappears once the day-to-day memory is counted.'],
             v=OK, math=f'''<p>Daily means over the {A["sal_psu"]["n"]} most recent days when all four buoys reported ({A["sal_psu"]["start"]} – {A["sal_psu"]["end"]}). For each pair, the daily <i>difference</i> is tested with a t-test whose sample size is cut to the effective number of independent days, n_eff = n(1 − r₁)/(1 + r₁), where r₁ is the day-to-day correlation of the difference. Because six pairs are tested for each measurement, p-values are adjusted for multiple comparisons (Holm method).</p>
 <p>For reference, the classic tests on salinity, which treat days as independent: one-way ANOVA F = {A["sal_psu"]["F"]:.0f}, Kruskal–Wallis H = {A["sal_psu"]["K"]:.0f}, Friedman χ² = {A["sal_psu"]["Fr"]:.0f}; effect size η² = {A["sal_psu"]["eta2"]:.2f}. Their p-values are too small for the reason above, so the table uses the adjusted tests.</p>''',
-            tabs=True, charts=[('p8', '')], table='t8', cap='')
+            tabs=True, charts=[('pmap', 'map'), ('p8', '')], cap='Map: average salinity over the last 30 days (coastline © OpenStreetMap contributors). Chart: average difference between each pair of buoys, with ranges adjusted for making six comparisons.')
     if 'rain' in R:
         r = R['rain']
         add(g='compare', t='Rain, river and tide: what moves the estuary?', w='Ram Island rain · USGS Saco River flow · Jordan Point salinity', c=[MS, GE, ME],
@@ -221,12 +221,12 @@ def build(R):
         r = R['radar']
         add(g='compare', t='Does the radar agree with the weather station?', w='Ram Island Radar vs Ram Island wind sensor', c=[OC, MA],
             plain='The radar sees how rough the sea surface looks. The weather station on the same island measures wind. If the radar works as we think, rougher water should go with stronger wind.',
-            read='Each dot is one radar scan. Dots climbing to the right mean more wind and rougher water.',
+            read='Grey dots are single radar scans. The orange line is the typical roughness at each wind speed: flat at first, then climbing once the wind passes about 10 mph.',
             found=[f'Below about <b>10 mph</b> the sea barely shows up on radar. Above that, roughness climbs steadily with wind (correlation {r["r"]:.2f}).',
                    f'It matches the <b>waves</b> even better ({r["rw"]:.2f} with the Camp Ellis buoy\'s wave-based wind): the radar sees the waves the wind makes, and waves linger after the wind drops.',
                    f'Bonus: the radar sees about <b>{(r["weekend"]/r["weekday"]-1)*100:.0f}% more boats</b> per scan on weekends.'],
             v=OK, math=f'<p>{r["n"]} scans matched to hourly wind. Correlations are descriptive; no p-values are given because hourly values aren\'t independent. The relationship is curved (a threshold), so the rank correlation ({r["rs"]:.2f}) is also reported.</p>',
-            charts=[('p11', '')], cap='Each dot is one radar scan matched to that hour\'s wind.')
+            charts=[('p11', '')], cap='Each grey dot is one radar scan matched to that hour\'s wind; the orange line is the median for each 1 m/s of wind.')
 
     # ------------------------------------------------------------------ PHYSICS
     if 'drift' in R:
@@ -260,13 +260,13 @@ def build(R):
         s = R['shields']
         add(g='phys', t='When does the seabed move?', w='Camp Ellis buoy (about 12 m deep) · wave motion at the bed · Shields number', c=[OC, MA],
             plain='Waves move water back and forth all the way down to the seabed. If that motion is strong enough, it rolls sand grains along. The Shields number compares the push with the grain\'s weight: above the line, sand moves.',
-            read='The line is each day\'s strongest push on the sand. Where it rises above the green dashed line, fine sand at the buoy\'s depth starts moving.',
+            read='Each bar is a month: the share of hours when waves were strong enough to roll fine sand on the seabed 12 m down.',
             found=[f'At the buoy\'s depth, fine sand moves in about <b>{s["move"]:.0f}%</b> of hours: about {s["winter"]:.0f}% in winter (December–March) and {s["summer"]:.0f}% in summer. The most active months: {s["top"][0]} and {s["top"][1]}.',
                    ('The very strong "sheet flow", when the whole surface layer moves, never happened at this depth. It happens closer to shore, where waves break.' if s['sheet'] < 0.05
                     else f'"Sheet flow", when the whole surface layer moves, happened in {s["sheet"]:.1f}% of hours.')],
             v=OK, math='''<p>Bed orbital velocity U = πH<sub>s</sub>/(T·sinh kh) from linear wave theory (depth 12.7 m including mean tide); skin-friction factor f<sub>w</sub> = 1.39(A/z₀)^−0.52 with z₀ = 2.5·D50/30 (Soulsby 1997); θ = ½f<sub>w</sub>U² / [(s−1)g·D50]; threshold θ<sub>cr</sub> from Soulsby & Whitehouse. D50 = 0.2 mm (fine sand).</p>
 <p>Waves only: adding the measured bottom current and local grain-size samples would sharpen it.</p>''',
-            charts=[('p14', '')], cap='Daily maximum Shields number. Dashed line: the push needed to move fine sand.')
+            charts=[('p14', '')], cap='Share of each month\'s hours with enough wave motion at the bed to move fine (0.2 mm) sand.')
     if 'currents' in R:
         c = R['currents']
         add(g='phys', t='Where does the bottom water go?', w='Camp Ellis current meter · progressive vector diagram · current rose · wind check', c=[OC, MS],
