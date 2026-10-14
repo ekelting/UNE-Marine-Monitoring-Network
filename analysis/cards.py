@@ -230,29 +230,32 @@ def build(R):
 
     # ------------------------------------------------------------------ PHYSICS
     if 'drift' in R:
-        d = R['drift']
+        d = R['drift']; nd, od = d['net_dir'], d['other_dir']
+        away = 'north, away from Camp Ellis and the Saco River jetty, toward Old Orchard and Pine Point' if nd == 'north' else 'south, toward the Saco River jetty'
         add(g='phys', t='Littoral drift: which way does the sand go, and why?', w='Camp Ellis wave buoy · wave direction vs the beach', c=[OC, GE, ME],
             plain='When waves hit a beach at an angle, they push sand along the shore like a conveyor belt. Which way the belt runs depends on which side of "straight on" the waves come from. The compass shows where Camp Ellis\'s wave energy comes from, with the beach drawn in.',
-            read='The thick yellow line is the beach. The dotted arrow points the way a wave would come if it hit the beach straight on. Dark petals show where the wave energy comes from. Petals in the orange half push sand south; petals in the blue half push it north.',
-            found=[f'Most wave energy arrives from the <b>{DIRS[d["top_dirs"][0]]}</b> and <b>{DIRS[d["top_dirs"][1]]}</b>.',
-                   f'Of the energy that reaches the beach at an angle, <b>{d["south_share"]:.0f}%</b> comes from the orange side, so the waves push sand <b>{"south, toward the Saco River jetty" if d["south_share"] > 50 else "north, away from the jetty"}</b>.',
-                   'The running total (lower chart) climbs in steps. Each step is a storm.'],
-            v=CARE, math=f'''<p>Wave energy by direction: sum of H<sub>s</sub>²·T<sub>p</sub> (proportional to wave energy flux) in each 22.5° sector of the buoy's mean wave direction (where waves come from). The beach line and straight-on direction ({R["cfg"]["normal"]}°) are estimates for the Camp Ellis – Ferry Beach shore; testing 90°–135° doesn't change the direction of drift.</p>
-<p>The running total uses the Kamphuis formula (dashed: CERC); the next card explains how it is calculated.</p>''',
-            charts=[('pdrose', 'tall'), ('p13', 'sm')], cap=f'Top: share of wave energy from each direction, with the beach and the straight-on direction. Bottom: running total of sand pushed south since {d["start"]}, thousand m³ (orange bands are storms).')
+            read='The thick yellow line is the beach. The dotted arrow points the way a wave would come if it hit the beach straight on. Dark petals show where the wave energy comes from. Petals in the blue half push sand north; petals in the orange half push it south.',
+            found=[f'Most wave energy arrives from the <b>{DIRS[d["top_dirs"][0]]}</b> and <b>{DIRS[d["top_dirs"][1]]}</b>. The beach just north of the Camp Ellis jetty faces east-northeast, so these waves arrive from slightly south of straight on.' if nd == 'north'
+                   else f'Most wave energy arrives from the <b>{DIRS[d["top_dirs"][0]]}</b> and <b>{DIRS[d["top_dirs"][1]]}</b>.',
+                   f'Of the energy that reaches the beach at an angle, <b>{d["with_share"]:.0f}%</b> pushes sand <b>{away}</b>.',
+                   'That matches decades of geological work in Saco Bay: sand moves north from the Saco River, Pine Point has grown, and Camp Ellis, cut off from the river\'s sand by the jetty, erodes.' if nd == 'north' else
+                   'Note: geological studies of Saco Bay find net drift to the north overall; this single-buoy estimate is very sensitive to the beach angle (see the next card).'],
+            v=CARE, math=f'''<p>Wave energy by direction: sum of H<sub>s</sub>²·T<sub>p</sub> (proportional to wave energy flux) in each 22.5° sector of the buoy's mean wave direction (where waves come from; energy-weighted mean {d["mean_dir"]:.0f}°). The beach from the jetty to Ferry Beach runs north-northwest, so a wave hitting it straight on comes from about {R["cfg"]["normal"]}° (estimated from map coordinates; a surveyed shoreline would sharpen it).</p>
+<p>The answer depends on that angle: with these waves the drift flips direction if the beach faced {d["flip"]:.0f}° or more (see the next card). Farther north, where the shore turns to face east-southeast at Old Orchard, the same waves would push sand the other way, so this estimate applies to the Camp Ellis – Ferry Beach stretch only.</p>''',
+            charts=[('pdrose', 'tall'), ('p13', 'sm')], cap=f'Top: share of wave energy from each direction, with the beach and the straight-on direction. Bottom: running total of sand pushed {nd} since {d["start"]}, thousand m³ (orange bands are storms).')
         top4 = d['ranking'][:4]; t4 = sum(r[1] for r in top4) / d['total'] * 100
         add(g='phys', t='Littoral drift: when, and how much?', w='Camp Ellis wave buoy · waves to the break point · CERC and Kamphuis formulas', c=[OC, GE, MA],
             plain='Now the amounts: how much sand the waves could move each month, and which storms did the most work. These are rough estimates, so think of them as "about this big" rather than exact numbers.',
-            read='Top: each bar is a month; orange (up) is sand pushed south, blue (down) is sand pushed north. Middle: storms ranked by how much sand they moved, with their share of the total on the bars. Bottom: how the yearly amount changes with the beach angle we assume.',
+            read=f'Top: each bar is a month; bars above the line are sand pushed {nd}, below are sand pushed {od}. Middle: storms ranked by how much sand they moved, with their share of the total on the bars. Bottom: how the yearly amount depends on which way the beach faces; above zero is northward.',
             found=[f'The busiest month was <b>{d["busiest"]}</b>. The single busiest storm, <b>{top4[0][0]}</b>, moved about {top4[0][1]/d["total"]*100:.0f}% of the total by itself.',
                    f'The top 4 storms moved about <b>{t4:.0f}%</b> of the sand; all {d["nstorms"]} storms together about {d["storm_share_k"]:.0f}%, though storms were only {d["storm_hours"]:.0f}% of the hours.',
                    f'Summer (June–August) moved {"less" if d["summer"] < d["feb"] else "more"} sand than February alone.',
-                   f'Yearly amount: roughly <b>{d["kmin"]/1000:.0f},000–{d["kmax"]/1000:.0f},000 m³</b> by Kamphuis and {d["cmin"]/1000:.0f},000–{d["cmax"]/1000:.0f},000 m³ by CERC, depending on the beach angle. These are what the waves <i>could</i> move if sand were unlimited.'],
+                   f'Yearly amount at Camp Ellis: roughly <b>{abs(d["k_here"])/1000:.0f},000 m³ {nd}</b> by Kamphuis ({abs(d["c_here"])/1000:.0f},000 by CERC, which tends to overestimate). These are what the waves <i>could</i> move if sand were unlimited; with the jetty blocking the river\'s sand, the real amount is limited by supply.'],
             v=CARE, math='''<p>Each hour, waves are refracted and shoaled from the buoy (12 m) to breaking (H = 0.78·depth) with Snell's law over straight, parallel depth contours, then</p>
 <div class="formula">CERC: Q = K√g·H_b^2.5·sin(2α_b) / [16√γ (s−1)(1−n)], K = 0.39</div>
 <div class="formula">Kamphuis: Q_m = 2.27·H_b²·T_p^1.5·m_b^0.75·D50^−0.25·sin^0.6(2α_b)</div>
-<p>Assumptions: beach slope 0.02, grain size 0.2 mm, porosity 0.4. Wood Island and the jetty bend waves in ways straight contours miss, so a wave model (such as SWAN) would sharpen the amounts. Storm periods are those on the Camp Ellis wave buoy page.</p>''',
-            charts=[('pdmonth', ''), ('pdstorm', ''), ('p13b', 'sm')], cap='Top: monthly potential transport (Kamphuis). Middle: storms ranked by sand moved (Kamphuis). Bottom: net yearly rate vs the assumed straight-on direction.')
+<p>Assumptions: beach slope 0.02, grain size 0.2 mm, porosity 0.4. Wood Island, Ram Island and the jetty bend waves in ways straight contours miss, and the shoreline curves through the bay, so a wave model (such as SWAN) run along a surveyed shoreline would sharpen both the amounts and where the drift changes direction. Storm periods are those on the Camp Ellis wave buoy page.</p>''',
+            charts=[('pdmonth', ''), ('pdstorm', ''), ('p13b', 'sm')], cap='Top: monthly potential transport (Kamphuis). Middle: storms ranked by sand moved (Kamphuis). Bottom: net yearly rate (+ north) vs the direction the beach faces.')
     if 'shields' in R:
         s = R['shields']
         add(g='phys', t='When does the seabed move?', w='Camp Ellis buoy (about 12 m deep) · wave motion at the bed · Shields number', c=[OC, MA],

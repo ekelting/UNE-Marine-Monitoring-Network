@@ -118,28 +118,29 @@ CH.rain=()=>{ const r=R.rain; if(!r) return; const rng=[r.t[0],r.t[r.t.length-1]
 CH.radar=()=>{ const r=R.radar; if(!r) return;
   P('p11',[{x:r.x.map(Wm),y:r.y,type:'scattergl',mode:'markers',marker:{size:6,color:css('--ri'),opacity:.5},hovertemplate:'wind %{x:.1f} '+Wu()+', roughness %{y:.1f}%<extra></extra>'}],
     base({showlegend:false,xaxis:{title:{text:'wind at Ram Island ('+Wu()+')'}},yaxis:{title:{text:'surface roughness (% echoing)'}}})); };
-CH.drift=()=>{ const d=R.drift; if(!d) return;
+CH.drift=()=>{ const d=R.drift; if(!d) return; const ND=d.net_dir, OD=d.other_dir;
   const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'], ang=dirs.map((_,i)=>i*22.5), N=R.cfg.normal;
-  const rel=a=>((a-N+540)%360)-180, rmax=Math.max(...d.erose)*1.12;
-  P('pdrose',[{type:'barpolar',r:ang.map(a=>rel(a)<0&&rel(a)>-90?rmax:0),theta:ang,width:22.5,marker:{color:'rgba(235,104,52,.10)'},hoverinfo:'skip',showlegend:false},
-    {type:'barpolar',r:ang.map(a=>rel(a)>0&&rel(a)<90?rmax:0),theta:ang,width:22.5,marker:{color:'rgba(42,120,214,.10)'},hoverinfo:'skip',showlegend:false},
+  const rel=a=>((a-N+540)%360)-180, rmax=Math.max(...d.erose)*1.12;   // rel>0: south of straight-on -> pushes north
+  P('pdrose',[{type:'barpolar',r:ang.map(a=>rel(a)>0&&rel(a)<90?rmax:0),theta:ang,width:22.5,marker:{color:'rgba(42,120,214,.12)'},hoverinfo:'skip',showlegend:false},
+    {type:'barpolar',r:ang.map(a=>rel(a)<0&&rel(a)>-90?rmax:0),theta:ang,width:22.5,marker:{color:'rgba(235,104,52,.12)'},hoverinfo:'skip',showlegend:false},
     {type:'barpolar',r:d.erose,theta:ang,width:20,name:'wave energy',customdata:dirs,marker:{color:css('--ink2'),line:{color:css('--card'),width:1}},hovertemplate:'from %{customdata}: %{r:.1f}% of wave energy<extra></extra>'},
     {type:'scatterpolar',r:[rmax,rmax],theta:[N-90,N+90],mode:'lines',line:{color:css('--grb'),width:5},name:'beach line',hoverinfo:'skip'},
     {type:'scatterpolar',r:[0,rmax*.85],theta:[N,N],mode:'lines+markers',marker:{symbol:'arrow',size:12,angleref:'previous',color:css('--ink2')},line:{color:css('--ink2'),width:2,dash:'dot'},name:'straight onto the beach',hoverinfo:'skip'}],
     base({margin:{l:30,r:30,t:30,b:30},legend:{orientation:'h',y:-0.06},polar:{barmode:'overlay',bgcolor:'rgba(0,0,0,0)',angularaxis:{direction:'clockwise',rotation:90,tickvals:ang,ticktext:dirs,gridcolor:css('--grid'),color:css('--ink2')},radialaxis:{range:[0,rmax],gridcolor:css('--grid'),showticklabels:false}},
-      annotations:[{x:1,xanchor:'right',y:.98,xref:'paper',yref:'paper',text:'waves from the orange side<br>push sand <b>south</b>',showarrow:false,font:{size:11,color:css('--ink2')}},{x:1,xanchor:'right',y:.02,xref:'paper',yref:'paper',text:'waves from the blue side<br>push sand <b>north</b>',showarrow:false,font:{size:11,color:css('--ink2')}}]}));
+      annotations:[{x:1,xanchor:'right',y:.02,xref:'paper',yref:'paper',text:'waves from the blue side<br>push sand <b>north</b>',showarrow:false,font:{size:11,color:css('--ink2')}},{x:0,xanchor:'left',y:.98,xref:'paper',yref:'paper',text:'waves from the orange side<br>push sand <b>south</b>',showarrow:false,font:{size:11,color:css('--ink2')}}]}));
   P('p13',[{x:d.cum.t,y:d.cum.k,name:'Kamphuis',type:'scatter',mode:'lines',line:{color:css('--ce'),width:2.4},hovertemplate:'%{x|%b %d}: %{y:,.0f} thousand m³<extra>Kamphuis</extra>'},
     {x:d.cum.t,y:d.cum.c,name:'CERC',type:'scatter',mode:'lines',line:{color:css('--jp'),width:2,dash:'dot'},hovertemplate:'%{x|%b %d}: %{y:,.0f} thousand m³<extra>CERC</extra>'}],
-    base({xaxis:{type:'date'},yaxis:{title:{text:'thousand m³ south'}},shapes:bands(d.storms)}));
-  const ml=d.month.m.map(m=>new Date(m+'-15').toLocaleDateString([],{month:'short'})+' ’'+m.slice(2,4));
-  P('pdmonth',[{x:ml,y:d.month.s,name:'pushed south',type:'bar',marker:{color:css('--jp')},hovertemplate:'%{x}: %{y:.1f} thousand m³ south<extra></extra>'},{x:ml,y:d.month.n,name:'pushed north',type:'bar',marker:{color:css('--ce')},hovertemplate:'%{x}: %{y:.2f} thousand m³ north<extra></extra>'}],
-    base({barmode:'relative',bargap:.25,xaxis:{type:'category'},yaxis:{title:{text:'thousand m³ (+ south, − north)'},zeroline:true,zerolinecolor:css('--ink2')}}));
+    base({xaxis:{type:'date'},yaxis:{title:{text:'thousand m³ moved '+ND}},shapes:bands(d.storms)}));
+  const ml=d.month.m.map(m=>new Date(m+'-15').toLocaleDateString([],{month:'short'})+' ’'+m.slice(2,4)), cw=ND==='north'?css('--ce'):css('--jp'), ca=ND==='north'?css('--jp'):css('--ce');
+  P('pdmonth',[{x:ml,y:d.month.w,name:'pushed '+ND,type:'bar',marker:{color:cw},hovertemplate:'%{x}: %{y:.1f} thousand m³ '+ND+'<extra></extra>'},{x:ml,y:d.month.a,name:'pushed '+OD,type:'bar',marker:{color:ca},hovertemplate:'%{x}: %{y:.2f} thousand m³ '+OD+'<extra></extra>'}],
+    base({barmode:'relative',bargap:.25,xaxis:{type:'category'},yaxis:{title:{text:'thousand m³ (+ '+ND+', − '+OD+')'},zeroline:true,zerolinecolor:css('--ink2')}}));
   const top=d.ranking.slice(0,8), rest=d.ranking.slice(8).reduce((a,r)=>a+r[1],0), labs=[...top.map(r=>r[0]),(d.ranking.length-top.length)+' smaller storms','All other days'], vals=[...top.map(r=>r[1]),rest,d.nonstorm];
-  P('pdstorm',[{y:labs,x:vals,type:'bar',orientation:'h',marker:{color:labs.map((l,i)=>i>=top.length?css('--muted'):css('--jp'))},text:vals.map(v=>(v/d.total*100).toFixed(0)+'%'),textposition:'outside',cliponaxis:false,textfont:{color:css('--ink'),size:12},hovertemplate:'%{y}: %{x:.1f} thousand m³<extra></extra>'}],
-    base({showlegend:false,margin:{l:120,r:40,t:6,b:40},yaxis:{autorange:'reversed',type:'category'},xaxis:{title:{text:'sand pushed south (thousand m³)'},rangemode:'tozero'}}));
-  P('p13b',[{x:d.sens.map(r=>r[0]),y:d.sens.map(r=>r[2]/1000),name:'Kamphuis',type:'scatter',mode:'lines+markers',line:{color:css('--ce'),width:2},marker:{size:7},hovertemplate:'%{x}°: %{y:,.0f} thousand m³/yr<extra>Kamphuis</extra>'},
-    {x:d.sens.map(r=>r[0]),y:d.sens.map(r=>r[1]/1000),name:'CERC',type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:2,dash:'dot'},marker:{size:7},hovertemplate:'%{x}°: %{y:,.0f} thousand m³/yr<extra>CERC</extra>'}],
-    base({margin:{l:56,r:12,t:24,b:40},xaxis:{title:{text:'assumed straight-on direction (°)'}},yaxis:{title:{text:'thousand m³/yr'},rangemode:'tozero'}})); };
+  P('pdstorm',[{y:labs,x:vals,type:'bar',orientation:'h',marker:{color:labs.map((l,i)=>i>=top.length?css('--muted'):cw)},text:vals.map(v=>(v/d.total*100).toFixed(0)+'%'),textposition:'outside',cliponaxis:false,textfont:{color:css('--ink'),size:12},hovertemplate:'%{y}: %{x:.1f} thousand m³<extra></extra>'}],
+    base({showlegend:false,margin:{l:120,r:40,t:6,b:40},yaxis:{autorange:'reversed',type:'category'},xaxis:{title:{text:'sand pushed '+ND+' (thousand m³)'},rangemode:'tozero'}}));
+  P('p13b',[{x:d.sens.map(r=>r[0]),y:d.sens.map(r=>r[2]/1000),name:'Kamphuis',type:'scatter',mode:'lines+markers',line:{color:css('--ce'),width:2},marker:{size:7},hovertemplate:'%{x}°: %{y:+,.0f} thousand m³/yr<extra>Kamphuis (+ north)</extra>'},
+    {x:d.sens.map(r=>r[0]),y:d.sens.map(r=>r[1]/1000),name:'CERC',type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:2,dash:'dot'},marker:{size:7},hovertemplate:'%{x}°: %{y:+,.0f} thousand m³/yr<extra>CERC (+ north)</extra>'}],
+    base({margin:{l:56,r:12,t:24,b:40},xaxis:{title:{text:'direction the beach faces (°)'}},yaxis:{title:{text:'thousand m³/yr (+ north, − south)'},zeroline:true,zerolinecolor:css('--ink2')},
+      shapes:[{type:'line',x0:N,x1:N,yref:'paper',y0:0,y1:1,line:{color:css('--grb'),width:2,dash:'dot'}}],annotations:[{x:N,yref:'paper',y:.04,xanchor:'left',xshift:4,text:'Camp Ellis beach (est.)',showarrow:false,font:{size:11,color:css('--ink2')},bgcolor:css('--card')}]})); };
 CH.shields=()=>{ const s=R.shields; if(!s) return;
   P('p14',[{x:s.t,y:s.v,type:'scatter',mode:'lines',line:{color:css('--ce'),width:1.6},hovertemplate:'%{x|%b %d}: %{y:.2f}<extra>daily max Shields</extra>'}],
     base({showlegend:false,xaxis:{type:'date'},yaxis:{title:{text:'Shields number'},rangemode:'tozero'},shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:s.cr,y1:s.cr,line:{color:css('--wi'),width:1.5,dash:'dash'}}],

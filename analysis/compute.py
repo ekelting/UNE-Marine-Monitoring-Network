@@ -20,7 +20,8 @@ EXT = os.path.join(HERE, 'ext')
 TZ = 'America/New_York'
 g = 9.81
 SONDES = {'wood-island': 'Wood Island', 'jordan-point': 'Jordan Point', 'ferry-beach': 'Ferry Beach', 'goose-rocks-beach': 'Goose Rocks Beach'}
-SHORE_NORMAL = 110          # degrees: direction a wave comes from when it hits the Camp Ellis–Ferry Beach shore straight on
+SHORE_NORMAL = 65           # degrees: direction a wave comes from when it hits the beach straight on. The shore from the Camp Ellis
+                            # jetty to Ferry Beach runs north-northwest, so it faces east-northeast (estimated from map coordinates).
 DECLINATION = -14.6         # magnetic declination at Saco Bay (degrees, west negative)
 
 
@@ -388,36 +389,45 @@ def drift(d, normal, h1=12.0, gam=0.78, s=2.65, n=0.4, K=0.39, mb=0.02, D50=0.00
 
 
 def a_drift(C):
+    """Potential longshore transport at Camp Ellis. Internally + = toward the north; results are reported in the net direction."""
     d = waves_ce(C); years = (d.index.max() - d.index.min()).days / 365.25
     sens = []
-    for nm in range(90, 136, 5):
-        qc, qk = drift(d, nm); sens.append([nm, float(qc.sum() / years), float(qk.sum() / years)])
+    for nm in range(50, 111, 5):
+        qc, qk = drift(d, nm); sens.append([nm, float(-qc.sum() / years), float(-qk.sum() / years)])     # + = north
         if nm == SHORE_NORMAL:
-            QC, QK = qc, qk
+            QC, QK = -qc, -qk
+    north = QK.sum() > 0
+    sgn = 1 if north else -1
+    DK, DC = QK * sgn, QC * sgn                       # + = the net direction
     st = storms_ce(C)
-    inn = pd.Series(False, index=QK.index); rows = []
+    inn = pd.Series(False, index=DK.index); rows = []
     for _, r in st.iterrows():
-        m = (QK.index >= r.start) & (QK.index <= r.end); inn |= m
-        rows.append([r.start.strftime('%b %d, %Y'), float(QK[m].sum() / 1000), float(r.peak_hs)])
+        m = (DK.index >= r.start) & (DK.index <= r.end); inn |= m
+        rows.append([r.start.strftime('%b %d, %Y'), float(DK[m].sum() / 1000), float(r.peak_hs)])
     rows.sort(key=lambda x: -x[1])
     E = d.hs ** 2 * d.tp; b = ((d.dm + 11.25) % 360 // 22.5).astype(int)
     erose = (E.groupby(b).sum() / E.sum() * 100).reindex(range(16), fill_value=0)
-    rel = ((d.dm - SHORE_NORMAL + 540) % 360) - 180
-    south_share = float(E[(rel < 0) & (rel > -90)].sum() / E[(rel.abs() < 90)].sum() * 100)
+    rel = ((d.dm - SHORE_NORMAL + 540) % 360) - 180          # > 0: waves from south of straight-on -> push north
+    north_share = float(E[(rel > 0) & (rel < 90)].sum() / E[(rel.abs() < 90)].sum() * 100)
     top2 = erose.sort_values(ascending=False).index[:2]
-    ms = QK.clip(lower=0).resample('ME').sum() / 1000; mn = QK.clip(upper=0).resample('ME').sum() / 1000
-    cK = QK.cumsum().resample('6h').last().ffill(); cC = QC.cumsum().resample('6h').last().ffill()
-    tot = float(QK.sum() / 1000)
-    north_frac = float(-QK.clip(upper=0).sum() / QK.abs().sum() * 100)
-    summer = float(ms[ms.index.month.isin([6, 7, 8])].sum()); feb = float(ms[ms.index.month == 2].sum()) if (ms.index.month == 2).any() else np.nan
-    return dict(sens=sens, erose=lst(erose, 2), south_share=south_share, top_dirs=[int(i) for i in top2],
+    mw = DK.clip(lower=0).resample('ME').sum() / 1000; ma = DK.clip(upper=0).resample('ME').sum() / 1000
+    cK = DK.cumsum().resample('6h').last().ffill(); cC = DC.cumsum().resample('6h').last().ffill()
+    tot = float(DK.sum() / 1000)
+    summer = float(mw[mw.index.month.isin([6, 7, 8])].sum()); feb = float(mw[mw.index.month == 2].sum()) if (mw.index.month == 2).any() else np.nan
+    flip = None
+    for (a1, _, k1), (a2, _, k2) in zip(sens, sens[1:]):
+        if k1 * k2 < 0:
+            flip = a1 + (a2 - a1) * k1 / (k1 - k2)
+    mean_dir = float(np.degrees(np.arctan2((E * np.sin(np.radians(d.dm))).sum(), (E * np.cos(np.radians(d.dm))).sum())) % 360)
+    return dict(sens=sens, erose=lst(erose, 2), net_dir='north' if north else 'south', other_dir='south' if north else 'north',
+                with_share=north_share if north else 100 - north_share, top_dirs=[int(i) for i in top2], flip=flip, mean_dir=mean_dir,
                 cum=dict(t=cK.index.strftime('%Y-%m-%dT%H:%M').tolist(), k=lst(cK / 1000, 2), c=lst(cC / 1000, 2)),
                 storms=[[r.start.strftime('%Y-%m-%dT%H:%M'), r.end.strftime('%Y-%m-%dT%H:%M')] for _, r in st.iterrows()],
-                ranking=rows, total=tot, nonstorm=float(tot - sum(r[1] for r in rows)), storm_share_k=float(QK[inn].abs().sum() / QK.abs().sum() * 100),
-                storm_share_c=float(QC[inn].abs().sum() / QC.abs().sum() * 100), storm_hours=float(inn.mean() * 100), nstorms=len(st),
-                month=dict(m=[x.strftime('%Y-%m') for x in ms.index], s=lst(ms, 2), n=lst(mn, 3)), busiest=ms.idxmax().strftime('%B %Y'),
-                north_frac=north_frac, summer=summer, feb=feb, years=years, start=d.index.min().strftime('%b %Y'),
-                kmin=min(r[2] for r in sens), kmax=max(r[2] for r in sens), cmin=min(r[1] for r in sens), cmax=max(r[1] for r in sens))
+                ranking=rows, total=tot, nonstorm=float(tot - sum(r[1] for r in rows)), storm_share_k=float(DK[inn].abs().sum() / DK.abs().sum() * 100),
+                storm_share_c=float(DC[inn].abs().sum() / DC.abs().sum() * 100), storm_hours=float(inn.mean() * 100), nstorms=len(st),
+                month=dict(m=[x.strftime('%Y-%m') for x in mw.index], w=lst(mw, 2), a=lst(ma, 3)), busiest=mw.idxmax().strftime('%B %Y'),
+                against_frac=float(-DK.clip(upper=0).sum() / DK.abs().sum() * 100), summer=summer, feb=feb, years=years, start=d.index.min().strftime('%b %Y'),
+                k_here=float(DK.sum() / years), c_here=float(DC.sum() / years))
 
 
 def a_shields(C, D50=0.0002, s=2.65, nu=1.36e-6):
