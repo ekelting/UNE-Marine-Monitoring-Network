@@ -106,3 +106,8 @@ details.sound li{margin:3px 0}
 
 
 .plot.map{height:520px}
+
+.timeline{list-style:none;margin:0;padding:0 0 0 18px;border-left:3px solid var(--chip2,#b7d3f6);display:flex;flex-direction:column;gap:12px}
+.timeline li{position:relative;display:flex;flex-direction:column;gap:2px;font-size:14.5px;max-width:62ch}
+.timeline li::before{content:"";position:absolute;left:-26px;top:5px;width:13px;height:13px;border-radius:50%;background:var(--card,#fff);border:3px solid var(--accent)}
+.tl-when{font-weight:700;font-variant-numeric:tabular-nums}

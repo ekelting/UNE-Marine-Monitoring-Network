@@ -36,10 +36,13 @@ const CH = {};
 CH.msl=()=>{ const m=R.msl; if(!m) return; const b=m.inter+m.slope*1912, cv=x=>unit==='us'? x*39.37 : x*100, u=unit==='us'?'inches':'cm';
   P('pmsl',[{x:m.yr,y:m.v.map(v=>cv(v-b)),type:'scatter',mode:'markers',marker:{size:6,color:css('--ce'),opacity:.8},hovertemplate:'%{x}: %{y:+.1f} '+u+' vs 1912<extra>yearly average</extra>'},
     {x:m.yr,y:m.yr.map(y=>cv(m.slope*(y-1912))),type:'scatter',mode:'lines',line:{color:css('--jp'),width:2.4},hoverinfo:'skip'}],
-    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:u+' higher than in 1912'},zeroline:true,zerolinecolor:css('--muted')}})); };
+    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:u+' higher than in 1912'},zeroline:true,zerolinecolor:css('--muted')},
+      shapes:[1978,2024].map(y=>({type:'line',x0:y,x1:y,yref:'paper',y0:0,y1:1,line:{color:css('--muted'),width:1,dash:'dot'}})),
+      annotations:[[1978,"Blizzard of '78"],[2024,'2024 record']].map(([y,t])=>({x:y,yref:'paper',y:.99,yanchor:'top',xanchor:y>2000?'right':'left',xshift:y>2000?-3:3,text:t,showarrow:false,font:{size:11,color:css('--ink2')}}))})); };
 CH.amax=()=>{ const a=R.amax; if(!a) return; const rl=a.rl, H=[hline(Lm(rl['10']),css('--ink2'),'dash','1-in-10-year'),hline(Lm(rl['100']),css('--ink2'),'dash','1-in-100-year'),hline(Lm(a.mhhw),css('--muted'),'dot','ordinary high tide')];
-  P('pamax',[{x:a.yr,y:a.v.map(Lm),type:'scatter',mode:'markers',marker:{size:a.v.map(v=>v>=rl['10']?11:7),color:a.v.map(v=>v>=rl['10']?css('--jp'):css('--ce')),line:{color:css('--card'),width:1}},hovertemplate:'%{x}: %{y:.2f} '+Lu()+'<extra>highest water</extra>'}],
-    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:'highest water ('+Lu()+' above MLLW)'}},shapes:H.map(h=>h.shape),annotations:H.filter(h=>h.ann).map(h=>h.ann)})); };
+  const ev=((R.events||{}).storms||[]).map(e=>{ const i=a.yr.indexOf(e.year); return i<0?null:{x:e.year,y:Lm(a.v[i]),text:e.label,showarrow:true,arrowhead:0,ax:e.year<2000?-30:(e.year===2018?-60:(e.year===2022?-40:-20)),ay:e.year===2024?-22:(e.year===2018?28:-26),font:{size:10.5,color:css('--ink')},bgcolor:css('--card'),arrowcolor:css('--muted')}; }).filter(Boolean);
+    P('pamax',[{x:a.yr,y:a.v.map(Lm),type:'scatter',mode:'markers',marker:{size:a.v.map(v=>v>=rl['10']?11:7),color:a.v.map(v=>v>=rl['10']?css('--jp'):css('--ce')),line:{color:css('--card'),width:1}},hovertemplate:'%{x}: %{y:.2f} '+Lu()+'<extra>highest water</extra>'}],
+    base({showlegend:false,xaxis:{title:{text:'year'}},yaxis:{title:{text:'highest water ('+Lu()+' above MLLW)'}},shapes:H.map(h=>h.shape),annotations:H.filter(h=>h.ann).map(h=>h.ann).concat(ev)})); };
 CH.surge=()=>{ const s=R.surge; if(!s) return;
   P('psurge',[{x:s.t,y:s.v.map(Lm),type:'scatter',mode:'lines',line:{color:css('--ce'),width:1.6},hovertemplate:'%{x|%b %d}: %{y:+.2f} '+Lu()+'<extra>surge (daily average)</extra>'}],
     base({showlegend:false,xaxis:{type:'date'},yaxis:{title:{text:'storm surge, daily average ('+Lu()+')'},zeroline:true,zerolinecolor:css('--muted')},shapes:bands(s.storms)})); };
@@ -177,6 +180,15 @@ CH.ode=()=>{ const o=R.ode; if(!o) return; const rng=[o.t[0],o.t[o.t.length-1]];
   if(li) li.innerHTML=[`τ = <b>${p.tau.toFixed(1)} ± ${se[0].toFixed(1)} days</b> (how fast salinity adjusts)`,`S_eq = <b>${p.Seq.toFixed(1)} ± ${se[1].toFixed(1)} PSU</b> at average flow and tide`,
     `b_Q = <b>${p.bq.toFixed(2)} ± ${se[2].toFixed(2)} PSU per m³/s</b> of Cornish flow (Q̄ = ${p.Q0.toFixed(1)} m³/s)`,`b_T = <b>${p.bt>=0?'+':''}${p.bt.toFixed(1)} ± ${se[3].toFixed(1)} PSU per m</b> of tidal range (T̄R = ${p.TR0.toFixed(2)} m)`,
     `Fit: R² = ${p.R2.toFixed(2)}, typical error ${p.rmse.toFixed(1)} PSU. The ± values are honest error bars, widened because each step is so similar to the last.`].map(x=>'<li>'+x+'</li>').join(''); };
+CH.same=()=>{ const e=R.events, m=R.msl; if(!e||!m||!document.getElementById('psame')) return; const r=e.records;
+  const gap=(r.ft2024-r.ft1978)*0.3048, slr=m.slope*(r.y2024-r.y1978), rest=gap-slr, cv=x=>unit==='us'? x*39.37 : x*100, u=unit==='us'?'in':'cm';
+  P('psame',[{y:[''],x:[cv(slr)],type:'bar',orientation:'h',name:'higher sea since 1978',marker:{color:css('--ce')},text:[cv(slr).toFixed(1)+' '+u+' · higher sea'],textposition:'inside',insidetextanchor:'middle',textfont:{color:'#fff',size:13},hovertemplate:'sea-level rise 1978→2024: %{x:.1f} '+u+'<extra></extra>'},
+    {y:[''],x:[cv(rest)],type:'bar',orientation:'h',name:'bigger storm / tide',marker:{color:css('--jp')},text:[cv(rest).toFixed(1)+' '+u],textposition:'inside',insidetextanchor:'middle',textfont:{color:'#fff',size:13},hovertemplate:'storm and tide difference: %{x:.1f} '+u+'<extra></extra>'}],
+    base({barmode:'stack',height:170,margin:{l:10,r:10,t:30,b:40},legend:{orientation:'h',y:1.35,x:0},xaxis:{title:{text:'how much higher the 2024 record was than 1978 ('+u+')'},range:[0,cv(gap)*1.02]},yaxis:{visible:false}})); };
+CH.flood=()=>{ const f=R.flood; if(!f||!document.getElementById('pflood')) return;
+  P('pflood',[{x:f.yr,y:f.days,type:'bar',marker:{color:css('--ce')},hovertemplate:'%{x}: %{y} days<extra>water reached Portland Pier\'s flood level</extra>',name:'each year'},
+    {x:f.dec.map(d=>d[0]+5),y:f.dec.map(d=>d[1]),type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:3,shape:'hvh'},marker:{size:6},name:'decade average',hovertemplate:'%{x:.0f}s: %{y:.1f} days per year<extra>decade average</extra>'}],
+    base({bargap:.1,xaxis:{title:{text:'year'}},yaxis:{title:{text:'days the water reached 12 ft'},rangemode:'tozero'}})); };
 CH.map=()=>{ if(!document.getElementById('pmap')||!R.coast) return; const k=Math.cos(43.46*Math.PI/180), tr=[];
   R.coast.lines.forEach(l=>tr.push({x:l.map(p=>p[0]),y:l.map(p=>p[1]),type:'scatter',mode:'lines',line:{color:css('--ink2'),width:1.3},hoverinfo:'skip',showlegend:false}));
   const B=R.coast.buoys, sal=B.map(b=>b.sal);

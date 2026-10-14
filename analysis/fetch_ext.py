@@ -110,6 +110,16 @@ def hourly(raw_obs=None, raw_pred=None):
     df = pd.concat([o.rename('obs_m'), p.rename('pred_m')], axis=1).sort_index()
     df.index.name = 'time_utc'
     save(df.reset_index().assign(time_utc=lambda d: d.time_utc.dt.strftime('%Y-%m-%dT%H:%MZ')), 'portland_hourly.csv')
+    # keep the daily-highest-water record (since 1912) up to date for the flood-days chart
+    loc = o.copy(); loc.index = loc.index.tz_localize('UTC').tz_convert('America/New_York').tz_localize(None)
+    dm = loc.resample('D').agg(['max', 'count']); dm = dm[dm['count'] >= 20]['max'].round(3)
+    p = os.path.join(OUT, 'portland_daymax.csv')
+    if os.path.exists(p):
+        old_dm = pd.read_csv(p, parse_dates=['date']).set_index('date').max_m
+        dm = pd.concat([old_dm[old_dm.index < dm.index.min()], dm])
+    dm.index.name = 'date'; dm.name = 'max_m'
+    dm.reset_index().assign(date=lambda d: d.date.dt.strftime('%Y-%m-%d')).to_csv(p, index=False)
+    print(f'  ✓ portland_daymax.csv: {len(dm):,} days')
 
 
 # ---------------------------------------------------------------- NDBC 44007

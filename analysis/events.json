@@ -1,0 +1,27 @@
+{
+ "storms": [
+  {"year": 1976, "label": "Mar 1976 storm"},
+  {"year": 1978, "label": "Blizzard of '78 (Feb 7)"},
+  {"year": 2018, "label": "Jan 4, 2018 'bomb cyclone'"},
+  {"year": 2022, "label": "Dec 23, 2022 storm"},
+  {"year": 2024, "label": "Jan 13, 2024 record"}
+ ],
+ "records": {"y1978": 1978.10, "ft1978": 14.17, "y2024": 2024.04, "ft2024": 14.57,
+             "source": "NOAA tide gauge 8418150 via National Weather Service Gray, ME"},
+ "pier_flood_ft": 12.0,
+ "camp_ellis": [
+  {"when": "1867", "what": "The Army Corps of Engineers builds a jetty at the mouth of the Saco River to keep the channel open for ships. It also blocks the river's sand from reaching Camp Ellis beach."},
+  {"when": "1908", "what": "Camp Ellis's shoreline sits about 400 feet farther out to sea than it would a century later."},
+  {"when": "1912", "what": "The Corps adds a spur to the jetty. Engineers at the time thought sand moved north to south; later research found it moves the other way."},
+  {"when": "1953", "what": "The Surf Street seawall (about 700 feet long) is built to hold back the sea."},
+  {"when": "1955", "what": "A Corps study estimates the area lost about 5.9 million cubic metres of sand since 1869, but concludes the jetty wasn't the cause."},
+  {"when": "1978", "what": "The Blizzard of '78 sets Portland's water-level record. Photos show waves bouncing off the jetty into Camp Ellis."},
+  {"when": "1983", "what": "Maine's Sand Dune Rules ban new seawalls and limit rebuilding of houses badly damaged by storms."},
+  {"when": "2007", "what": "The Patriots' Day storm (April) destroys another Camp Ellis house."},
+  {"when": "2022–23", "what": "$45 million is announced (2022) for a 750-foot spur off the jetty to protect Camp Ellis; the Army Corps finalizes the plan in 2023."},
+  {"when": "Since 1950s", "what": "Meanwhile, sand drifting north has built up Pine Point, enough to support about 50 more homes over 50 years."}
+ ],
+ "camp_ellis_sources": [["UMaine Sea Grant: A brief history of Camp Ellis", "https://seagrant.umaine.edu/resource/brief-history-of-camp-ellis-2019"],
+                        ["Maine Monitor: Unstoppable ocean (Saco)", "https://themainemonitor.org/unstoppable-ocean-saco"],
+                        ["Kelley et al., GSA Northeastern Section 2006", "https://gsa.confex.com/gsa/2006NE/webprogram/Paper100969.html"]]
+}

@@ -49,6 +49,16 @@ def build(R):
 <div class="formula">trend = {m["slope"]*1000:.2f} ± {m["ci"]*1000:.2f} mm/yr (95%) · last 30 years: {m["slope30"]*1000:.1f} ± {m["ci30"]*1000:.1f} mm/yr</div>
 <p>Assumes the land under the gauge is stable. Maine's land is close to stable, so this is close to true sea-level rise.</p>''',
             charts=[('pmsl', '')], cap='Yearly average sea level at Portland (above MLLW, the average lowest tide).', src='NOAA CO-OPS station 8418150')
+    if 'flood' in R:
+        fl = R['flood']; ratio = fl['last'] / fl['first'] if fl['first'] > 0 else None
+        add(g='past', t='Flooding is becoming routine', w='NOAA tide gauge, Portland · days each year the water reached 12 ft', c=[ME, GE, OC],
+            plain='Portland Pier starts to flood when the water reaches 12 feet above the low-tide datum. Counting how many days a year that happens turns "a few millimetres of sea-level rise per year" into something you can see on the waterfront.',
+            read='Each bar is one year: the number of days the highest tide reached 12 ft. The orange steps are the average for each decade.',
+            found=[f'Before 1950 the water reached 12 ft on about <b>{fl["first"]:.1f} days a year</b>. Over {fl["last_span"][0]}–{fl["last_span"][1]} it averaged <b>{fl["last"]:.1f} days a year</b>' + (f', about {ratio:.0f}× as often.' if ratio and ratio >= 1.5 else '.'),
+                   f'The most was <b>{fl["max"][1]} days</b>, in {fl["max"][0]}.',
+                   'Most of these are not storms. As the sea rises, ordinary high tides (especially king tides) reach the level that once took a storm.'],
+            v=OK, math=f'<p>Daily highest water from NOAA\'s verified hourly heights at Portland (station 8418150), {fl["start"]} to today. A day counts if any hourly reading reached 12.0 ft (3.66 m) above MLLW, the level at which Portland Pier floods. Years with fewer than 330 days of data are left out. Hourly readings can miss the very top of a tide by a few centimetres, so counts are slightly conservative.</p>',
+            charts=[('pflood', '')], cap='Days per year the water at Portland reached 12 ft above MLLW.', src='NOAA CO-OPS station 8418150')
     if 'amax' in R:
         a = R['amax']; rl = a['rl']; t = a['top']
         add(g='past', t='How high can the water get?', w='NOAA tide gauge, Portland · highest water each year · extreme-value fit', c=[OC, ME, MA],
@@ -61,6 +71,16 @@ def build(R):
 <div class="formula">return level z_T = GEV⁻¹(1 − 1/T)</div>
 <p>"1-in-10-year" means a 10% chance in any year, not once every 10 years like clockwork. Assumes years are independent and storms aren't changing apart from sea level. Portland is about 20 km from Saco Bay, so local water can differ by a few centimetres.</p>''',
             charts=[('pamax', '')], cap='Highest water each year at Portland, adjusted to today\'s sea level (above MLLW).', src='NOAA CO-OPS station 8418150')
+    if 'events' in R and 'msl' in R:
+        r = R['events']['records']; gap_m = (r['ft2024'] - r['ft1978']) * 0.3048; slr = R['msl']['slope'] * (r['y2024'] - r['y1978'])
+        add(g='past', t='Same storm, higher sea: 1978 vs 2024', w='NOAA tide gauge, Portland · the two record storms', c=[ME, OC, GE],
+            plain=f'For 46 years the Blizzard of \'78 held Portland\'s record: {r["ft1978"]} ft. On January 13, 2024 a storm reached {r["ft2024"]} ft. How much of that new record came from a bigger storm, and how much from a higher sea?',
+            read='The bar is how much higher the 2024 record was than 1978. The blue part is how much the sea itself rose in between; the orange part is everything else (storm surge and tide).',
+            found=[f'The 2024 record beat 1978 by {Lb(gap_m)}. The sea rose about {Lb(slr)} between the two storms.',
+                   f'So roughly <b>{slr/gap_m*100:.0f}%</b> of the new record came from a higher starting sea, not a bigger storm.',
+                   f'The Blizzard of \'78 happening at today\'s sea level would have reached about {Lb(r["ft1978"]*0.3048 + R["msl"]["slope"]*(2026 - r["y1978"]))}.'],
+            v=OK, math=f'<p>Record values from NOAA via the National Weather Service ({r["ft1978"]} ft MLLW in Feb 1978; {r["ft2024"]} ft MLLW on Jan 13, 2024). Sea-level rise between them uses the long-term trend ({R["msl"]["slope"]*1000:.2f} mm/yr). Year-to-year swings in average sea level (a few centimetres) mean the split is approximate.</p>',
+            charts=[('psame', 'xs')], cap='How much higher the 2024 record was than 1978, split into sea-level rise and the rest.', src='NOAA CO-OPS 8418150; NWS Gray')
     if 'surge' in R:
         s = R['surge']; top = s['top']
         add(g='past', t='Storm surge this year', w='NOAA tide gauge, Portland · measured water minus predicted tide', c=[OC, ME, GE],
@@ -229,6 +249,12 @@ def build(R):
             charts=[('p11', '')], cap='Each grey dot is one radar scan matched to that hour\'s wind; the orange line is the median for each 1 m/s of wind.')
 
     # ------------------------------------------------------------------ PHYSICS
+    if 'events' in R:
+        E = R['events']
+        add(g='phys', t='Camp Ellis through time', w='History of the beach, the jetty and the storms', c=[GE, ME, OC],
+            plain='Camp Ellis is one of the best-studied eroding beaches in Maine. Its story explains why the sand-drift results matter: the jetty cut the beach off from its sand, and the waves keep carrying sand north.',
+            read='', found=[], timeline=E['camp_ellis'],
+            v=OK, math='<p>Compiled from: ' + '; '.join(f'<a href="{u}">{t}</a>' for t, u in E['camp_ellis_sources']) + '.</p>', charts=[], cap='')
     if 'drift' in R:
         d = R['drift']; nd, od = d['net_dir'], d['other_dir']
         away = 'north, away from Camp Ellis and the Saco River jetty, toward Old Orchard and Pine Point' if nd == 'north' else 'south, toward the Saco River jetty'

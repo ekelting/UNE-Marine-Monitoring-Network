@@ -40,6 +40,8 @@ def card_html(c, n):
   <div class="chips">{chips}</div><div class="plain"><b class="k">In plain words</b>{c["plain"]}</div>{read}{found}
   <details class="sound"><summary><span class="verdict {vk}">{vl}</span><span>Is this sound?</span></summary><div class="body">{c["math"]}</div></details></div>'''
     viz = ''
+    if c.get('timeline'):
+        viz += '<ol class="timeline">' + ''.join(f'<li><span class="tl-when">{e["when"]}</span><span class="tl-what">{e["what"]}</span></li>' for e in c['timeline']) + '</ol>'
     if c.get('tiles'):
         viz += '<div class="tiles">' + ''.join(f'<div class="tile"><div class="l">{a}</div><div class="v">{b}</div><div class="s">{s}</div></div>' for a, b, s in c['tiles']) + '</div>'
     if c.get('tabs'):

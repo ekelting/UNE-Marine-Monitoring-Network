@@ -510,7 +510,25 @@ def a_coast(C):
     return dict(lines=co['lines'], buoys=buoys, source=co['source'])
 
 
-ANALYSES = [('msl', a_msl), ('amax', None), ('surge', a_surge), ('sst', a_sst), ('flow', a_flow), ('air', a_air),
+def a_events(C):
+    return json.load(open(os.path.join(HERE, 'events.json')))
+
+
+def a_flood(C):
+    """Days per year when Portland's highest water reached Portland Pier's flooding level (12 ft MLLW)."""
+    d = pd.read_csv(os.path.join(EXT, 'portland_daymax.csv'), parse_dates=['date']).set_index('date').max_m
+    thr = 12.0 * 0.3048
+    g = d.groupby(d.index.year); n = g.count(); days = g.apply(lambda x: int((x >= thr).sum()))
+    ok = n >= 330
+    yrs = days[ok]
+    dec = yrs.groupby((yrs.index // 10) * 10).mean()
+    first = yrs[yrs.index < 1950].mean(); last = yrs[yrs.index >= yrs.index.max() - 9].mean()
+    return dict(yr=yrs.index.tolist(), days=yrs.values.tolist(), dec=[[int(k), float(v)] for k, v in dec.items()], thr=thr,
+                first=float(first), last=float(last), last_span=[int(yrs.index.max() - 9), int(yrs.index.max())], max=[int(yrs.idxmax()), int(yrs.max())],
+                start=int(yrs.index.min()), partial=[int(y) for y in days.index[~ok]])
+
+
+ANALYSES = [('events', a_events), ('msl', a_msl), ('flood', a_flood), ('amax', None), ('surge', a_surge), ('sst', a_sst), ('flow', a_flow), ('air', a_air),
             ('marsh', a_marsh), ('tideclock', a_tideclock), ('strat', a_strat), ('soil', a_soil), ('head', None), ('wrose', a_wrose),
             ('chl', a_chl), ('anova', a_anova), ('coast', a_coast), ('rain', a_rain), ('radar', a_radar),
             ('drift', a_drift), ('shields', a_shields), ('currents', a_currents), ('ode', a_ode)]
