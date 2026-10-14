@@ -93,9 +93,9 @@ function renderMap(){
       L.marker(MAPDATA.anchor, {icon:L.divIcon({className:'buoy-ic', html:'<div style="font-size:16px;line-height:16px">⚓</div>', iconSize:[16,16], iconAnchor:[8,8]})})
         .addTo(LMAP).bindTooltip('Mooring (anchor)');
     for (const o of (MAPDATA.others||[])){
-      L.marker([o.lat, o.lon], {icon:buoyIcon(o.kind, false), title:o.label}).addTo(LMAP)
-        .bindTooltip(esc(o.label), {direction:'right', offset:[4,-12], className:'blabel'})
-        .bindPopup(`<b>${esc(o.label)}</b><br>${KIND_TXT[o.kind]||''}<br><a href="${esc(o.url)}">Open its dashboard →</a>`);
+      L.marker([o.lat, o.lon], {icon:buoyIcon(o.kind, false), title:o.label, opacity:o.offline?0.45:1}).addTo(LMAP)
+        .bindTooltip(esc(o.label) + (o.offline ? ' · offline' : ''), {direction:'right', offset:[4,-12], className:'blabel'})
+        .bindPopup(`<b>${esc(o.label)}</b>${o.offline?' <i>(offline)</i>':''}<br>${KIND_TXT[o.kind]||''}<br><a href="${esc(o.url)}">Open its dashboard →</a>`);
     }
     const me = MAPDATA.me;
     L.marker([me.lat, me.lon], {icon:buoyIcon(me.kind, true), zIndexOffset:1000, title:me.label}).addTo(LMAP)
@@ -148,7 +148,8 @@ def nav_buttons(sisters):
     order = {'wave': 0, 'radar': 1, 'wq': 2, 'wx': 3, 'env': 4}
     out = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE stations</a>'
     for x in sorted(sisters, key=lambda x: order.get(kind_of(x), 9)):
-        out += f'<a class="btn" href="{html.escape(x["url"])}">{KIND_EMOJI.get(kind_of(x), "📍")} {html.escape(x["label"])}</a>'
+        off = ' <span style="opacity:.8">(offline)</span>' if x.get('offline') else ''
+        out += f'<a class="btn" href="{html.escape(x["url"])}">{KIND_EMOJI.get(kind_of(x), "📍")} {html.escape(x["label"])}{off}</a>'
     return out
 
 

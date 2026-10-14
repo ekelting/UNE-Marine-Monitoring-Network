@@ -199,5 +199,6 @@
       "lon": -70.348578
     }
   ],
-  "status_note": "🐟 This buoy's 2026 season ran from May 7 to late September, when it came out of the water. The page shows that deployment; new readings will appear here automatically if it goes back in."
+  "status_note": "🐟 Offline: the Fathom buoy is out of the water for repairs. Its 2026 season ran from May 7 to late September; this page shows that deployment, and new readings will appear automatically when it goes back in.",
+  "offline": true
 }
