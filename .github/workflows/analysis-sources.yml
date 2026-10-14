@@ -2,19 +2,19 @@ name: Analysis sources (one-off)
 on:
   push:
     branches: [analysis-sources]
-    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py", "tools/fetch_coast.py"]
+    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py", "tools/fetch_coast.py", "tools/fetch_daymax.py"]
 permissions:
   contents: write
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: python tools/fetch_coast.py
+      - run: python tools/fetch_daymax.py
       - name: Save the downloads on this branch (compressed)
         run: |
           true
