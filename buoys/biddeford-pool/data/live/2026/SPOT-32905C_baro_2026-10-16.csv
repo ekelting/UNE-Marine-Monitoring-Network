@@ -1,2 +1,3 @@
 Epoch Time,Processing Source,Mean Barometric Pressure (hPa),Latitude (deg),Longitude (deg)
 1792108800,hdr,1022.69,43.43777,-70.3491753
+1792110000,embedded,1022.6,43.4377667,-70.3491833
