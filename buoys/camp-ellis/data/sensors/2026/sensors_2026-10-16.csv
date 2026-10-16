@@ -1,15 +1,43 @@
 timestamp,sensorPosition,data_type_name,unit_type,units,value,latitude,longitude,configuration_checksum
 2026-10-16T00:05:10.000Z,1,bm_soft_temperature_mean_13bits,temperature,°C,12.900000000000002,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_abs_speed_mean_15bits,speed,cm/s,3.98,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_abs_speed_std_15bits,speed,cm/s,0.79,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_abs_tilt_mean_8bits,tilt,rad,0.13,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_direction_circ_mean_13bits,direction,rad,1.952,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_direction_circ_std_13bits,direction,rad,0.226,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_reading_count_10bits,reading_count,count,4.0,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_std_tilt_mean_8bits,tilt,rad,0.01,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,2,aanderaa_temperature_mean_13bits,temperature,°C,13.059999999999999,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,3,bm_do_mg_per_l_mean_17bits,mass_concentration,mg/L,8.452,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,3,bm_do_quality_mean_10bits,quality_ratio,unitless,0.906,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,3,bm_do_salinity_mean_13bits,mass_ratio,parts per thousand,35.0,43.4729,-70.35955,0x5e54227b
-2026-10-16T00:05:10.000Z,3,bm_do_saturation_pct_mean_18bits,percentage,%,98.94500000000001,43.4729,-70.35955,0x5e54227b
 2026-10-16T00:05:10.000Z,3,bm_do_temperature_mean_16bits,temperature,°C,13.017000000000001,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,3,bm_do_saturation_pct_mean_18bits,percentage,%,98.94500000000001,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,3,bm_do_salinity_mean_13bits,mass_ratio,parts per thousand,35.0,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,3,bm_do_mg_per_l_mean_17bits,mass_concentration,mg/L,8.452,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_temperature_mean_13bits,temperature,°C,13.059999999999999,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_std_tilt_mean_8bits,tilt,rad,0.01,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,3,bm_do_quality_mean_10bits,quality_ratio,unitless,0.906,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_direction_circ_std_13bits,direction,rad,0.226,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_direction_circ_mean_13bits,direction,rad,1.952,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_abs_tilt_mean_8bits,tilt,rad,0.13,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_abs_speed_std_15bits,speed,cm/s,0.79,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_abs_speed_mean_15bits,speed,cm/s,3.98,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:05:10.000Z,2,aanderaa_reading_count_10bits,reading_count,count,4.0,43.4729,-70.35955,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_temperature_mean_13bits,temperature,°C,13.05,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,3,bm_do_temperature_mean_16bits,temperature,°C,13.017000000000001,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,3,bm_do_saturation_pct_mean_18bits,percentage,%,99.53,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,3,bm_do_salinity_mean_13bits,mass_ratio,parts per thousand,35.0,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,3,bm_do_quality_mean_10bits,quality_ratio,unitless,0.904,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,3,bm_do_mg_per_l_mean_17bits,mass_concentration,mg/L,8.503,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_std_tilt_mean_8bits,tilt,rad,0.01,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_reading_count_10bits,reading_count,count,5.0,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_direction_circ_std_13bits,direction,rad,0.209,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_direction_circ_mean_13bits,direction,rad,2.368,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_abs_tilt_mean_8bits,tilt,rad,0.14,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_abs_speed_std_15bits,speed,cm/s,1.12,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,2,aanderaa_abs_speed_mean_15bits,speed,cm/s,3.8200000000000003,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T00:35:10.000Z,1,bm_soft_temperature_mean_13bits,temperature,°C,12.93,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,3,bm_do_salinity_mean_13bits,mass_ratio,parts per thousand,35.0,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,3,bm_do_quality_mean_10bits,quality_ratio,unitless,0.906,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,3,bm_do_mg_per_l_mean_17bits,mass_concentration,mg/L,8.532,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_temperature_mean_13bits,temperature,°C,13.059999999999999,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_std_tilt_mean_8bits,tilt,rad,0.01,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_reading_count_10bits,reading_count,count,3.0,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_abs_tilt_mean_8bits,tilt,rad,0.1,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_direction_circ_mean_13bits,direction,rad,2.31,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,3,bm_do_saturation_pct_mean_18bits,percentage,%,99.857,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_abs_speed_std_15bits,speed,cm/s,0.39,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_abs_speed_mean_15bits,speed,cm/s,3.2800000000000002,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,1,bm_soft_temperature_mean_13bits,temperature,°C,12.98,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,2,aanderaa_direction_circ_std_13bits,direction,rad,0.101,43.4729167,-70.3595667,0x5e54227b
+2026-10-16T01:05:10.000Z,3,bm_do_temperature_mean_16bits,temperature,°C,13.017000000000001,43.4729167,-70.3595667,0x5e54227b
