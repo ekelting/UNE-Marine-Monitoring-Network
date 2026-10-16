@@ -186,7 +186,7 @@ CH.same=()=>{ const e=R.events, m=R.msl; if(!e||!m||!document.getElementById('ps
     {y:[''],x:[cv(rest)],type:'bar',orientation:'h',name:'bigger storm / tide',marker:{color:css('--jp')},text:[cv(rest).toFixed(1)+' '+u],textposition:'inside',insidetextanchor:'middle',textfont:{color:'#fff',size:13},hovertemplate:'storm and tide difference: %{x:.1f} '+u+'<extra></extra>'}],
     base({barmode:'stack',height:170,margin:{l:10,r:10,t:30,b:40},legend:{orientation:'h',y:1.35,x:0},xaxis:{title:{text:'how much higher the 2024 record was than 1978 ('+u+')'},range:[0,cv(gap)*1.02]},yaxis:{visible:false}})); };
 CH.flood=()=>{ const f=R.flood; if(!f||!document.getElementById('pflood')) return;
-  P('pflood',[{x:f.yr,y:f.days,type:'bar',marker:{color:css('--ce')},hovertemplate:'%{x}: %{y} days<extra>water reached Portland Pier\'s flood level</extra>',name:'each year'},
+  P('pflood',[{x:f.yr,y:f.days,type:'bar',marker:{color:css('--ce')},hovertemplate:'%{x}: %{y} days<extra>water reached the 12 ft minor flood level</extra>',name:'each year'},
     {x:f.dec.map(d=>d[0]+5),y:f.dec.map(d=>d[1]),type:'scatter',mode:'lines+markers',line:{color:css('--jp'),width:3,shape:'hvh'},marker:{size:6},name:'decade average',hovertemplate:'%{x:.0f}s: %{y:.1f} days per year<extra>decade average</extra>'}],
     base({bargap:.1,xaxis:{title:{text:'year'}},yaxis:{title:{text:'days the water reached 12 ft'},rangemode:'tozero'}})); };
 CH.map=()=>{ if(!document.getElementById('pmap')||!R.coast) return; const k=Math.cos(43.46*Math.PI/180), tr=[];

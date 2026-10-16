@@ -52,12 +52,12 @@ def build(R):
     if 'flood' in R:
         fl = R['flood']; ratio = fl['last'] / fl['first'] if fl['first'] > 0 else None
         add(g='past', t='Flooding is becoming routine', w='NOAA tide gauge, Portland · days each year the water reached 12 ft', c=[ME, GE, OC],
-            plain='Portland Pier starts to flood when the water reaches 12 feet above the low-tide datum. Counting how many days a year that happens turns "a few millimetres of sea-level rise per year" into something you can see on the waterfront.',
+            plain='At 12 feet above the low-tide datum, the National Weather Service\'s "minor flood" level for Portland, the lowest wharves and side streets near Portland Pier take on a few inches of water. Counting how many days a year that happens turns "a few millimetres of sea-level rise per year" into something you can see on the waterfront.',
             read='Each bar is one year: the number of days the highest tide reached 12 ft. The orange steps are the average for each decade.',
             found=[f'Before 1950 the water reached 12 ft on about <b>{fl["first"]:.1f} days a year</b>. Over {fl["last_span"][0]}–{fl["last_span"][1]} it averaged <b>{fl["last"]:.1f} days a year</b>' + (f', about {ratio:.0f}× as often.' if ratio and ratio >= 1.5 else '.'),
                    f'The most was <b>{fl["max"][1]} days</b>, in {fl["max"][0]}.',
                    'Most of these are not storms. As the sea rises, ordinary high tides (especially king tides) reach the level that once took a storm.'],
-            v=OK, math=f'<p>Daily highest water from NOAA\'s verified hourly heights at Portland (station 8418150), {fl["start"]} to today. A day counts if any hourly reading reached 12.0 ft (3.66 m) above MLLW, the level at which Portland Pier floods. Years with fewer than 330 days of data are left out. Hourly readings can miss the very top of a tide by a few centimetres, so counts are slightly conservative.</p>',
+            v=OK, math=f'<p>Daily highest water from NOAA\'s verified hourly heights at Portland (station 8418150), {fl["start"]} to today. A day counts if any hourly reading reached 12.0 ft (3.66 m) above MLLW: the National Weather Service minor flood stage for this gauge, at which wharves and the most vulnerable side streets near Portland Pier flood 4 to 6 inches deep. Years with fewer than 330 days of data are left out. Hourly readings can miss the very top of a tide by a few centimetres, so counts are slightly conservative.</p>',
             charts=[('pflood', '')], cap='Days per year the water at Portland reached 12 ft above MLLW.', src='NOAA CO-OPS station 8418150')
     if 'amax' in R:
         a = R['amax']; rl = a['rl']; t = a['top']
