@@ -2,7 +2,7 @@ name: Analysis sources (one-off)
 on:
   push:
     branches: [analysis-sources]
-    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py", "tools/fetch_coast.py", "tools/fetch_daymax.py"]
+    paths: [".github/workflows/analysis-sources.yml", "tools/fetch_sources.py", "tools/fetch_coast.py", "tools/fetch_daymax.py", "tools/fetch_jetty.py"]
 permissions:
   contents: write
 jobs:
@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pandas
-      - run: python tools/fetch_daymax.py
+      - run: python tools/fetch_jetty.py
       - name: Save the downloads on this branch (compressed)
         run: |
           true
