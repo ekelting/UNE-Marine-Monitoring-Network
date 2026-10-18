@@ -27,6 +27,10 @@ header h1{margin:0;font-size:clamp(26px,4vw,42px);letter-spacing:-.6px}
 header p{margin:6px 0 0;opacity:.9;max-width:760px}
 .waves{position:absolute;left:0;right:0;bottom:-2px;height:56px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.tb-links{gap:12px;margin-top:20px}.tb-status,.tb-prefs{margin-top:12px}
+.btn.big{font-size:17px;font-weight:700;padding:11px 22px;background:rgba(255,255,255,.2);border-width:1.5px}
+.btn.big:hover{background:rgba(255,255,255,.3)}
+.btn.big:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit;font-size:14px;text-decoration:none}
 .btn[aria-pressed="true"]{background:#fff;color:var(--hero1);font-weight:600}
 .status{font-size:14px;opacity:.92;display:inline-flex;align-items:center;gap:6px}
@@ -125,10 +129,14 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 <header class="hero"><div class="wrap">
   <h1>🌊 UNE Marine Monitoring Network</h1>
   <p>Live waves, water quality and weather from University of New England buoys and stations in Saco Bay, Biddeford and along the southern Maine coast.</p>
-  <div class="toolbar">
-    <a class="btn" href="./saco-bay/">🌊 Saco Bay, explained</a>
-    <a class="btn" href="./analysis/">📊 What the data say</a>
+  <div class="toolbar tb-links">
+    <a class="btn big" href="./saco-bay/">🌊 Saco Bay, explained</a>
+    <a class="btn big" href="./analysis/">📊 What the data say</a>
+  </div>
+  <div class="toolbar tb-status">
     <span class="status"><span class="pulse"></span><span id="status">Loading live data…</span></span>
+  </div>
+  <div class="toolbar tb-prefs">
     <div class="seggrp"><span class="seglbl">Units:</span><div class="segctl" role="group" aria-label="Units"><span class="knob"></span><button id="u-si" aria-pressed="false">Metric</button><button id="u-us" aria-pressed="true">Imperial</button></div></div>
     <div class="seggrp"><span class="seglbl">Theme:</span><div class="segctl" role="group" aria-label="Theme"><span class="knob"></span><button id="th-light" aria-pressed="true">Light</button><button id="th-dark" aria-pressed="false">Dark</button></div></div>
   </div>
