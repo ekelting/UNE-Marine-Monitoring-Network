@@ -184,7 +184,7 @@ a.ti{text-decoration:none;font-size:12px;opacity:.75;margin-left:2px;color:inher
   </section>
 
   <section class="grid two">
-    <div><h2>💥 Whitewater &amp; the tide</h2><p class="lede">How much breaking, churning water the radar sees along the shore, in square feet (or square metres), with the tide drawn behind it.</p>
+    <div><h2>💥 Whitewater &amp; the tide</h2><p class="lede">How much breaking, churning water the radar sees along the shore, in square feet (or square metres), with the tide in the panel above on the same time axis.</p>
       <div class="card"><div id="white" class="chart"></div></div></div>
     <div><h2>📅 Radar diary</h2><p class="lede">How many scans the radar delivered each day. Gaps mean it was offline or being serviced.</p>
       <div class="card"><div id="diary" class="chart"></div></div></div>
@@ -399,9 +399,11 @@ function drawWhite(){
   const tr=[{x:TS.t,y:TS.whitewater_m2.map(v=>v==null?null:A(v)),type:'scatter',mode:'lines',fill:'tozeroy',line:{color:css('--radar'),width:1.5},
     hovertemplate:'%{y:.2f} '+Au()+'<extra>💥 whitewater</extra>'}];
   if((D.tide||[]).length) tr.unshift({x:D.tide.map(p=>p.t),y:D.tide.map(p=>unit==='ft'?p.v:p.v/M2FT),yaxis:'y2',type:'scatter',mode:'lines',
-    line:{color:css('--tide'),width:1.5,dash:'dot'},hovertemplate:`%{y:.1f} ${Hu()}<extra>🌙 tide</extra>`});
-  Plotly.react('white',tr,theme({height:330,margin:{l:56,r:56,t:16,b:44},xaxis:{type:'date',range:[start,end]},
-    yaxis:{title:{text:'💥 whitewater ('+Au()+')'},rangemode:'tozero'},yaxis2:{title:{text:`🌙 tide (${Hu()})`},overlaying:'y',side:'right',showgrid:false}}),CFGP);
+    line:{color:css('--tide'),width:1.8},hovertemplate:`%{y:.1f} ${Hu()}<extra>🌙 tide</extra>`});
+  const hasT=(D.tide||[]).length;   // two stacked panels on one time axis (tide on top), not two y-axes on one chart
+  Plotly.react('white',tr,theme({height:hasT?380:330,margin:{l:56,r:20,t:16,b:44},xaxis:{type:'date',range:[start,end],anchor:'y'},
+    yaxis:{title:{text:'💥 whitewater ('+Au()+')'},rangemode:'tozero',domain:hasT?[0,0.64]:[0,1]},
+    yaxis2:{title:{text:`🌙 tide (${Hu()})`},domain:[0.72,1],anchor:'x'},showlegend:false}),CFGP);
 }
 function drawDiary(){
   const d=D.daily||[]; if(!d.length) return empty('diary','📭 No scans yet.');

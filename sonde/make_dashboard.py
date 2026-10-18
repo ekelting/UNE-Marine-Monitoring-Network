@@ -123,7 +123,14 @@ def build_figs(S):
         for i, (c, t, col, m) in enumerate(items):
             r, cc = divmod(i, 2)
             ax = '' if i == 0 else str(i + 1)
-            s = pt[(c, 'mean')][pt[(c, 'count')] >= 4]
+            ok_ = pt[(c, 'count')] >= 4
+            s = pt[(c, 'q50')][ok_] if (c, 'q50') in pt else pt[(c, 'mean')][ok_]   # median: robust to the odd spike
+            if (c, 'q25') in pt:
+                lo_, hi_ = pt[(c, 'q25')][ok_], pt[(c, 'q75')][ok_]
+                tr.append(dict(type='scatter', mode='lines', x=_clean(lo_.index.tolist()), y=_clean(lo_.tolist()), line=dict(width=0, color=col, shape='spline'),
+                               meta=m, xaxis='x' + ax, yaxis='y' + ax, hoverinfo='skip', showlegend=False))
+                tr.append(dict(type='scatter', mode='lines', x=_clean(hi_.index.tolist()), y=_clean(hi_.tolist()), line=dict(width=0, color=col, shape='spline'),
+                               fill='tonexty', fillcolor=col + '33', meta=m, xaxis='x' + ax, yaxis='y' + ax, hoverinfo='skip', showlegend=False))
             tr.append(dict(type='scatter', mode='lines+markers', x=_clean(s.index.tolist()), y=_clean(s.tolist()),
                            line=dict(color=col, width=2.4, shape='spline'), marker=dict(size=4, color=col), meta=m,
                            xaxis='x' + ax, yaxis='y' + ax, name=t,
@@ -144,13 +151,25 @@ def build_figs(S):
         lbl = [f'{(h % 12) or 12} {"AM" if h < 12 else "PM"}' for h in di.index]
         tr, lay = [], dict(showlegend=False, height=380, margin=dict(l=60, r=20, t=20, b=50),
                            xaxis=dict(tickvals=hrs[::3], ticktext=lbl[::3], title='Time of day (Eastern)', anchor='y2'))
-        items = [(c, t, col, m) for c, t, col, m in [('do_pct', 'Oxygen saturation (%)', AQUA, None), ('temp_c', 'Water temp (TUNIT)', ORANGE, 'temp')] if c in di]
+        items = [(c, t, col, m) for c, t, col, m in [('do_pct', 'Oxygen saturation (%)', AQUA, None), ('temp_c', 'Water temp (TUNIT)', ORANGE, 'temp'),
+                                                     ('chl_ugl', 'Chlorophyll (µg/L)', GREEN, None)] if c in di and di[c].notna().sum() >= 12]
+        q25, q75 = S.get('diel_q25'), S.get('diel_q75')
+        n_ = len(items); gap_ = 0.08; h_ = (1 - gap_ * (n_ - 1)) / max(n_, 1)
+        lay['height'] = 190 * n_ + 90
+        lay['xaxis']['anchor'] = f'y{n_ if n_ > 1 else ""}'
         for i, (c, t, col, m) in enumerate(items):
             ax = '' if i == 0 else str(i + 1)
-            tr.append(dict(type='scatter', mode='lines+markers', x=hrs, y=_clean(di[c].tolist()), customdata=lbl, meta=m,
+            if q25 is not None and c in q25:
+                tr.append(dict(type='scatter', mode='lines', x=hrs, y=_clean(q25[c].tolist()), line=dict(width=0, color=col, shape='spline'), meta=m,
+                               xaxis='x', yaxis='y' + ax, hoverinfo='skip'))
+                tr.append(dict(type='scatter', mode='lines', x=hrs, y=_clean(q75[c].tolist()), line=dict(width=0, color=col, shape='spline'), meta=m,
+                               fill='tonexty', fillcolor=col + '33', xaxis='x', yaxis='y' + ax, hoverinfo='skip'))
+            med = S['diel_q50'][c] if S.get('diel_q50') is not None and c in S['diel_q50'] else di[c]
+            tr.append(dict(type='scatter', mode='lines+markers', x=hrs, y=_clean(med.tolist()), customdata=lbl, meta=m,
                            line=dict(color=col, width=2.4, shape='spline'), marker=dict(size=5), xaxis='x', yaxis='y' + ax,
                            hovertemplate='%{customdata}: <b>%{y:.2f}</b> ' + t.split('(')[-1].rstrip(')') + '<extra></extra>'))
-            lay['yaxis' + ax] = dict(title=t, domain=[0.55, 1] if i == 0 else [0, 0.45], anchor='x')
+            top = 1 - i * (h_ + gap_)
+            lay['yaxis' + ax] = dict(title=t, domain=[max(top - h_, 0), top], anchor='x')
         figs['diel'] = _fig(tr, lay)
 
     # 4) calendars --------------------------------------------------------------------
@@ -515,9 +534,9 @@ table.mtable{font-size:13.5px}.mtable th{white-space:normal;vertical-align:botto
     <div class="card"><div id="timeline" class="chart"></div></div></section>
 
   <section class="grid two">
-    <div><h2>🌙 The water breathes with the tide</h2><p class="lede">Each line is the average across every tide so far, lined up by hours before (−) and after (+) high tide. The rising tide brings in ocean water; the falling tide carries water from closer to shore back past the buoy.</p>
+    <div><h2>🌙 The water breathes with the tide</h2><p class="lede">Each line is the typical value (the median) across every tide so far, lined up by hours before (−) and after (+) high tide; the shaded band holds the middle half of readings. The rising tide brings in ocean water; the falling tide carries water from closer to shore back past the buoy.</p>
       <div class="card"><div id="tidephase" class="chart"></div><p class="t-sub" style="margin:6px 0 0">High-tide times from NOAA predictions for station %%TIDE_ST_TXT%%.</p></div></div>
-    <div><h2>☀️ The daily rhythm</h2><p class="lede">Average for each hour of the day. Algae make oxygen in sunlight and everything uses it up overnight; the water warms through the afternoon.</p>
+    <div><h2>☀️ The daily rhythm</h2><p class="lede">The typical value (median) for each hour of the day, with the middle half of readings shaded. Algae make oxygen in sunlight and everything uses it up overnight; the water warms through the afternoon; and chlorophyll readings dip at midday when bright sun makes the algae glow less.</p>
       <div class="card"><div id="diel" class="chart"></div></div></div>
   </section>
 

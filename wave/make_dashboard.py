@@ -113,15 +113,29 @@ def build_figs(S, bd):
              height=max(260, 34 * len(months) + 90)))
 
     # 3) monthly ---------------------------------------------------------------
+    # Month by month: a box plot of every hourly wave height in the month (box = middle half of hours, line = median,
+    # whiskers = 5th to 95th percentile), with the month's single biggest hour as an orange dot.
+    Hm = H['hs'].dropna()
+    per = Hm.index.to_period('M')
+    lab_of = {pd.Period(r.month, 'M') if not isinstance(r.month, pd.Period) else r.month: r.label for r in mo.itertuples()} if 'month' in mo else {}
+    bx = dict(x=[], q1=[], median=[], q3=[], lowerfence=[], upperfence=[], mean=[])
+    mx_x, mx_y = [], []
+    for p_, g in Hm.groupby(per):
+        if len(g) < 24 * 7:
+            continue
+        lab = lab_of.get(p_) or p_.strftime('%b %Y')
+        q = g.quantile([.05, .25, .5, .75, .95]).values
+        for k_, v_ in zip(['lowerfence', 'q1', 'median', 'q3', 'upperfence'], q):
+            bx[k_].append(round(float(v_), 3))
+        bx['mean'].append(round(float(g.mean()), 3)); bx['x'].append(lab)
+        mx_x.append(lab); mx_y.append(round(float(g.max()), 3))
     figs['monthly'] = _fig([
-        dict(type='bar', name='Average', x=mo['label'].tolist(), y=_clean(mo['hs_mean'].tolist()), marker=dict(color=BLUE),
-             meta='len', hovertemplate='%{x}: average %{y:.1f} UNIT<extra></extra>'),
-        dict(type='bar', name='Rough days (top 10%)', x=mo['label'].tolist(), y=_clean(mo['hs_p90'].tolist()),
-             marker=dict(color=AQUA), meta='len', hovertemplate='%{x}: 90th percentile %{y:.1f} UNIT<extra></extra>'),
-        dict(type='bar', name='Biggest', x=mo['label'].tolist(), y=_clean(mo['hs_max'].tolist()), marker=dict(color=ORANGE),
-             meta='len', hovertemplate='%{x}: max %{y:.1f} UNIT<extra></extra>'),
-    ], dict(barmode='group', bargap=0.25, bargroupgap=0.08, yaxis=dict(title='Wave height, Hs (UNIT)'),
-            legend=dict(orientation='h', y=1.14, x=1, xanchor='right'), height=380))
+        dict(type='box', name='Hourly wave heights', marker=dict(color=BLUE), fillcolor=BLUE + '55', line=dict(color=BLUE, width=1.5),
+             boxmean=True, meta='len', hoverinfo='y', **bx),
+        dict(type='scatter', mode='markers', name='Biggest hour', x=mx_x, y=mx_y, meta='len',
+             marker=dict(color=ORANGE, size=9, symbol='diamond'), hovertemplate='%{x}: biggest %{y:.1f} UNIT<extra></extra>'),
+    ], dict(yaxis=dict(title='Wave height, Hs (UNIT)', rangemode='tozero'), xaxis=dict(type='category'),
+            legend=dict(orientation='h', y=1.14, x=1, xanchor='right'), height=400))
     figs['energy'] = _fig([dict(
         type='bar', x=mo['label'].tolist(), y=_clean((mo['energy_mj_m'] / 3.6).tolist()), marker=dict(color=BLUE),
         text=[f"{v / 3.6:,.0f}" for v in mo['energy_mj_m']], textposition='outside', cliponaxis=False,
@@ -210,8 +224,7 @@ def build_figs(S, bd):
                            y=_clean(mean.tolist()), line=dict(color=c, width=2.2, shape='spline'),
                            hovertemplate='%{x:.1f}-second waves: %{y:.3f} m²/Hz<extra>' + name + '</extra>'))
         figs['spectrum'] = _fig(tr, dict(
-            xaxis=dict(title='Wave period — seconds between crests (log scale)', type='log',
-                       tickvals=[2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25]),
+            xaxis=dict(title='Wave period — seconds between crests', range=[2, 25], dtick=2),
             yaxis=dict(title='Wave energy density (m²/Hz)'), legend=dict(orientation='h', y=1.14, x=1, xanchor='right'),
             height=380))
 
@@ -746,7 +759,8 @@ function render(){
     const el=document.getElementById(id); if(!el) continue;
     const f=JSON.parse(JSON.stringify(ORIG[id]));
     for (const t of f.data){
-      if (t.meta==='len'){ if(t.y && t.type!=='heatmap') t.y=scaleArr(t.y,k); if(t.type==='heatmap'){t.z=scaleArr(t.z,k); t.zmax=t.zmax*k;} }
+      if (t.meta==='len'){ if(t.y && t.type!=='heatmap') t.y=scaleArr(t.y,k); if(t.type==='heatmap'){t.z=scaleArr(t.z,k); t.zmax=t.zmax*k;}
+        if(t.type==='box') for (const q of ['q1','median','q3','lowerfence','upperfence','mean']) if(t[q]) t[q]=scaleArr(t[q],k); }
       t.hovertemplate=sub(t.hovertemplate,unit);
       if (t.colorbar&&t.colorbar.title) t.colorbar.title.text=sub(t.colorbar.title.text,unit);
     }

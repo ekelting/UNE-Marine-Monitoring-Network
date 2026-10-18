@@ -75,6 +75,9 @@ def build_figs(S):
         if v['panel'] not in [p for p, _ in panels]:
             panels.append((v['panel'], []))
         dict(panels)[v['panel']].append(v)
+    dirv = next((v for v in bc.VARS if v.get('agg') == 'dir' and v['key'] in df and df[v['key']].notna().sum() > 24), None)
+    if dirv:   # wind direction over time: dots, because a line would jump across the 360°/0° wrap
+        panels.append(('Wind from', [dirv]))
     n = len(panels)
     gap = 0.04
     h = (1 - gap * (n - 1)) / max(n, 1)
@@ -90,6 +93,15 @@ def build_figs(S):
     for i, (title, vs) in enumerate(panels):
         ax = '' if i == 0 else str(i + 1)
         top = 1 - i * (h + gap)
+        if vs[0].get('agg') == 'dir':
+            v = vs[0]
+            lay['yaxis' + ax] = dict(title='Wind from', domain=[max(top - h, 0), top], anchor='x', range=[0, 360],
+                                     tickvals=[0, 90, 180, 270, 360], ticktext=['N', 'E', 'S', 'W', 'N'])
+            Pd = P[v['key']].where(P['wind_ms'] > 0.3) if 'wind_ms' in P else P[v['key']]
+            tr.append(dict(type='scattergl', mode='markers', name='Wind direction', x=_ts(P.index), y=_clean(Pd.values),
+                           marker=dict(color=CAT[i % len(CAT)], size=3, opacity=0.6), xaxis='x', yaxis='y' + ax, showlegend=False,
+                           hovertemplate='from %{y:.0f}°<extra>Wind direction</extra>'))
+            continue
         units = ulabel(vs[0])
         lay['yaxis' + ax] = dict(title=f'{title} ({units})' if units else title, domain=[max(top - h, 0), top], anchor='x',
                                  rangemode='tozero' if vs[0].get('agg') == 'sum' or vs[0].get('conv') == 'speed' else 'normal')

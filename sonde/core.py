@@ -216,7 +216,12 @@ def phase_table(df, ph, bin_h=0.5):
     d = df[cols].copy()
     d['phase'] = (ph / bin_h).round() * bin_h
     d = d.dropna(subset=['phase'])
-    return d.groupby('phase').agg(['mean', 'count'])
+    q25 = lambda x: x.quantile(.25)
+    q75 = lambda x: x.quantile(.75)
+    q25.__name__, q75.__name__ = 'q25', 'q75'
+    q50 = lambda x: x.quantile(.5)
+    q50.__name__ = 'q50'
+    return d.groupby('phase').agg(['mean', 'count', q25, q50, q75])
 
 
 def summary(B, hilo=None):
@@ -234,6 +239,9 @@ def summary(B, hilo=None):
     L = df.copy()
     L.index = local(L.index)
     S['diel'] = L.groupby(L.index.hour)[[c for c in ['do_pct', 'temp_c', 'chl_ugl'] if c in L]].mean()
+    S['diel_q25'] = L.groupby(L.index.hour)[list(S['diel'].columns)].quantile(.25)     # typical range for the rhythm chart
+    S['diel_q50'] = L.groupby(L.index.hour)[list(S['diel'].columns)].quantile(.5)
+    S['diel_q75'] = L.groupby(L.index.hour)[list(S['diel'].columns)].quantile(.75)
     latest = {}
     for c in df.columns:
         if c == 'res':
