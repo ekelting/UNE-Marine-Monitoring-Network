@@ -94,6 +94,7 @@ def page(R, plotly_src):
         if not grp:
             continue
         body.append(f'<h2 class="group" id="g-{gk}">{gname}</h2>' + (f'<p class="lede">{gnote}</p>' if gnote else ''))
+        audit.append(f'<tr class="grp"><th colspan="3"><a href="#g-{gk}">{gname}</a></th></tr>')
         for c in grp:
             n += 1
             body.append(card_html(c, n))

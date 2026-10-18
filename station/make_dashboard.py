@@ -76,13 +76,15 @@ def build_figs(S):
             panels.append((v['panel'], []))
         dict(panels)[v['panel']].append(v)
     dirv = next((v for v in bc.VARS if v.get('agg') == 'dir' and v['key'] in df and df[v['key']].notna().sum() > 24), None)
-    if dirv:   # wind direction over time: dots, because a line would jump across the 360°/0° wrap
-        panels.append(('Wind from', [dirv]))
+    if dirv:   # where the wind came from, day by day (a 0-360° line or dots are hard to read)
+        panels.append(('Wind', [dirv]))
     n = len(panels)
     gap = 0.04
-    h = (1 - gap * (n - 1)) / max(n, 1)
+    wts = [1.6 if vs[0].get('agg') == 'dir' else 1 for _, vs in panels]     # the 8-row wind strip gets more room
+    hs_ = [(1 - gap * (n - 1)) * w / sum(wts) for w in wts]
+    tops = [1 - sum(hs_[:i]) - gap * i for i in range(n)]
     lay = dict(showlegend=True, legend=dict(orientation='h', y=-0.03, yanchor='top', x=0, xanchor='left'),
-               height=165 * n + 150, margin=dict(l=70, r=20, t=50, b=40), hovermode='x unified',
+               height=int(165 * sum(wts) + 150), margin=dict(l=70, r=20, t=50, b=40), hovermode='x unified',
                xaxis=dict(type='date', anchor=f'y{n if n > 1 else ""}',
                           rangeselector=dict(buttons=[dict(count=1, label='1 day', step='day', stepmode='backward'),
                                                       dict(count=3, label='3 days', step='day', stepmode='backward'),
@@ -92,15 +94,29 @@ def build_figs(S):
     tr = []
     for i, (title, vs) in enumerate(panels):
         ax = '' if i == 0 else str(i + 1)
-        top = 1 - i * (h + gap)
+        top, h = tops[i], hs_[i]
         if vs[0].get('agg') == 'dir':
+            # Where the wind came from, day by day: 8 compass rows x 1 column per day, shaded by the share of that
+            # day's hours the wind blew from that direction. Reads at any zoom, unlike a 0-360 degree line or dots.
             v = vs[0]
-            lay['yaxis' + ax] = dict(title='Wind from', domain=[max(top - h, 0), top], anchor='x', range=[0, 360],
-                                     tickvals=[0, 90, 180, 270, 360], ticktext=['N', 'E', 'S', 'W', 'N'])
-            Pd = P[v['key']].where(P['wind_ms'] > 0.3) if 'wind_ms' in P else P[v['key']]
-            tr.append(dict(type='scattergl', mode='markers', name='Wind direction', x=_ts(P.index), y=_clean(Pd.values),
-                           marker=dict(color=CAT[i % len(CAT)], size=3, opacity=0.6), xaxis='x', yaxis='y' + ax, showlegend=False,
-                           hovertemplate='from %{y:.0f}°<extra>Wind direction</extra>'))
+            comp8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+            lay['yaxis' + ax] = dict(title='Wind from', domain=[max(top - h, 0), top], anchor='x', type='category',
+                                     categoryorder='array', categoryarray=comp8[::-1], fixedrange=True, showgrid=False)
+            Wd = df[[v['key']] + (['wind_ms'] if 'wind_ms' in df else [])].dropna()
+            if 'wind_ms' in Wd:
+                Wd = Wd[Wd['wind_ms'] > 0.3]                      # calm hours have no direction
+            if len(Wd):
+                Wd = _loc(Wd)
+                sec = ((Wd[v['key']] % 360 + 22.5) // 45 % 8).astype(int).map(lambda i: comp8[i])
+                tab_ = pd.crosstab(Wd.index.normalize(), sec, normalize='index').reindex(columns=comp8).fillna(0) * 100
+                tab_ = tab_.asfreq('1D')                           # keep gaps as gaps
+                days = [d.strftime('%Y-%m-%d') for d in tab_.index]
+                tr.append(dict(type='heatmap', x=days, y=comp8, z=_clean(tab_.T.round(0).values), xaxis='x', yaxis='y' + ax,
+                               colorscale=[[0, 'rgba(183,211,246,0)'], [0.15, '#d6e6fa'], [0.5, '#5598e7'], [1, '#0d366b']],
+                               zmin=0, zmax=60, xgap=0, ygap=1, showscale=True, name='Wind from',
+                               colorbar=dict(title=dict(text='% of the day', side='right'), thickness=8, len=max(0.12, h),
+                                             y=top - h / 2, yanchor='middle', ticksuffix='%'),
+                               hovertemplate='%{x|%a %b %d}: from the %{y} %{z:.0f}% of the time<extra></extra>'))
             continue
         units = ulabel(vs[0])
         lay['yaxis' + ax] = dict(title=f'{title} ({units})' if units else title, domain=[max(top - h, 0), top], anchor='x',
@@ -406,7 +422,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 
   %%EXPLAIN%%
 
-  <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Use the buttons to zoom to the last day, week or month, or drag across any panel. Click a name in the legend to hide or show it.</p>
+  <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Use the buttons to zoom to the last day, week or month, or drag across any panel. Click a name in the legend to hide or show it. The bottom strip shows where the wind came from each day: one column per day, one row per compass direction, darker = more of that day.</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
 
   %%DAYS%%
@@ -455,6 +471,7 @@ function render(){
       const fn = unit==='us' ? CONV[t.meta] : null;
       if (fn){ t.y=conv(t.y,fn); if (t.customdata) t.customdata=conv(t.customdata,fn); }
       t.hovertemplate=sub(t.hovertemplate); if (t.name) t.name=sub(t.name);
+      if (t.type==='heatmap' && t.name==='Wind from' && curTheme()==='dark') t.colorscale=[[0,'rgba(0,0,0,0)'],[0.15,'#1d3a5c'],[0.5,'#3f7fd0'],[1,'#b9d8ff']];
     }
     const L=themed(JSON.parse(sub(JSON.stringify(f.layout))));
     if (L.polar && el.clientWidth < 560){ L.height=600; L.polar.domain={x:[0,1],y:[0.42,1]}; L.legend=Object.assign({},L.legend,{x:0,y:0,yanchor:'bottom'}); }
