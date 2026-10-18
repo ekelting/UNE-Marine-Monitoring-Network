@@ -131,6 +131,21 @@ def build_figs(S):
                 tr.append(dict(type='scattergl', mode='lines', name=v['label'], x=_ts(P.index), y=_clean(P[v['key']].values),
                                line=dict(color=col, width=1.4), connectgaps=False, meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
                                hovertemplate='%{y:.' + str(v.get('dec', 1)) + 'f} ' + ulabel(v) + '<extra>' + esc(v['label']) + '</extra>'))
+    # One small legend per panel, just above its top-right corner, instead of one long legend under the chart.
+    # Panels with a single line need no legend (the axis title names it).
+    lay.pop('legend', None)
+    for i, (title, vs) in enumerate(panels):
+        ax = '' if i == 0 else str(i + 1)
+        mine = [t for t in tr if t.get('yaxis') == 'y' + ax]
+        lname = 'legend' if i == 0 else f'legend{i + 1}'
+        multi = len([t for t in mine if t.get('showlegend', True) is not False]) > 1
+        for t in mine:
+            t['legend'] = lname
+            if not multi:
+                t['showlegend'] = False
+        if multi:
+            lay[lname] = dict(orientation='h', x=1, xanchor='right', y=tops[i], yanchor='bottom', font=dict(size=11),
+                              bgcolor='rgba(0,0,0,0)', itemsizing='constant', entrywidthmode='pixels')
     figs['timeline'] = dict(data=tr, layout=lay)
 
     # ---------- day by day ----------
@@ -474,6 +489,10 @@ function render(){
       if (t.type==='heatmap' && t.name==='Wind from' && curTheme()==='dark') t.colorscale=[[0,'rgba(0,0,0,0)'],[0.15,'#1d3a5c'],[0.5,'#3f7fd0'],[1,'#b9d8ff']];
     }
     const L=themed(JSON.parse(sub(JSON.stringify(f.layout))));
+    if (Object.keys(L).some(k=>/^legend\d+$/.test(k)) && el.clientWidth < 600){   // phones: per-panel legends would wrap into the panels, so use one legend underneath
+      for (const k of Object.keys(L)) if (/^legend\d+$/.test(k)) delete L[k];
+      for (const t of f.data) delete t.legend;
+      L.legend={orientation:'h', x:0, xanchor:'left', y:-0.07, yanchor:'top', font:{size:11}}; }
     if (L.polar && el.clientWidth < 560){ L.height=600; L.polar.domain={x:[0,1],y:[0.42,1]}; L.legend=Object.assign({},L.legend,{x:0,y:0,yanchor:'bottom'}); }
     try { Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']}); } catch(e){ console.error(id,e); }
   }
