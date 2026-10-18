@@ -186,8 +186,6 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
     </div>
   </section>
 
-  <section><h2>💡 What's happening</h2><p class="lede">Headlines written automatically by each station's own page.</p>
-    <div class="insights" id="insights"></div></section>
 
   <section>
     <details><summary>ℹ️ About this network</summary>
@@ -437,14 +435,8 @@ function renderCharts(){
     lg.querySelectorAll('span[data-repo]').forEach(sp=>sp.onclick=()=>{ hidden[id+sp.dataset.repo]=!hidden[id+sp.dataset.repo]; renderCharts(); });
   }
 }
-function renderInsights(){
-  let h='';
-  for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.insights) continue;
-    for (const [e,t] of d.insights.filter(x=>x[0]!=='📅').slice(0,2)) h+=`<div class="card ins"><div class="e">${e}</div><div><h4>${escH(t)}</h4><a href="./${s.slug}/"><span class="swatch" style="background:${s.color}"></span> ${escH(s.name)} →</a></div></div>`; }
-  document.getElementById('insights').innerHTML = h || '<p class="lede">Loading…</p>';
-}
 function renderAll(){
-  renderKPIs(); renderStations(); renderMap(); renderCharts(); renderInsights();
+  renderKPIs(); renderStations(); renderMap(); renderCharts();
   document.getElementById('u-us').setAttribute('aria-pressed', unit==='us'); document.getElementById('u-si').setAttribute('aria-pressed', unit==='si');
   document.getElementById('maplabel').value = labelMode;
 }
