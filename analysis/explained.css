@@ -1,6 +1,7 @@
 /* Layout: a deep-sea hero that opens in Quick look, a grid of seven question tiles, then one "chapter" per question:
    big answer + playful illustration first, charts below that appear as the reader turns up the detail. */
 :root{
+  --sw-arrow:#cdeefc;
   --bg:#f3f8f9; --card:#ffffff; --ink:#0d2633; --ink2:#3c5563; --muted:#647c89; --line:#d6e3e8; --grid:#e4edf0; --chip:#e6f0f3;
   --accent:#ff6b35; --sea:#1f6f97; --deep:#0b2f45; --foam:#e8f6f8; --sky:#dff0f7; --sand:#e6cf9a; --sanddot:#b98a2e; --land:#cfe1c8;
   --kelp:#2f7d5b; --granite:#8b98a1; --wood:#9b6b43; --house:#f2efe8; --roof:#c4553a; --door:#5a6b7d; --mud:#7b6146; --soil:#6e5139;
@@ -188,3 +189,5 @@ footer{color:var(--muted);font-size:13.5px;margin:40px 0 20px}
 .more-cta h2{margin:0 0 4px;font-size:24px}.more-cta p{margin:0;color:var(--ink2)}
 .more-cta a{background:var(--accent);color:#fff;text-decoration:none;font-weight:800;border-radius:14px;padding:11px 18px}
 footer a{color:inherit}
+
+.il-xs{font-size:9.5px}

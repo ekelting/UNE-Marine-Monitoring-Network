@@ -4,8 +4,41 @@ import calendar
 
 OK, CARE = ('ok', '✓ Solid'), ('care', '⚠ Use with care')
 OC, MA, GE, MS, ME = '🌊 oceanographers', '📐 mathematicians', '🗺️ geographers', '🐟 marine scientists', '🦞 Mainers'
-GROUPS = [('past', 'How this year compares with the past', 'These use long public records from NOAA and USGS, so they are the most reliable comparisons on the page.'),
-          ('one', 'One station, in depth', ''), ('compare', 'Comparing places', ''), ('phys', 'Coastal erosion and estuary physics', '')]
+# Topics follow the seven questions on "Saco Bay, explained", from the big picture to the details.
+GROUPS = [('glance', 'The year at a glance', ''),
+          ('sea', 'Sea level, storms and flooding', 'These use NOAA\'s Portland tide gauge, running since 1912, so they are the most reliable comparisons on the page.'),
+          ('temp', 'Warm year or cold?', ''),
+          ('sand', 'Sand, waves and the seabed at Camp Ellis', ''),
+          ('river', 'Where the river meets the sea', ''),
+          ('algae', 'Algae', ''),
+          ('land', 'Marsh, woods and wind', '')]
+# Card order: (group, title prefix). Cards keep their own text; this only decides where each one sits.
+ORDER = [('glance', 'Days that matter'),
+         ('sea', 'Sea level is rising'), ('sea', 'Flooding is becoming routine'), ('sea', 'How high can the water get?'),
+         ('sea', 'Same storm, higher sea'), ('sea', 'Storm surge this year'),
+         ('temp', 'Was the sea warmer than normal?'), ('temp', 'Was the air warmer than normal?'), ('temp', 'Layers in the sea'),
+         ('sand', 'Camp Ellis through time'), ('sand', 'Littoral drift: which way'), ('sand', 'Littoral drift: when'),
+         ('sand', 'When does the seabed move?'), ('sand', 'Where does the bottom water go?'),
+         ('river', 'Rain, river and tide'), ('river', 'Tide clock'), ('river', 'Bigger tides, bigger salinity swings'),
+         ('river', 'A salinity model for Jordan Point'), ('river', 'Estuary mixing calculator'), ('river', 'Are the four water-quality buoys'),
+         ('algae', 'Chlorophyll: how much algae'), ('algae', 'Chlorophyll: why it'),
+         ('land', 'The marsh'), ('land', 'How fast heat sinks into the forest soil'), ('land', 'Where does the wind come from?'),
+         ('land', 'Does the radar agree with the weather station?')]
+
+
+def arrange(C):
+    """Put every card in its topic and in reading order; anything not listed keeps its place at the end of its old group."""
+    def key(c):
+        for i, (g, t) in enumerate(ORDER):
+            if c['t'].startswith(t):
+                c['g'] = g
+                return i
+        c['g'] = {'past': 'sea', 'one': 'land', 'compare': 'river', 'phys': 'sand'}.get(c['g'], c['g'])
+        return len(ORDER)
+    C.sort(key=key)
+    return C
+
+
 DIRS = ['north', 'north-northeast', 'northeast', 'east-northeast', 'east', 'east-southeast', 'southeast', 'south-southeast',
         'south', 'south-southwest', 'southwest', 'west-southwest', 'west', 'west-northwest', 'northwest', 'north-northwest']
 
@@ -333,4 +366,4 @@ def build(R):
 <li>Estuarine Richardson number Ri_E = (g·Δρ/ρ)·Q / (W·U³), Δρ/ρ ≈ 7.7×10⁻⁴ × ΔS. Below 0.08 well mixed; 0.08–0.8 partially mixed; above 0.8 layered.</li></ul>
 <p>Default river flow is the Cornish gauge (last 30 days) × 1.3, a rough allowance for the watershed below Cornish. Vertical mixing can't be measured with one sensor depth.</p>''',
             charts=[], cap='')
-    return C
+    return arrange(C)

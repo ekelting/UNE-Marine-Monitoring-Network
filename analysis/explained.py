@@ -272,6 +272,11 @@ js = JS.replace('%%DATA%%', json.dumps(R, separators=(',', ':')))
 js = js.replace("if (window.Plotly) drawAll(); else window.addEventListener('load',()=>window.Plotly&&drawAll());", EXTRA_JS.replace('%%STORM%%', STORM_JS).replace('%%ESTI%%', str(EST_I)) + "\nif (window.Plotly) drawAll(); else window.addEventListener('load',()=>window.Plotly&&drawAll());")
 
 HOME = 'https://ekelting.github.io/UNE-Marine-Monitoring-Network/'
+try:
+    import cards as _cards
+    _NCARDS = len(_cards.build(R))
+except Exception:  # noqa: BLE001
+    _NCARDS = len(R) - 3
 page = f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Saco Bay, explained · UNE Marine Monitoring Network</title>
@@ -299,7 +304,7 @@ page = f'''<!doctype html>
   {ILL_DEFS}
   <nav class="qgrid" aria-label="Questions">{tiles}</nav>
   {''.join(chs)}
-  <section class="more-cta"><div><h2>Want every number?</h2><p>The full technical page has all {len(R) - 3} analyses with their methods, assumptions and uncertainty.</p></div><a href="{HOME}analysis/">📊 See the full analyses</a></section>
+  <section class="more-cta"><div><h2>Want every number?</h2><p>The full technical page has all {_NCARDS} analyses with their methods, assumptions and uncertainty.</p></div><a href="{HOME}analysis/">📊 See the full analyses</a></section>
   <footer>Data: UNE stations (updated hourly); NOAA tide gauge 8418150 (Portland, since 1912); NOAA buoy 44007; NOAA Portland Jetport weather; USGS Saco River at Cornish (since 1916); map © OpenStreetMap contributors. Recent NOAA/USGS values are provisional. Not for navigation. Updated {R["_built"]}. <a href="{HOME}">UNE Marine Monitoring Network</a></footer>
 </main>
 <script>{js}</script>

@@ -152,21 +152,20 @@ SAND_SVG = f'''<svg viewBox="0 0 320 282" {FRAME} role="img" aria-label="Map of 
   <g {SH}>{''.join(f'<path d="{p}" fill="var(--pp-rock)" stroke="var(--pp-rock)" stroke-width="3.2" stroke-linejoin="round"/>' for p in _SM['jetties'])}{''.join(f'<path d="{p}" fill="var(--pp-wood)" stroke="var(--pp-wood2)" stroke-width="1.6"/>' for p in _SM['pier'])}</g>
   <g>{''.join(f'<circle r="2.1" fill="var(--pp-grain)"><animateMotion dur="12s" begin="-{i*1:.2f}s" repeatCount="indefinite" path="{_SM['grains']}"/></circle>' for i in range(12))}</g>
   {''.join(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.4" fill="var(--pp-buoy)" stroke="var(--pp-ink2)" stroke-width=".8"/>' for x, y in (_SM['buoy'], _pt['wibuoy']))}
-  {arrow(_cx[170] + 20, 172, _cx[110] + 18, 110)}
-  {arrow(308, 84, 252, 84)}
-  {arrow(308, 132, 256, 110.5)}
-  {arrow(308, 184, 268, 144)}
-  <g class="il-s il-b il-h"><text x="300" y="98" text-anchor="end">E</text><text x="300" y="146" text-anchor="end">ESE</text><text x="304" y="198" text-anchor="end">SE</text></g>
-  {tab(244, 58, 150, 'waves from E, ESE and SE', h=20, cls='il-s il-b')}
-  {tab(_cx[140] + 30, 142, 112, 'Sand drifts north', anchor='start', h=20)}
-  {tab(124, 174, 148, 'Camp Ellis: loses sand', anchor='start', h=20)}<path d="M128 184 L{_pt['campellis'][0]+2:.1f} {_pt['campellis'][1]:.1f}" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
-  {tab(8, 96, 74, 'Ferry Beach', anchor='start', h=18, cls='il-s il-b')}
-  {tab(8, 22, 104, 'Old Orchard Beach', anchor='start', h=18, cls='il-s il-b')}<path d="M112 22 L{_pt['oob'][0]:.1f} {_pt['oob'][1]+4:.1f}" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
-  {tab(8, 152, 70, 'Saco River', anchor='start', h=18, cls='il-s il-b')}
-  {tab(8, 222, 66, 'UNE buoy', anchor='start', h=18, cls='il-s il-b')}<path d="M52 213 L{_SM['buoy'][0]-2:.1f} {_SM['buoy'][1]+3:.1f}" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
-  {tab(176, 272, 86, 'Biddeford Pool', h=18, cls='il-s il-b')}
-  {tab(258, 236, 74, 'Wood Island', h=18, cls='il-s il-b')}<path d="M236 228 L220 213" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
-  <g transform="translate(294 22)" {SH}><circle r="13" fill="var(--pp-pill)"/><path d="M0 -10 L4 3 L0 1 L-4 3Z" fill="var(--pp-accent)"/><text y="11" text-anchor="middle" class="il-s" style="fill:var(--pp-pillink);font-size:8px">N</text></g>
+  {arrow(_cx[170] + 18, 170, _cx[120] + 16, 118, w=5, head=11, hw=7)}
+  <g stroke="var(--sw-arrow)" stroke-width="1.3" stroke-linecap="round" fill="none">
+    <path d="M306 84 L268 84 M273 80.5 L268 84 L273 87.5"/>
+    <path d="M306 128 L270.9 113.5 M276.6 113.2 L270.9 113.5 L273.9 118.3"/>
+    <path d="M306 176 L279.2 149.2 M284.5 150.8 L279.2 149.2 L280.8 154.5"/>
+  </g>
+  <g style="fill:var(--sw-arrow);font:700 8.5px var(--f-body)"><text x="270" y="79">E</text><text x="272" y="108">ESE</text><text x="284" y="146">SE</text></g>
+  <text x="262" y="68" text-anchor="middle" style="fill:var(--sw-arrow);font:700 8.5px var(--f-body)">waves from</text>
+  {tab(_cx[140] + 28, 142, 100, 'Sand drifts north', anchor='start', h=16, cls='il-s il-b il-xs')}
+  {tab(124, 174, 126, 'Camp Ellis: loses sand', anchor='start', h=16, cls='il-s il-b il-xs')}<path d="M128 182 L{_pt['campellis'][0]+2:.1f} {_pt['campellis'][1]:.1f}" stroke="var(--pp-card)" stroke-width="1.2" stroke-dasharray="2 3"/>
+  {tab(8, 96, 70, 'Ferry Beach', anchor='start', h=15, cls='il-s il-b il-xs')}
+  {tab(8, 22, 104, 'Old Orchard Beach', anchor='start', h=15, cls='il-s il-b il-xs')}<path d="M112 22 L{_pt['oob'][0]:.1f} {_pt['oob'][1]+4:.1f}" stroke="var(--pp-card)" stroke-width="1.2" stroke-dasharray="2 3"/>
+  {tab(8, 152, 66, 'Saco River', anchor='start', h=15, cls='il-s il-b il-xs')}
+  <g transform="translate(298 20)" {SH}><circle r="11" fill="var(--pp-pill)"/><path d="M0 -10 L4 3 L0 1 L-4 3Z" fill="var(--pp-accent)"/><text y="11" text-anchor="middle" class="il-s" style="fill:var(--pp-pillink);font-size:8px">N</text></g>
   <g transform="translate(236 266)"><path d="M0 0 H{_SM['K']*0.0090:.1f}" stroke="var(--pp-card)" stroke-width="3" stroke-linecap="round"/><text x="{_SM['K']*0.0045:.1f}" y="-5" text-anchor="middle" class="il-s il-b il-h">1 km</text></g>
 </svg>'''
 

@@ -197,9 +197,7 @@ CH.map=()=>{ if(!document.getElementById('pmap')||!R.coast) return; const k=Math
     textfont:{color:css('--ink'),size:12},marker:{size:20,color:sal,colorscale:[[0,'#c6dbef'],[1,'#08306b']],cmin:Math.min(...sal)-1,cmax:Math.max(...sal)+.5,line:{color:css('--card'),width:2},
     colorbar:{title:{text:'salinity (PSU)',side:'right'},thickness:10,len:.55,y:.3}},customdata:sal,hovertemplate:'%{text}: average salinity %{customdata:.1f} PSU<extra></extra>',showlegend:false});
   P('pmap',tr,base({margin:{l:4,r:4,t:4,b:4},xaxis:{visible:false,range:[-70.45,-70.29]},yaxis:{visible:false,range:[43.385,43.555],scaleanchor:'x',scaleratio:1/k},
-    annotations:[{x:-70.3878,y:43.4835,ax:-70.3832,ay:43.4655,xref:'x',yref:'y',axref:'x',ayref:'y',showarrow:true,arrowhead:3,arrowsize:1.3,arrowwidth:3.5,arrowcolor:'#eb6834',text:''},
-      {x:-70.4,y:43.49,text:'sand drifts<br>north',showarrow:false,font:{size:12,color:'#eb6834'},xanchor:'right'},
-      {x:-70.33,y:43.505,text:'Saco Bay',showarrow:false,font:{size:13,color:css('--muted')}},{x:-70.415,y:43.452,text:'Saco River',showarrow:false,font:{size:11,color:css('--ink2')}},
+    annotations:[{x:-70.33,y:43.505,text:'Saco Bay',showarrow:false,font:{size:13,color:css('--muted')}},{x:-70.415,y:43.452,text:'Saco River',showarrow:false,font:{size:11,color:css('--ink2')}},
       {x:-70.322,y:43.433,text:'Biddeford Pool',showarrow:false,font:{size:11,color:css('--ink2')}},{x:-70.398,y:43.522,text:'Old Orchard Beach',xanchor:'right',showarrow:false,font:{size:11,color:css('--ink2')}},
       {x:-70.292,y:43.389,text:'coastline © OpenStreetMap',showarrow:false,font:{size:9,color:css('--muted')},xanchor:'right'}]})); };
 function calc(){ const out=document.getElementById('calcout'); if(!out) return; const v=id=>parseFloat(document.getElementById(id).value);
