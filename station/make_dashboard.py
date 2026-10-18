@@ -75,12 +75,9 @@ def build_figs(S):
         if v['panel'] not in [p for p, _ in panels]:
             panels.append((v['panel'], []))
         dict(panels)[v['panel']].append(v)
-    dirv = next((v for v in bc.VARS if v.get('agg') == 'dir' and v['key'] in df and df[v['key']].notna().sum() > 24), None)
-    if dirv:   # where the wind came from, day by day (a 0-360° line or dots are hard to read)
-        panels.append(('Wind', [dirv]))
     n = len(panels)
     gap = 0.04
-    wts = [1.6 if vs[0].get('agg') == 'dir' else 1 for _, vs in panels]     # the 8-row wind strip gets more room
+    wts = [1] * n
     hs_ = [(1 - gap * (n - 1)) * w / sum(wts) for w in wts]
     tops = [1 - sum(hs_[:i]) - gap * i for i in range(n)]
     lay = dict(showlegend=True, legend=dict(orientation='h', y=-0.03, yanchor='top', x=0, xanchor='left'),
@@ -95,29 +92,6 @@ def build_figs(S):
     for i, (title, vs) in enumerate(panels):
         ax = '' if i == 0 else str(i + 1)
         top, h = tops[i], hs_[i]
-        if vs[0].get('agg') == 'dir':
-            # Where the wind came from, day by day: 8 compass rows x 1 column per day, shaded by the share of that
-            # day's hours the wind blew from that direction. Reads at any zoom, unlike a 0-360 degree line or dots.
-            v = vs[0]
-            comp8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-            lay['yaxis' + ax] = dict(title='Wind from', domain=[max(top - h, 0), top], anchor='x', type='category',
-                                     categoryorder='array', categoryarray=comp8[::-1], fixedrange=True, showgrid=False)
-            Wd = df[[v['key']] + (['wind_ms'] if 'wind_ms' in df else [])].dropna()
-            if 'wind_ms' in Wd:
-                Wd = Wd[Wd['wind_ms'] > 0.3]                      # calm hours have no direction
-            if len(Wd):
-                Wd = _loc(Wd)
-                sec = ((Wd[v['key']] % 360 + 22.5) // 45 % 8).astype(int).map(lambda i: comp8[i])
-                tab_ = pd.crosstab(Wd.index.normalize(), sec, normalize='index').reindex(columns=comp8).fillna(0) * 100
-                tab_ = tab_.asfreq('1D')                           # keep gaps as gaps
-                days = [d.strftime('%Y-%m-%d') for d in tab_.index]
-                tr.append(dict(type='heatmap', x=days, y=comp8, z=_clean(tab_.T.round(0).values), xaxis='x', yaxis='y' + ax,
-                               colorscale=[[0, 'rgba(183,211,246,0)'], [0.15, '#d6e6fa'], [0.5, '#5598e7'], [1, '#0d366b']],
-                               zmin=0, zmax=60, xgap=0, ygap=1, showscale=True, name='Wind from',
-                               colorbar=dict(title=dict(text='% of the day', side='right'), thickness=8, len=max(0.12, h),
-                                             y=top - h / 2, yanchor='middle', ticksuffix='%'),
-                               hovertemplate='%{x|%a %b %d}: from the %{y} %{z:.0f}% of the time<extra></extra>'))
-            continue
         units = ulabel(vs[0])
         lay['yaxis' + ax] = dict(title=f'{title} ({units})' if units else title, domain=[max(top - h, 0), top], anchor='x',
                                  rangemode='tozero' if vs[0].get('agg') == 'sum' or vs[0].get('conv') == 'speed' else 'normal')
@@ -178,6 +152,35 @@ def build_figs(S):
                 ttl = f'{v["label"]} ({ulabel(v)})'
             lay['yaxis' + ax] = dict(title=ttl, domain=[max(top - h, 0), top], anchor='x')
         figs['days'] = dict(data=tr, layout=lay)
+
+    # ---------- wind calendar: one arrow per day, bigger = windier ----------
+    if 'wind_dir' in df and 'wind_ms' in df:
+        d = _loc(df[['wind_dir', 'wind_ms']].dropna())
+        if len(d):
+            th = np.deg2rad(d['wind_dir'])
+            g = pd.DataFrame({'u': -d['wind_ms'] * np.sin(th), 'v': -d['wind_ms'] * np.cos(th), 's': d['wind_ms'],
+                              'h': d.index.floor('h')}, index=d.index).groupby(d.index.normalize())
+            dd = pd.DataFrame({'u': g['u'].mean(), 'v': g['v'].mean(), 's': g['s'].mean(), 'n': g['h'].nunique()})
+            dd = dd[dd['n'] >= 12]                                  # need at least half a day of readings
+            if len(dd) >= 7:
+                frm = (np.degrees(np.arctan2(-dd['u'], -dd['v'])) + 360) % 360
+                c16 = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+                mon = [t.strftime('%b %Y') for t in dd.index]
+                months = list(dict.fromkeys(mon))
+                # biggest arrow = this station's windy days (top 5%), so a sheltered station still shows its variety
+                cap = max(float(dd['s'].quantile(0.95)), 1.0)
+                rel = (dd['s'] / cap).clip(upper=1).values
+                figs['windcal'] = dict(data=[dict(
+                    type='scatter', mode='markers', x=[t.day for t in dd.index], y=mon, meta='speed',
+                    customdata=_clean(dd['s'].round(2).values),
+                    text=[f"{t.strftime('%a %b %d')}: from the {c16[int((f + 11.25) // 22.5) % 16]}" for t, f in zip(dd.index, frm)],
+                    marker=dict(symbol='arrow-wide', angle=_clean(((frm + 180) % 360).round(0).values),
+                                size=_clean((15 * (0.25 + rel)).round(1)), color='#3f7fd0', line=dict(width=0)),
+                    hovertemplate='%{text}, %{customdata:.0f} SUNIT average<extra></extra>')],
+                    layout=dict(height=max(260, 36 * len(months) + 70), margin=dict(l=80, r=20, t=10, b=44), showlegend=False,
+                                hovermode='closest', meta=dict(months=months, cap=round(cap, 2)),
+                                xaxis=dict(title='Day of the month', dtick=5, range=[0.4, 31.6], fixedrange=True, showgrid=False),
+                                yaxis=dict(type='category', categoryorder='array', categoryarray=months, fixedrange=True, showgrid=False)))
 
     # ---------- wind rose ----------
     if 'wind_dir' in df and 'wind_ms' in df:
@@ -305,6 +308,12 @@ def build_html(S, path, plotly_src, downloads=None, notice='', archive_url=None,
         '%%DOWNLOADS%%': dl, '%%NOW_TILES%%': now_tiles, '%%CARDS%%': cards, '%%MHEAD%%': mhead, '%%MROWS%%': mrows, '%%STALE%%': stale,
         '%%DAYS%%': ('<section><h2>📅 Day by day</h2><p class="lede">Each day\'s range (shaded) and average (line); bars are daily totals.</p>'
                      '<div class="card"><div id="days" class="chart"></div></div></section>') if has('days') else '',
+        '%%WINDCAL%%': ('<section><h2>🌬️ Wind, day by day</h2><p class="lede">One arrow per day, newest month at the top. Each arrow points '
+                        'the way the wind blew (like a weather map), and the bigger the arrow, the windier the day: calm days shrink to a dot, and '
+                        f'the biggest arrows are days averaging <span class="cv" data-v="{figs["windcal"]["layout"]["meta"]["cap"] if has("windcal") else 0}" data-c="speed" data-d="0" data-u="m/s"></span> or more. '
+                        'Hover or tap an arrow for the date, where the wind came from and its average speed.</p>'
+                        '<div class="card"><div id="windcal" class="chart"></div>'
+                        '<button type="button" class="seg" id="wc-all" hidden style="margin-top:8px"></button></div></section>') if has('windcal') else '',
         '%%ROSE%%': ('<section><h2>🧭 Where the wind comes from</h2><p class="lede">Each wedge shows how often the wind blows from that '
                      'direction; colours show how strong. Distance from the centre = % of the time.</p>'
                      '<div class="card"><div id="rose" class="chart"></div></div></section>') if has('rose') else '',
@@ -437,9 +446,10 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 
   %%EXPLAIN%%
 
-  <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Use the buttons to zoom to the last day, week or month, or drag across any panel. Click a name in the legend to hide or show it. The bottom strip shows where the wind came from each day: one column per day, one row per compass direction, darker = more of that day.</p>
+  <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Use the buttons to zoom to the last day, week or month, or drag across any panel. Click a name in the legend to hide or show it.</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
 
+  %%WINDCAL%%
   %%DAYS%%
   %%ROSE%%
 
@@ -484,11 +494,19 @@ function render(){
     const f=JSON.parse(JSON.stringify(ORIG[id]));
     for (const t of f.data){
       const fn = unit==='us' ? CONV[t.meta] : null;
-      if (fn){ t.y=conv(t.y,fn); if (t.customdata) t.customdata=conv(t.customdata,fn); }
+      if (fn){ if (!(Array.isArray(t.y) && typeof t.y[0]==='string')) t.y=conv(t.y,fn); if (t.customdata) t.customdata=conv(t.customdata,fn); }
       t.hovertemplate=sub(t.hovertemplate); if (t.name) t.name=sub(t.name);
-      if (t.type==='heatmap' && t.name==='Wind from' && curTheme()==='dark') t.colorscale=[[0,'rgba(0,0,0,0)'],[0.15,'#1d3a5c'],[0.5,'#3f7fd0'],[1,'#b9d8ff']];
     }
     const L=themed(JSON.parse(sub(JSON.stringify(f.layout))));
+    if (id==='windcal'){   // wind calendar: show the latest 12 months unless "show all" is on
+      if (curTheme()==='dark') f.data[0].marker.color='#7fb2f0';
+      const ms=L.meta.months, keep=wcAll? ms : ms.slice(-12), b=document.getElementById('wc-all');
+      if (ms.length>12){ b.hidden=false; b.textContent= wcAll? 'Show the last 12 months' : `Show all ${ms.length} months`; }
+      const t=f.data[0], idx=t.y.map((m,i)=>keep.includes(m)? i : -1).filter(i=>i>=0);
+      for (const k of ['x','y','text','customdata']) t[k]=idx.map(i=>t[k][i]);
+      for (const k of ['angle','size']) t.marker[k]=idx.map(i=>t.marker[k][i]);
+      L.yaxis.categoryarray=keep;
+      if (el.clientWidth<700){ const k=Math.max(0.55, el.clientWidth/760); t.marker.size=t.marker.size.map(v=>v*k); } L.height=Math.max(260, 36*keep.length+70); el.style.height=L.height+'px'; }
     if (Object.keys(L).some(k=>/^legend\d+$/.test(k)) && el.clientWidth < 600){   // phones: per-panel legends would wrap into the panels, so use one legend underneath
       for (const k of Object.keys(L)) if (/^legend\d+$/.test(k)) delete L[k];
       for (const t of f.data) delete t.legend;
@@ -506,6 +524,8 @@ function render(){
 }
 document.getElementById('u-us').onclick=()=>{unit='us'; try{localStorage.setItem('wq-unit',unit)}catch(e){} render();};
 document.getElementById('u-si').onclick=()=>{unit='si'; try{localStorage.setItem('wq-unit',unit)}catch(e){} render();};
+let wcAll=false;
+{ const b=document.getElementById('wc-all'); if(b) b.onclick=()=>{ wcAll=!wcAll; render(); }; }
 function curTheme(){ const r=document.documentElement; return r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
 function slideKnobs(){ document.querySelectorAll('.segctl').forEach(g=>{ const on=g.querySelector('button[aria-pressed="true"]'), k=g.querySelector('.knob');
   if(on&&k){ k.style.left=on.offsetLeft+'px'; k.style.width=on.offsetWidth+'px'; } }); }
