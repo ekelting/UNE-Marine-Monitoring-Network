@@ -110,12 +110,23 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 .segctl button[aria-pressed="true"]{color:#14304d;opacity:1}
 .segctl .knob{position:absolute;z-index:0;top:3px;bottom:3px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .25s ease,width .25s ease}
 @media (prefers-reduced-motion:reduce){.segctl .knob{transition:none}}
+.promo{display:flex;align-items:center;gap:18px;margin:18px 0 6px;padding:14px 18px 14px 14px;border-radius:20px;text-decoration:none;color:#fff;
+  background:linear-gradient(120deg,#1f6f97,#2d7a9c 45%,#4a9dbd);box-shadow:0 6px 20px rgba(6,40,60,.18);transition:transform .15s}
+.promo:hover{transform:translateY(-2px)}
+.promo:focus-visible{outline:3px solid #ff6b35;outline-offset:3px}
+.promo-art{width:132px;height:auto;flex:none;border-radius:12px}
+.promo-txt{display:grid;gap:4px;min-width:0}
+.promo-txt b{font-size:20px}
+.promo-txt span{opacity:.92;font-size:15px;line-height:1.45}
+.promo-go{flex:none;margin-left:auto;background:#ff6b35;color:#fff;font-weight:800;border-radius:12px;padding:9px 16px}
+@media (max-width:640px){.promo{flex-wrap:wrap}.promo-art{width:100%;max-height:110px}.promo-go{margin-left:0}}
 </style></head>
 <body>
 <header class="hero"><div class="wrap">
   <h1>🌊 UNE Marine Monitoring Network</h1>
   <p>Live waves, water quality and weather from University of New England buoys and stations in Saco Bay, Biddeford and along the southern Maine coast.</p>
   <div class="toolbar">
+    <a class="btn" href="./saco-bay/">🌊 Saco Bay, explained</a>
     <a class="btn" href="./analysis/">📊 What the data say</a>
     <span class="status"><span class="pulse"></span><span id="status">Loading live data…</span></span>
     <div class="seggrp"><span class="seglbl">Units:</span><div class="segctl" role="group" aria-label="Units"><span class="knob"></span><button id="u-si" aria-pressed="false">Metric</button><button id="u-us" aria-pressed="true">Imperial</button></div></div>
@@ -128,6 +139,17 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
   <div id="errors"></div>
+  <a class="promo" href="./saco-bay/">
+    <svg class="promo-art" viewBox="0 0 160 90" aria-hidden="true">
+      <rect width="160" height="90" fill="#dff1f4"/><circle cx="122" cy="24" r="11" fill="#ffd37a"/>
+      <path d="M-10 52 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 V100 H-10Z" fill="#7cc3d6"/>
+      <path d="M-13 60 q13 -6 26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 V100 H-13Z" fill="#4a9dbd"/>
+      <path d="M-8 72 q8.5 -5 17 0 t17 0 t17 0 t17 0 t17 0 t17 0 t17 0 t17 0 t17 0 t17 0 V100 H-8Z" fill="#2d7a9c"/>
+      <rect x="34" y="14" width="10" height="70" rx="2" fill="#fffdf7"/><rect x="44" y="8" width="13" height="80" rx="2" fill="#c8946a"/>
+    </svg>
+    <span class="promo-txt"><b>New: Saco Bay, explained</b><span>Is the sea rising? Where does the sand go? Seven questions about our coast, answered with these buoys and a century of NOAA and USGS records.</span></span>
+    <span class="promo-go">Explore →</span>
+  </a>
 
   <section>
     <div class="main">

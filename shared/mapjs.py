@@ -147,6 +147,7 @@ def nav_buttons(sisters):
     import html
     order = {'wave': 0, 'radar': 1, 'wq': 2, 'wx': 3, 'env': 4}
     out = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE stations</a>'
+    out += '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/">🌊 Saco Bay, explained</a>'
     out += '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/analysis/">📊 What the data say</a>'
     for x in sorted(sisters, key=lambda x: order.get(kind_of(x), 9)):
         off = ' <span style="opacity:.8">(offline)</span>' if x.get('offline') else ''

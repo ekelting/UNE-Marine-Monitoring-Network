@@ -7,7 +7,9 @@ import html
 import json
 import math
 import os
+import runpy
 import sys
+import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -113,7 +115,7 @@ def page(R, plotly_src):
 .hdr-nav a{{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:5px 13px;font-size:14px;text-decoration:none}}
 </style></head><body>
 <header><div class="wrap">
-  <nav class="hdr-nav"><a href="{HOME}">🗺️ All UNE stations</a></nav>
+  <nav class="hdr-nav"><a href="{HOME}">🗺️ All UNE stations</a><a href="{HOME}saco-bay/">🌊 Saco Bay, explained</a></nav>
   <h1>📊 What the data say</h1>
   <p>Analyses of the network's stations, side by side with long public records from NOAA and USGS. Every card starts in plain words, with a tip on how to read the chart; the math and its assumptions are under "Is this sound?". Updated daily.</p>
   <div class="toolbar">
@@ -155,6 +157,18 @@ def main():
     os.makedirs(out, exist_ok=True)
     open(os.path.join(out, 'index.html'), 'w').write(page(R, src))
     print(f'✅ Analysis page built ({len(R) - 3} analyses, {len(R.get("_errors") or {})} skipped)')
+    # Saco Bay, explained: the public-friendly companion, built from the same results
+    try:
+        Rj = json.loads(json.dumps(clean(R), allow_nan=False))
+        js = open(os.path.join(HERE, 'page.js')).read()
+        html_out = runpy.run_path(os.path.join(HERE, 'explained.py'), init_globals={'R': Rj, 'JS': js, 'PLOTLY': src, 'HERE': HERE})['page']
+        out2 = os.path.join(a.site, 'saco-bay')
+        os.makedirs(out2, exist_ok=True)
+        open(os.path.join(out2, 'index.html'), 'w').write(html_out)
+        print('✅ Saco Bay, explained built')
+    except Exception:  # noqa: BLE001  (never let it take down the Analysis page)
+        traceback.print_exc()
+        print('::warning::Saco Bay, explained failed to build; its previous version is not updated this hour')
 
 
 if __name__ == '__main__':
