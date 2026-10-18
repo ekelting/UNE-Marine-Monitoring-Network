@@ -98,7 +98,7 @@ chs = [
       + chart('pstrat', 'Layers in the sea at Camp Ellis', 'the shaded area is how much warmer the top is than the bottom. Big gap = layered; near zero = mixed.')
       + math_box('How we measured it', '<p>Normal = 1991–2020 average for each date at NOAA buoy 44007 (±5 days, smoothed); band = 10th–90th percentile. Marine heatwave test: Hobday et al. (2016). Layers from the three sensors on the Camp Ellis mooring.</p>')),
  chap('c-sand', '🏖️', '--sand', 'Where does the sand go?', 'North, away from Camp Ellis.',
-      'Waves at Camp Ellis roll in from the east and southeast, a little south of straight on for this beach, so they push sand north along the shore like a slow conveyor belt. The jetty blocks new sand from the Saco River, so Camp Ellis loses sand while beaches to the north gain it.',
+      'Waves at Camp Ellis roll in from the east, east-southeast and southeast, a little south of straight on for this beach, so they push sand north along the shore like a slow conveyor belt. The jetty blocks new sand from the Saco River, so Camp Ellis loses sand while beaches to the north gain it.',
       SAND_SVG,
       [f'This matches decades of geology in Saco Bay: Pine Point has grown while Camp Ellis has eroded.',
        f'Storms do most of the work: they were only {d["storm_hours"]:.0f}% of the hours but moved about {d["storm_share_k"]:.0f}% of the sand.',

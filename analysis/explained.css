@@ -92,7 +92,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;letter-s
 .swell{animation:swell 5s linear infinite}
 @keyframes swell{to{transform:translateX(var(--wl))}}
 .crests{animation:crests 9s linear infinite}
-@keyframes crests{from{transform:translateX(60px)}to{transform:translateX(0)}}
+@keyframes crests{from{transform:translateX(30px)}to{transform:translateX(0)}}
 .heat{animation:heat 6s linear infinite}
 @keyframes heat{to{transform:translateX(var(--wl))}}
 .estflow path{transition:transform .5s,opacity .5s;transform-box:fill-box;transform-origin:center}

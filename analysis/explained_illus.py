@@ -126,11 +126,25 @@ STORM_SVG = f'''<div class="st-wrap">
 import sandmap as _sandmap  # noqa: E402
 _SM = _sandmap.build()
 _cx = {int(k): v for k, v in _SM['coast_x'].items()}
-_bands = ''.join(f'<path d="M{130+k*30} -40 q-7 11 0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 t0 22 V360 H700 V-40Z" fill="var(--pp-{"w2" if k%2 else "w3"})"/>' for k in range(0, 12))
+# Three swells, each a set of paper crest lines moving the way it really travels: from the east (heading west),
+# east-southeast (heading west-northwest) and southeast (heading northwest). rotate(+a) turns the westward set clockwise.
+def _swell(rot, op, dur, sw, mask):
+    lines = ''.join(f'<path d="M{x} -160 q-3.5 10 0 20 ' + 't0 20 ' * 31 + f'" />' for x in range(40, 470, 30))
+    return (f'<g mask="url(#{mask})"><g transform="rotate({rot} 230 140)"><g class="crests" style="animation-duration:{dur}s">'
+            f'<g fill="none" stroke="var(--pp-foam)" stroke-width="{sw}" stroke-linecap="round" opacity="{op}">{lines}</g></g></g></g>')
+def _lane(mid, y0, y1, y2, y3):   # a soft vertical band: 0 at y0, 1 from y1 to y2, 0 at y3
+    return (f'<linearGradient id="{mid}g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="282">'
+            f'<stop offset="{y0/282:.3f}" stop-color="#fff" stop-opacity="0"/><stop offset="{y1/282:.3f}" stop-color="#fff"/>'
+            f'<stop offset="{y2/282:.3f}" stop-color="#fff"/><stop offset="{y3/282:.3f}" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            f'<mask id="{mid}" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="282"><rect width="320" height="282" fill="url(#{mid}g)"/></mask>')
+_LANES = _lane('swE', -1, 0, 96, 122) + _lane('swESE', 100, 124, 150, 176) + _lane('swSE', 154, 180, 282, 283)
+_bands = _swell(0, .6, 9, 2.4, 'swE') + _swell(22.5, .6, 10, 2.4, 'swESE') + _swell(45, .6, 11, 2.4, 'swSE')
 _pt = _SM['pts']
-SAND_SVG = f'''<svg viewBox="0 0 320 282" {FRAME} role="img" aria-label="Map of Saco Bay from Biddeford Pool and Camp Ellis north to Old Orchard Beach. Waves arrive from the east and southeast and push sand north along the beach, away from the Camp Ellis jetties.">
+SAND_SVG = f'''<svg viewBox="0 0 320 282" {FRAME} role="img" aria-label="Map of Saco Bay from Biddeford Pool and Camp Ellis north to Old Orchard Beach. Waves arrive from the east, east-southeast and southeast and push sand north along the beach, away from the Camp Ellis jetties.">
   <rect width="320" height="282" fill="var(--pp-w3)"/>
-  <g class="crests"><g transform="skewX(14)">{_bands}</g></g>
+  <defs>{_LANES}</defs>
+  <rect width="320" height="282" fill="var(--pp-w2)" opacity=".35"/>
+  {_bands}
   <path d="{_SM['beach']}" fill="none" stroke="var(--pp-w1)" stroke-width="16" stroke-linejoin="round" opacity=".9"/>
   <path d="{_SM['beach']}" fill="none" stroke="var(--pp-sand)" stroke-width="7" stroke-linejoin="round"/>
   <g {SH}><path d="{_SM['land']}" fill="var(--pp-g1)"/>{''.join(f'<path d="{p}" fill="var(--pp-g1)"/>' for p in _SM['islands'])}</g>
@@ -139,9 +153,11 @@ SAND_SVG = f'''<svg viewBox="0 0 320 282" {FRAME} role="img" aria-label="Map of 
   <g>{''.join(f'<circle r="2.1" fill="var(--pp-grain)"><animateMotion dur="12s" begin="-{i*1:.2f}s" repeatCount="indefinite" path="{_SM['grains']}"/></circle>' for i in range(12))}</g>
   {''.join(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.4" fill="var(--pp-buoy)" stroke="var(--pp-ink2)" stroke-width=".8"/>' for x, y in (_SM['buoy'], _pt['wibuoy']))}
   {arrow(_cx[170] + 20, 172, _cx[110] + 18, 110)}
-  {arrow(306, 92, 248, 92)}
-  {arrow(306, 172, 256, 132)}
-  {tab(258, 68, 128, 'waves from E and SE', h=20, cls='il-s il-b')}
+  {arrow(308, 84, 252, 84)}
+  {arrow(308, 132, 256, 110.5)}
+  {arrow(308, 184, 268, 144)}
+  <g class="il-s il-b il-h"><text x="300" y="98" text-anchor="end">E</text><text x="300" y="146" text-anchor="end">ESE</text><text x="304" y="198" text-anchor="end">SE</text></g>
+  {tab(244, 58, 150, 'waves from E, ESE and SE', h=20, cls='il-s il-b')}
   {tab(_cx[140] + 30, 142, 112, 'Sand drifts north', anchor='start', h=20)}
   {tab(124, 174, 148, 'Camp Ellis: loses sand', anchor='start', h=20)}<path d="M128 184 L{_pt['campellis'][0]+2:.1f} {_pt['campellis'][1]:.1f}" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
   {tab(8, 96, 74, 'Ferry Beach', anchor='start', h=18, cls='il-s il-b')}
@@ -149,9 +165,9 @@ SAND_SVG = f'''<svg viewBox="0 0 320 282" {FRAME} role="img" aria-label="Map of 
   {tab(8, 152, 70, 'Saco River', anchor='start', h=18, cls='il-s il-b')}
   {tab(8, 222, 66, 'UNE buoy', anchor='start', h=18, cls='il-s il-b')}<path d="M52 213 L{_SM['buoy'][0]-2:.1f} {_SM['buoy'][1]+3:.1f}" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
   {tab(176, 272, 86, 'Biddeford Pool', h=18, cls='il-s il-b')}
-  {tab(270, 190, 74, 'Wood Island', h=18, cls='il-s il-b')}<path d="M250 198 L222 205" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
+  {tab(258, 236, 74, 'Wood Island', h=18, cls='il-s il-b')}<path d="M236 228 L220 213" stroke="var(--pp-card)" stroke-width="1.5" stroke-dasharray="2 3"/>
   <g transform="translate(294 22)" {SH}><circle r="13" fill="var(--pp-pill)"/><path d="M0 -10 L4 3 L0 1 L-4 3Z" fill="var(--pp-accent)"/><text y="11" text-anchor="middle" class="il-s" style="fill:var(--pp-pillink);font-size:8px">N</text></g>
-  <g transform="translate(244 246)"><path d="M0 0 H{_SM['K']*0.0090:.1f}" stroke="var(--pp-card)" stroke-width="3" stroke-linecap="round"/><text x="{_SM['K']*0.0045:.1f}" y="-5" text-anchor="middle" class="il-s il-b il-h">1 km</text></g>
+  <g transform="translate(236 266)"><path d="M0 0 H{_SM['K']*0.0090:.1f}" stroke="var(--pp-card)" stroke-width="3" stroke-linecap="round"/><text x="{_SM['K']*0.0045:.1f}" y="-5" text-anchor="middle" class="il-s il-b il-h">1 km</text></g>
 </svg>'''
 
 # ------------------------------------------------------------------ 4. layers: the Camp Ellis mooring in paper bands
