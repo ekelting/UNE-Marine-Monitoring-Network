@@ -239,8 +239,9 @@ const speedColor = (s) => s==null?'#94a3b8': s<3?'#38bdf8': s<8?'#22c55e': s<15?
 
 /* ---------------- header bits ---------------- */
 (function(){
-  $('sisters').innerHTML = (C.cumulus_url ? `<a class="btn" href="${esc(C.cumulus_url)}">🔗 Raw radar on CUMULUS</a>` : '');
-  $('downloads').innerHTML = `<a class="chip" style="background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)" href="data/collects.csv">⬇️ Every scan (CSV)</a>`
+  $('sisters').innerHTML = '';
+  // the live source sits with the downloads, like the "Live source" link on the buoy pages
+  $('downloads').innerHTML = (C.cumulus_url ? `<a class="chip" style="background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)" href="${esc(C.cumulus_url)}">🔗 Live source: CUMULUS radar page</a>` : '') + `<a class="chip" style="background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)" href="data/collects.csv">⬇️ Every scan (CSV)</a>`
     + `<a class="chip" style="background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35)" href="data/tracks.csv">⬇️ Every boat track (CSV)</a>`;
 })();
 
@@ -447,7 +448,7 @@ function initBoats(){
     `<b>Times</b> are US Eastern on this page and UTC in the CSV files.`,
   ];
   $('about').innerHTML=li.map(x=>`<li>${x}</li>`).join('');
-  $('foot').innerHTML=`Updated ${esc(fmtTime(D.generated_utc))} · ${D.n_scans.toLocaleString()} scans measured${D.first_utc?` since ${esc(fmtTime(D.first_utc,{hour:undefined,minute:undefined,year:'numeric'}))}`:''}. Radar: ${esc(C.radar_model||'')} by SeaSignals Technology via CUMULUS (Coastal Measures), sponsored by the University of New England. Not for navigation.`;
+  $('foot').innerHTML=`Updated ${esc(fmtTime(D.generated_utc))} · ${D.n_scans.toLocaleString()} scans measured${D.first_utc?` since ${esc(fmtTime(D.first_utc,{hour:undefined,minute:undefined,year:'numeric'}))}`:''}. Radar: ${esc(C.radar_model||'')} by SeaSignals Technology via ${C.cumulus_url?`<a href="${esc(C.cumulus_url)}">CUMULUS (Coastal Measures)</a>`:'CUMULUS (Coastal Measures)'}, sponsored by the University of New England. Not for navigation.`;
 })();
 
 /* ---------------- units, theme, refresh ---------------- */

@@ -477,6 +477,9 @@ function renderCharts(){
   const ink=css('--ink2'), grid=css('--grid');
   const spec = {'c-temp':['water_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-sal':['sal_psu', v=>v, ()=>'PSU'], 'c-do':['do_mgl', v=>v, ()=>'mg/L'], 'c-hs':['hs_m', Hn, ()=> unit==='us'?'ft':'m'],
                 'c-air':['air_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-wind':['wind_ms', Wn, ()=> unit==='us'?'mph':'m/s'], 'c-rain':['rain_mm', Rn, ()=> unit==='us'?'in':'mm']};
+  // every chart spans the same two weeks, ending at the newest reading from any station
+  const tEnd=Math.max(...SITES.map(s=>{ const t=DATA[s.slug]&&DATA[s.slug].recent&&DATA[s.slug].recent.t; return t&&t.length? Date.parse(t[t.length-1]) : 0; }));
+  const XR = tEnd>0 ? [new Date(tEnd-14*864e5).toISOString(), new Date(tEnd).toISOString()] : undefined;
   for (const [id,[key,conv,u]] of Object.entries(spec)){
     const tr=[]; const present=[];
     for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent||!d.recent[key]||!d.recent[key].some(fin)) continue;
@@ -487,7 +490,7 @@ function renderCharts(){
     const shapes = key==='do_mgl' ? [5,2].map((y,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:y,y1:y,line:{color:i?'#d4473f':'#eda100',width:1.2,dash:'dash'}})) : [];
     const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:12},
       margin:{l:50,r:12,t:10,b:36},showlegend:false,hovermode:'x unified',shapes,
-      xaxis:{type:'date',gridcolor:grid,linecolor:grid},yaxis:{title:{text:u(),font:{size:12}},gridcolor:grid,zerolinecolor:grid,rangemode: key==='hs_m'?'tozero':'normal'}};
+      xaxis:{type:'date',range:XR,gridcolor:grid,linecolor:grid},yaxis:{title:{text:u(),font:{size:12}},gridcolor:grid,zerolinecolor:grid,rangemode: key==='hs_m'?'tozero':'normal'}};
     Plotly.react(id, tr, L, {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
     const lg=document.querySelector(`.legend[data-for="${id}"]`);
     lg.innerHTML = present.map(s=>`<span data-repo="${s.slug}" class="${hidden[id+s.slug]?'off':''}"><span class="swatch" style="background:${s.color}"></span>${escH(s.name)}</span>`).join('');
