@@ -149,38 +149,56 @@
       : L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Esri, GEBCO, NOAA, Garmin, HERE, &copy; OpenStreetMap contributors' }),
                       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 })]);
   }
-  // el: map element; river: {outer, inner, dams} in [lat, lon]; mini: the small main-page version
-  function makeMap(el, { river, mini = false, dark = false, mode = 'map' } = {}) {
-    const m = L.map(el, { zoomControl: false, scrollWheelZoom: false, minZoom: 7, maxZoom: 15, zoomSnap: 0.25 });
-    L.control.zoom({ position: mini ? 'bottomright' : 'topleft' }).addTo(m);
-    el.addEventListener('click', () => m.scrollWheelZoom.enable()); el.addEventListener('mouseleave', () => m.scrollWheelZoom.disable());
-    const g = { m, dark, mode, base: null, bands: [], st: [], last: null };
+  // el: map element; river: {outer, inner, dams} in [lat, lon]; geo: bands.json (the rings trimmed to water);
+  // mini: the small main-page version, which opens at 3 nm and steps out ring by ring
+  const STEPS = [3, 6, 9, 12, 15, 18, 21, 24];
+  function makeMap(el, { river, geo, mini = false, dark = false, mode = 'map' } = {}) {
+    const m = L.map(el, { zoomControl: false, scrollWheelZoom: false, doubleClickZoom: !mini, minZoom: 7, maxZoom: 15, zoomSnap: 0.25 }).setView(LAUNCH, 11);
+    if (!mini) { L.control.zoom({ position: 'topleft' }).addTo(m);
+      el.addEventListener('click', () => m.scrollWheelZoom.enable()); el.addEventListener('mouseleave', () => m.scrollWheelZoom.disable()); }
+    const g = { m, dark, mode, base: null, bands: [], rings: [], st: [], last: null, R: mini ? 3 : 24 };
     g.setBase = (mode_, dark_) => { g.mode = mode_ ?? g.mode; g.dark = dark_ ?? g.dark; if (g.base) g.base.remove(); g.base = baseLayer(g.mode, g.dark).addTo(m); g.base.bringToBack && g.base.bringToBack(); if (g.last) g.paint(g.last); };
-    BANDS.forEach((r, i) => { const ll = i === 0 ? [LAUNCH, ...arc(1)] : [...arc(RINGS[i + 1]), ...arc(RINGS[i]).reverse()];
-      g.bands.push(L.polygon(ll, { stroke: false, fillOpacity: .3, interactive: false }).addTo(m)); });
-    BANDS.forEach(r => { L.polyline(arc(r), { color: '#3c4650', weight: mini ? 1 : 1.3, opacity: .75, dashArray: mini ? '3 3' : '6 5', interactive: false }).addTo(m);
-      if (!mini || r === 1 || r % 6 === 0) L.marker(pt(r, 22), { icon: L.divIcon({ className: 'tc-lbl tc-ring', html: r + ' nm', iconSize: null }), interactive: false }).addTo(m); });
+    BANDS.forEach((r, i) => {
+      const shape = geo ? geo.bands[i] : [[i === 0 ? [LAUNCH, ...arc(1)] : [...arc(RINGS[i + 1]), ...arc(RINGS[i]).reverse()]]];
+      g.bands.push(L.polygon(shape, { stroke: false, fillOpacity: .3, interactive: false }));
+      const lines = geo ? geo.lines[i] : [arc(r)], at = geo && geo.labels[i] ? geo.labels[i] : pt(r, 22);
+      g.rings.push(L.layerGroup([L.polyline(lines, { color: '#3c4650', weight: mini ? 1 : 1.3, opacity: .75, dashArray: mini ? '3 3' : '6 5', interactive: false }),
+        L.marker(at, { icon: L.divIcon({ className: 'tc-lbl tc-ring', html: r + ' nm', iconSize: null, iconAnchor: [-3, 6] }), interactive: false })]));
+    });
     if (river) {
       g.river = L.polygon([...river.outer, ...river.inner], { color: '#3c4650', weight: .8, fillOpacity: .75 }).addTo(m).bindTooltip('Saco River estuary, mouth to the Biddeford dams');
       if (!mini) river.dams.forEach(d => L.polyline(d, { color: '#111', weight: 4, interactive: false }).addTo(m));
     }
-    L.circleMarker(LAUNCH, { radius: mini ? 4 : 6, color: '#fff', weight: 1.5, fillColor: '#f28f16', fillOpacity: 1 }).bindTooltip('UNE boat launch').addTo(m);
+    L.circleMarker(LAUNCH, { radius: mini ? 4.5 : 6, color: '#fff', weight: 1.5, fillColor: '#f28f16', fillOpacity: 1 }).bindTooltip('UNE boat launch').addTo(m);
     if (!mini) {
       L.circleMarker([43.4727, -70.3605], { radius: 5, color: '#fff', weight: 1.5, fillColor: '#1c5cab', fillOpacity: 1 }).bindTooltip('Camp Ellis wave buoy (local waves)').addTo(m);
       L.circleMarker([43.525, -70.141], { radius: 5, color: '#fff', weight: 1.5, fillColor: '#1c5cab', fillOpacity: 1 }).bindTooltip('NOAA buoy 44007 (offshore waves)').addTo(m);
       L.circleMarker([43.467126, -70.356328], { radius: 5, color: '#fff', weight: 1.5, fillColor: '#5a6b7d', fillOpacity: 1 }).bindTooltip('Ram Island weather station (wind)').addTo(m);
     }
-    const home = mini ? [[LAUNCH[0] - 20 / 60, LAUNCH[1] - 1 / (60 * KX)], [LAUNCH[0] + 20 / 60, LAUNCH[1] + 24.8 / (60 * KX)]]
-                      : [[LAUNCH[0] - 24.6 / 60, LAUNCH[1] - 6 / (60 * KX)], [LAUNCH[0] + 24.6 / 60, LAUNCH[1] + 24.8 / (60 * KX)]];
-    g.home = () => { m.fitBounds(home, { padding: [4, 4] }); const q = m.latLngToContainerPoint(LAUNCH); m.panBy([q.x - (mini ? 14 : 110), 0], { animate: false }); };
+    // show the rings out to R nautical miles and frame them
+    g.show = R => { g.R = R; BANDS.forEach((r, i) => { const on = r <= R;
+        if (on) { g.bands[i].addTo(m); g.rings[i].addTo(m); } else { g.bands[i].remove(); g.rings[i].remove(); } });
+      if (g.river) g.river.bringToFront();
+      if (g.last) g.paint(g.last);
+      if (g.stepLbl) { g.stepLbl.textContent = `Out to ${R} nm`; g.inBtn.disabled = R <= STEPS[0]; g.outBtn.disabled = R >= STEPS[STEPS.length - 1]; } };
+    g.frame = R => { const b = L.latLngBounds([]); g.bands.forEach((p, i) => { if (BANDS[i] <= R) b.extend(p.getBounds()); }); b.extend(LAUNCH);
+      m.fitBounds(b, { padding: mini ? [26, 10] : [8, 8], animate: !!g.ready }); };
+    g.home = () => { g.show(mini ? g.R : 24); g.frame(mini ? g.R : 24); };
     g.river && (g.toRiver = () => m.fitBounds(g.river.getBounds(), { padding: [20, 20] }));
+    if (mini) {   // "Closer / Farther" steps instead of free zooming
+      const C = L.control({ position: 'bottomright' }); C.onAdd = () => { const d = L.DomUtil.create('div', 'leaflet-bar tc-steps');
+        d.innerHTML = '<button type="button" data-d="-1" aria-label="Closer">−</button><span aria-live="polite"></span><button type="button" data-d="1" aria-label="Farther out">+</button>';
+        L.DomEvent.disableClickPropagation(d); [g.inBtn, g.stepLbl, g.outBtn] = d.children;
+        d.querySelectorAll('button').forEach(bt => bt.onclick = () => { const i = STEPS.indexOf(g.R) + (+bt.dataset.d); if (i < 0 || i >= STEPS.length) return; g.show(STEPS[i]); g.frame(STEPS[i]); });
+        return d; }; C.addTo(m);
+    }
     g.paint = res => { g.last = res; const c = COL(g.dark);
       g.bands.forEach((b, i) => b.setStyle({ fillColor: c[res.bands[i].lvl] }));
       if (g.river) g.river.setStyle({ fillColor: c[res.river.lvl] });
       g.st.forEach(x => x.remove()); g.st = [];
-      if (!mini) res.groups.forEach(gp => { const r = (RINGS[gp.from] + RINGS[gp.to + 1]) / 2;
-        g.st.push(L.marker(pt(r, gp.from === 0 ? 135 : 115), { icon: L.divIcon({ className: 'tc-lbl tc-st', html: `<span style="color:${c[gp.lvl]}">${STATE[gp.lvl]}</span>`, iconSize: null, iconAnchor: [34, 8] }), interactive: false }).addTo(m)); }); };
-    g.setBase(mode, dark); g.home();
+      if (!mini) res.groups.forEach(gp => { if (RINGS[gp.from] >= g.R) return; const r = (RINGS[gp.from] + Math.min(RINGS[gp.to + 1], g.R)) / 2;
+        g.st.push(L.marker(pt(r, gp.from === 0 ? 135 : 115), { icon: L.divIcon({ className: 'tc-lbl tc-st', html: `<i style="background:${COL(false)[gp.lvl]}"></i>${STATE[gp.lvl]}`, iconSize: null, iconAnchor: [44, 11] }), interactive: false }).addTo(m)); }); };
+    g.setBase(mode, dark); g.home(); g.ready = true;
     return g;
   }
 

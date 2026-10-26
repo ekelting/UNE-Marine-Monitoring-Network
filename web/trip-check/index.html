@@ -52,8 +52,9 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .trip.cau{background:var(--warnbg);border-color:var(--warnc)}.trip.cau .st{color:var(--warnc)}
 .trip.no{background:var(--badbg);border-color:var(--bad)}.trip.no .st{color:var(--bad)}
 .alert{border-radius:10px;padding:8px 12px;font-size:13.5px;border:1px solid var(--line);background:var(--chip);margin-bottom:6px}
-.tc-lbl{white-space:nowrap;font-size:11px;font-weight:700;color:#1d2a36;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
-.tc-st{font-size:13px}
+.tc-lbl{white-space:nowrap;font-size:11px;font-weight:700;color:#1d2a36;pointer-events:none;background:rgba(255,255,255,.88);border-radius:4px;padding:0 4px;line-height:16px}
+.tc-lbl.tc-st{font-size:13px;padding:2px 10px 2px 8px;line-height:18px;border-radius:999px;background:#fff;color:#1d2a36;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tc-st i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .viewbtns a{width:auto!important;padding:0 9px;font-size:12px;font-weight:600}
 footer{color:var(--muted);font-size:13px;padding-bottom:30px}
 </style></head><body>
@@ -98,7 +99,7 @@ footer{color:var(--muted);font-size:13px;padding-bottom:30px}
     <div class="tripwrap">
       <div><div id="map"></div>
         <div class="btns" role="group" aria-label="Background"><button type="button" data-base="map" aria-pressed="true">Map</button><button type="button" data-base="chart" aria-pressed="false">Nautical chart</button></div>
-        <p class="note">Rings at 1 nm, then every 3 nm from the UNE boat launch out to 24 nm. Drag or zoom; scroll-zoom turns on after you click the map. The chart background is from NOAA and is not for navigation.</p></div>
+        <p class="note">Rings at 1 nm, then every 3 nm from the UNE boat launch out to 24 nm, shaded over water only. Drag or zoom; scroll-zoom turns on after you click the map. The chart background is from NOAA and is not for navigation.</p></div>
       <div class="trips" id="trips" aria-live="polite"></div>
     </div>
   </section>
@@ -126,7 +127,7 @@ function draw(){
 }
 async function load(){
   const get=u=>fetch(u+'?t='+Math.floor(Date.now()/300000)).then(r=>r.ok?r.json():null).catch(()=>null);
-  const [local,wind,ndbc,river]=await Promise.all([get('../camp-ellis/data/latest.json'),get('../ram-island/data/latest.json'),get('../ndbc-44007.json'),get('../river.json')]);
+  const [local,wind,ndbc,river,geo]=await Promise.all([get('../camp-ellis/data/latest.json'),get('../ram-island/data/latest.json'),get('../ndbc-44007.json'),get('../river.json'),get('../bands.json')]);
   let tides=null; try{ tides=await TC.fetchTides(); }catch(e){}
   let alertErr=false; try{ ALERTS=await TC.fetchAlerts(); }catch(e){ alertErr=true; ALERTS=[]; }
   LIVE=TC.liveInputs({local,wind,ndbc,alerts:ALERTS,tides});
@@ -136,7 +137,7 @@ async function load(){
     : ALERTS.length? ALERTS.map(a=>`<div class="alert"><b>⚠️ ${a.event}</b> · ${[...new Set(a.zones.map(z=>TC.ZONES[z]))].join(', ')} · <a href="${a.url}">details</a></div>`).join('')
     : `<div class="alert">✓ No NOAA marine or coastal alerts for Saco Bay, Casco Bay or the York and Cumberland coast.</div>`;
   fill(LIVE.inp);
-  if(!MAP){ MAP=TC.makeMap($('map'),{river,dark:dark()});
+  if(!MAP){ MAP=TC.makeMap($('map'),{river,geo,dark:dark()});
     const V=L.control({position:'topright'}); V.onAdd=()=>{ const d=L.DomUtil.create('div','leaflet-bar viewbtns');
       d.innerHTML='<a href="#" role="button" data-v="river">River</a><a href="#" role="button" data-v="all">24 nm</a>'; L.DomEvent.disableClickPropagation(d);
       d.querySelectorAll('a').forEach(x=>x.onclick=e=>{ e.preventDefault(); x.dataset.v==='river'? MAP.toRiver() : MAP.home(); }); return d; }; V.addTo(MAP.m); }

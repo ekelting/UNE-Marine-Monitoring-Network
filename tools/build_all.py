@@ -76,7 +76,7 @@ def main():
         if r.returncode:
             print('::warning::the Analysis page failed to build; its previous version is not updated this hour')
     shutil.copy(os.path.join(ROOT, 'web', 'index.html'), os.path.join(a.out, 'index.html'))
-    for f in ('tripcheck.js', 'river.json'):                     # the "On the water today" panel and the trip-check page
+    for f in ('tripcheck.js', 'river.json', 'bands.json'):                     # the "On the water today" panel and the trip-check page
         shutil.copy(os.path.join(ROOT, 'web', f), os.path.join(a.out, f))
     os.makedirs(os.path.join(a.out, 'trip-check'), exist_ok=True)
     shutil.copy(os.path.join(ROOT, 'web', 'trip-check', 'index.html'), os.path.join(a.out, 'trip-check', 'index.html'))

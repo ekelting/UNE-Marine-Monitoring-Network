@@ -154,7 +154,13 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 .w-tag:hover u{color:var(--accent)}
 .w-key{position:absolute;left:10px;bottom:26px;z-index:500;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:11.5px;display:flex;gap:10px;flex-wrap:wrap}
 .w-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;opacity:.75}
-.tc-lbl{white-space:nowrap;font-size:11px;font-weight:700;color:#1d2a36;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
+.tc-steps{display:flex;align-items:center;background:var(--card)}
+.tc-steps button{font:inherit;font-size:16px;font-weight:700;width:30px;height:30px;border:0;background:var(--card);color:var(--ink);cursor:pointer}
+.tc-steps button:disabled{opacity:.35;cursor:default}
+.tc-steps span{font-size:12px;font-weight:600;padding:0 8px;color:var(--ink);white-space:nowrap;border-left:1px solid var(--line);border-right:1px solid var(--line);line-height:30px}
+.tc-lbl.tc-st{font-size:13px;padding:2px 10px 2px 8px;line-height:18px;border-radius:999px;background:#fff;color:#1d2a36;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tc-st i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.tc-lbl{white-space:nowrap;font-size:11px;font-weight:700;color:#1d2a36;pointer-events:none;background:rgba(255,255,255,.88);border-radius:4px;padding:0 4px;line-height:16px}
 @media (max-width:640px){.promo{flex-wrap:wrap}.promo-art{width:100%;max-height:110px}.promo-go{margin-left:0}}
 </style></head>
 <body>
@@ -489,12 +495,13 @@ function renderCharts(){
   }
 }
 // ---------- On the water today ----------
-let TIDES=null, TIDE_TRIED=false, ALERTS=null, ALERT_ERR=false, TCM=null, RIVER=null, NDBC=null;
+let TIDES=null, TIDE_TRIED=false, ALERTS=null, ALERT_ERR=false, TCM=null, RIVER=null, BANDS_GEO=null, NDBC=null;
 async function loadWater(){
   const jobs=[TC.fetchTides().then(t=>TIDES=t).catch(e=>console.warn('tides',e)).finally(()=>TIDE_TRIED=true),
     TC.fetchAlerts().then(a=>{ALERTS=a; ALERT_ERR=false;}).catch(e=>{ALERT_ERR=true; console.warn('alerts',e);}),
     fetch('./ndbc-44007.json?t='+Math.floor(Date.now()/600000)).then(r=>r.ok?r.json():null).then(j=>NDBC=j).catch(()=>{})];
   if(!RIVER) jobs.push(fetch('./river.json').then(r=>r.json()).then(j=>RIVER=j).catch(()=>{}));
+  if(!BANDS_GEO) jobs.push(fetch('./bands.json').then(r=>r.json()).then(j=>BANDS_GEO=j).catch(()=>{}));
   await Promise.all(jobs); renderWater(); }
 const fmtT = d => d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
 const fmtWhen = iso => { if(!iso) return ''; const d=new Date(iso), today=new Date().toDateString()===d.toDateString();
@@ -533,7 +540,7 @@ function renderAlerts(){
 }
 function renderTripMap(){
   const el=document.getElementById('tcmap'); if(!el || typeof L==='undefined' || typeof TC==='undefined') return;
-  if(!TCM){ TCM=TC.makeMap(el,{river:RIVER,mini:true,dark:isDark()}); }
+  if(!TCM){ if(!BANDS_GEO || !RIVER) return; TCM=TC.makeMap(el,{river:RIVER,geo:BANDS_GEO,mini:true,dark:isDark()}); }
   else if(TCM.dark!==isDark()) TCM.setBase('map',isDark());
   const {inp}=TC.liveInputs({local:DATA['camp-ellis'], wind:DATA['ram-island'], ndbc:NDBC, alerts:ALERTS||[], tides:TIDES});
   TCM.paint(TC.rate(inp)); setTimeout(()=>TCM.m.invalidateSize(),80);
