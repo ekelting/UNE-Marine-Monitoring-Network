@@ -88,19 +88,20 @@ GLOSSARY = [('PSU', 'Practical salinity units: about grams of salt per kilogram 
 
 def page(R, plotly_src):
     cards = CARDS.build(R)
-    body, audit, n = [], [], 0
+    body, secs, n = [], [], 0
     for gk, gname, gnote in CARDS.GROUPS:
         grp = [c for c in cards if c['g'] == gk]
         if not grp:
             continue
         body.append(f'<h2 class="group" id="g-{gk}">{gname}</h2>' + (f'<p class="lede">{gnote}</p>' if gnote else ''))
-        audit.append(f'<tr class="grp"><th colspan="3"><a href="#g-{gk}">{gname}</a></th></tr>')
+        rows = []
         for c in grp:
             n += 1
             body.append(card_html(c, n))
             vk, vl = c['v']
             emo = ''.join(x.split(' ', 1)[0] for x in c['c'])        # audience emojis, e.g. 🦞🐟
-            audit.append(f'<tr><td>{n}</td><td><a href="#a{n}">{c["t"]}</a> <span class="aud" aria-label="for {html.escape(", ".join(x.split(" ", 1)[1] for x in c["c"]))}">{emo}</span></td><td><span class="verdict {vk}">{vl}</span></td></tr>')
+            rows.append(f'<li><span class="n">{n}</span><span><a href="#a{n}">{c["t"]}</a> <span class="aud" aria-label="for {html.escape(", ".join(x.split(" ", 1)[1] for x in c["c"]))}">{emo}</span></span><span class="verdict {vk}">{vl}</span></li>')
+        secs.append(f'<div class="sec"><h3><a href="#g-{gk}">{gname}</a></h3><ol>{"".join(rows)}</ol></div>')
     css = open(os.path.join(HERE, 'style.css')).read()
     js = open(os.path.join(HERE, 'page.js')).read().replace('%%DATA%%', json.dumps(clean(R), separators=(',', ':'), allow_nan=False))
     skipped = R.get('_errors') or {}
@@ -113,9 +114,25 @@ def page(R, plotly_src):
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 <script src="{plotly_src}"></script>
 <style>{css}
-.audit .aud{{white-space:nowrap;font-size:13px;letter-spacing:1px}}
-.audkey{{list-style:none;padding:0;margin:0;display:grid;gap:3px}}
+.overview{{display:grid;grid-template-columns:1fr;gap:14px}}
+.ov-top{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 28px}}
+.overview .keylist{{list-style:none;margin:0;padding:0;display:grid;gap:6px}}
+.keylist li{{display:flex;gap:8px;align-items:baseline;margin:0}}
+.overview .audkey{{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 14px}}
+.audkey li{{margin:0;white-space:nowrap}}
 .audkey .aud{{display:inline-block;width:1.6em}}
+.overview .caveat{{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink2);margin:0;max-width:none}}
+.secs{{columns:2;column-gap:14px}}
+.sec{{break-inside:avoid;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px;display:block}}
+.sec h3{{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}}
+.sec h3 a{{color:inherit;text-decoration:none}}
+.sec ol{{list-style:none;margin:0;padding:0;display:grid;gap:5px}}
+.sec li{{display:grid;grid-template-columns:1.8em minmax(0,1fr) auto;gap:6px;align-items:baseline;font-size:13.5px;line-height:1.35;margin:0}}
+.sec li .n{{font-family:var(--mono);color:var(--muted);font-size:12px}}
+.sec li a{{color:var(--ink);text-decoration:none}}
+.sec li a:hover{{text-decoration:underline}}
+.sec .aud{{font-size:12px;letter-spacing:1px;white-space:nowrap;display:inline}}
+@media (max-width:760px){{.ov-top{{grid-template-columns:1fr}}.secs{{columns:1}}.audkey{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
 .hdr-nav{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}}
 .hdr-nav a{{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:5px 13px;font-size:14px;text-decoration:none}}
 </style></head><body>
@@ -130,16 +147,16 @@ def page(R, plotly_src):
 </div></header>
 <main class="wrap">
 <section class="overview">
- <div><h2>How sure are we?</h2>
-  <p>Each card has a badge:</p>
-  <ul><li><span class="verdict ok">✓ Solid</span> the method fits the data and the result holds up.</li>
-   <li><span class="verdict care">⚠ Use with care</span> fine to look at, but it rests on an assumption or a short record. The card says which.</li></ul>
-  <h3 style="margin:14px 0 4px;font-size:16px">Who each analysis is for</h3>
-  <ul class="audkey">{"".join(f'<li><span class="aud">{x.split(" ", 1)[0]}</span> {x.split(" ", 1)[1][0].upper() + x.split(" ", 1)[1][1:]}</li>' for x in (CARDS.ME, CARDS.MS, CARDS.OC, CARDS.GE, CARDS.MA))}</ul>
-  <p style="margin-top:10px">Our own stations started between late 2025 and 2026, so most of their results cover months, not years. They will firm up as records grow.</p>
-  {note}
+ <div class="ov-top">
+  <div><h2>How sure are we?</h2>
+   <ul class="keylist"><li><span class="verdict ok">✓ Solid</span><span>the method fits the data and the result holds up.</span></li>
+    <li><span class="verdict care">⚠ Use with care</span><span>fine to look at, but it rests on an assumption or a short record. The card says which.</span></li></ul></div>
+  <div><h2>Who each analysis is for</h2>
+   <ul class="audkey">{"".join(f'<li><span class="aud">{x.split(" ", 1)[0]}</span>{x.split(" ", 1)[1][0].upper() + x.split(" ", 1)[1][1:]}</li>' for x in (CARDS.ME, CARDS.MS, CARDS.OC, CARDS.GE, CARDS.MA))}<li><span class="aud">📊</span>All {n} analyses</li></ul></div>
  </div>
- <div><h2>All {n} analyses</h2><div class="tblwrap"><table class="audit">{"".join(audit)}</table></div></div>
+ <p class="caveat">Our own stations started between late 2025 and 2026, so most of their results cover months, not years. They will firm up as records grow.</p>
+ {note}
+ <div class="secs">{"".join(secs)}</div>
 </section>
 {"".join(body)}
 <h2 class="group">Words used on this page</h2><div class="gloss">{gloss}</div>
