@@ -185,20 +185,6 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
   <div id="errors"></div>
-  <section class="water" aria-labelledby="water-h">
-    <div class="w-head"><h2 id="water-h">⛵ On the water today</h2><span class="lede">Tide at Camp Ellis · NOAA alerts · UNE trip check</span></div>
-    <div class="w-grid">
-      <div class="w-left">
-        <div class="card w-tide"><div id="tide" class="w-chart"></div><div class="w-chips" id="tide-chips"><span>Loading NOAA tide predictions…</span></div></div>
-        <div id="alerts" aria-live="polite"><div class="alert al-wait">Checking NOAA alerts…</div></div>
-      </div>
-      <div class="card w-map">
-        <div id="tcmap"></div>
-        <a class="w-tag" href="./trip-check/">UNE trip check · <u>Full trip check →</u></a>
-        <div class="w-key"><span><i style="background:var(--good)"></i>Looks OK</span><span><i style="background:var(--warnc)"></i>Captain's call</span><span><i style="background:var(--bad)"></i>Stay ashore</span></div>
-      </div>
-    </div>
-  </section>
   <a class="promo" href="./saco-bay/">
     <svg class="promo-art" viewBox="0 0 160 90" aria-hidden="true">
       <rect width="160" height="90" fill="#dff1f4"/><circle cx="122" cy="24" r="11" fill="#ffd37a"/>
@@ -234,6 +220,20 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
     </div>
   </section>
 
+  <section class="water" aria-labelledby="water-h">
+    <div class="w-head"><h2 id="water-h">⛵ On the water today</h2><span class="lede">Tide at Camp Ellis · NOAA alerts · UNE trip check</span></div>
+    <div class="w-grid">
+      <div class="w-left">
+        <div class="card w-tide"><div id="tide" class="w-chart"></div><div class="w-chips" id="tide-chips"><span>Loading NOAA tide predictions…</span></div></div>
+        <div id="alerts" aria-live="polite"><div class="alert al-wait">Checking NOAA alerts…</div></div>
+      </div>
+      <div class="card w-map">
+        <div id="tcmap"></div>
+        <a class="w-tag" href="./trip-check/">UNE trip check · <u>Full trip check →</u></a>
+        <div class="w-key"><span><i style="background:var(--good)"></i>Looks OK</span><span><i style="background:var(--warnc)"></i>Captain's call</span><span><i style="background:var(--bad)"></i>Stay ashore</span></div>
+      </div>
+    </div>
+  </section>
   <section><h2>📈 Compare the stations</h2><p class="lede">The last two weeks, hourly. Click a name under a chart to hide or show that buoy. Drag across a chart to zoom; double-click to reset.</p>
     <div class="charts">
       <div class="card chartcard"><h3>🌡️ Water temperature</h3><p>At every buoy and station that measures it.</p><div id="c-temp" class="chart"></div><div class="legend" data-for="c-temp"></div></div>
