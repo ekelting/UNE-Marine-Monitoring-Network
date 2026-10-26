@@ -116,8 +116,9 @@ def page(R, plotly_src):
 <style>{css}
 .overview{{display:grid;grid-template-columns:1fr;gap:14px}}
 .ov-top{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 28px}}
-.overview .keylist{{list-style:none;margin:0;padding:0;display:grid;gap:6px}}
-.keylist li{{display:flex;gap:8px;align-items:baseline;margin:0}}
+.overview .keylist{{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 10px;align-items:baseline}}
+.keylist li{{display:contents}}
+.keylist li .verdict{{justify-self:end}}
 .overview .audkey{{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 14px}}
 .audkey li{{margin:0;white-space:nowrap}}
 .audkey .aud{{display:inline-block;width:1.6em}}
