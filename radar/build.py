@@ -378,7 +378,7 @@ def main():
             here['radar_vs_buoy'] = f'roughness vs. wind at the buoy: r = {c["r"]:.2f} ({c.get("word", "")} linked), from {c.get("n", 0):,} matching hours.'
     keys = ['radar_scan', 'radar_rough', 'radar_motion', 'radar_zones', 'radar_white', 'radar_boats', 'radar_rhythm', 'radar_vs_buoy']
     page = page.replace('%%EXCSS%%', explain.CSS).replace('%%EXPLAIN%%', explain.SECTION.format(cards=explain.cards(keys, here)))
-    page = page.replace('%%NAV%%', mapjs.nav_buttons(CFG.get('sister_sites', [])))
+    page = page.replace('%%NAV%%', mapjs.nav_buttons(CFG.get('sister_sites', []), extra='<span id="sisters" style="display:contents"></span>'))
     page = page.replace('%%DATA%%', blob).replace('%%SHORT%%', CFG.get('title_name') or CFG.get('short_name', 'Radar'))
     with open(os.path.join(a.out, 'index.html'), 'w', encoding='utf-8') as fh:
         fh.write(page)

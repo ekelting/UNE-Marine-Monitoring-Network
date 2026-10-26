@@ -142,17 +142,21 @@ def kind_of(site):
 KIND_EMOJI = {'wave': '🌊', 'radar': '📡', 'wq': '💧', 'wx': '🌦️', 'env': '🌿'}
 
 
-def nav_buttons(sisters):
-    """Top-row navigation: home + every other station, grouped by kind."""
+def nav_buttons(sisters, extra=''):
+    """Top navigation in two rows: the two big story pages, then home + every other station grouped by kind.
+    Also makes the units and theme switches below a little smaller (same on every station page)."""
     import html
     order = {'wave': 0, 'radar': 1, 'wq': 2, 'wx': 3, 'env': 4}
-    out = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE stations</a>'
-    out += '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/">🌊 Saco Bay, explained</a>'
-    out += '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/analysis/">📊 What the data say</a>'
+    row = 'display:flex;flex-wrap:wrap;gap:8px;flex-basis:100%;align-items:center'
+    top = ('<a class="btn" style="font-size:15px;font-weight:700;padding:8px 18px;border-width:1.5px" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/saco-bay/">🌊 Saco Bay, explained</a>'
+           '<a class="btn" style="font-size:15px;font-weight:700;padding:8px 18px;border-width:1.5px" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/analysis/">📊 What the data say</a>')
+    st = '<a class="btn" href="https://ekelting.github.io/UNE-Marine-Monitoring-Network/">🗺️ All UNE stations</a>'
     for x in sorted(sisters, key=lambda x: order.get(kind_of(x), 9)):
         off = ' <span style="opacity:.8">(offline)</span>' if x.get('offline') else ''
-        out += f'<a class="btn" href="{html.escape(x["url"])}">{KIND_EMOJI.get(kind_of(x), "📍")} {html.escape(x["label"])}{off}</a>'
-    return out
+        st += f'<a class="btn" href="{html.escape(x["url"])}">{KIND_EMOJI.get(kind_of(x), "📍")} {html.escape(x["label"])}{off}</a>'
+    small = ('<style>.segctl{padding:2px}.segctl button{font-size:12px;padding:3px 11px}.segctl .knob{top:2px;bottom:2px}'
+             '.seglbl{font-size:10.5px}.seggrp{gap:6px}</style>')
+    return f'{small}<div style="{row}">{top}</div><div style="{row};margin-top:4px">{st}{extra}</div>'
 
 
 def mapdata(me, others, center=None, zoom=12, track=None, anchor=None):
