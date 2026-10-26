@@ -191,11 +191,16 @@ CH.flood=()=>{ const f=R.flood; if(!f||!document.getElementById('pflood')) retur
     base({bargap:.1,xaxis:{title:{text:'year'}},yaxis:{title:{text:'days the water reached 12 ft'},rangemode:'tozero'}})); };
 CH.map=()=>{ if(!document.getElementById('pmap')||!R.coast) return; const k=Math.cos(43.46*Math.PI/180), tr=[];
   R.coast.lines.forEach(l=>tr.push({x:l.map(p=>p[0]),y:l.map(p=>p[1]),type:'scatter',mode:'lines',line:{color:css('--ink2'),width:1.3},hoverinfo:'skip',showlegend:false}));
-  const B=R.coast.buoys, sal=B.map(b=>b.sal);
+  // the buoy colours follow the measurement picked with the buttons (salinity on pages without buttons)
+  const mv=document.querySelector('.tabs')? v8 : 'sal_psu', B=R.coast.buoys.filter(b=>b[{sal_psu:'sal',temp_c:'tmp',do_mgl:'do'}[mv]]!=null);
+  const MS={sal_psu:{f:'sal',cv:x=>x,u:'PSU',t:'salinity',w:'average salinity',d:1,cs:[[0,'#c6dbef'],[1,'#08306b']]},
+            temp_c:{f:'tmp',cv:T,u:Tu(),t:'water temperature',w:'average water temperature',d:1,cs:[[0,'#fee8c8'],[0.5,'#fc8d59'],[1,'#b30000']]},
+            do_mgl:{f:'do',cv:x=>x,u:'mg/L',t:'dissolved oxygen',w:'average oxygen',d:1,cs:[[0,'#d9f0d3'],[0.5,'#5aae61'],[1,'#00441b']]}}[mv];
+  const sal=B.map(b=>MS.cv(b[MS.f])), spread=Math.max(...sal)-Math.min(...sal), padv=Math.max(spread*.25,.3);
   tr.push({x:[-70.3605],y:[43.4727],text:['Camp Ellis wave buoy'],type:'scatter',mode:'markers+text',textposition:'middle right',marker:{size:10,color:css('--muted'),symbol:'diamond'},textfont:{color:css('--ink2'),size:11},hoverinfo:'text',showlegend:false});
   tr.push({x:B.map(b=>b.lon),y:B.map(b=>b.lat),text:B.map(b=>`<b>${b.name}</b>`),type:'scatter',mode:'markers+text',textposition:B.map(b=>({'Jordan Point':'middle left','Wood Island':'bottom center','Ferry Beach':'middle right','Goose Rocks Beach':'middle right'})[b.name]||'top right'),
-    textfont:{color:css('--ink'),size:12},marker:{size:20,color:sal,colorscale:[[0,'#c6dbef'],[1,'#08306b']],cmin:Math.min(...sal)-1,cmax:Math.max(...sal)+.5,line:{color:css('--card'),width:2},
-    colorbar:{title:{text:'salinity (PSU)',side:'right'},thickness:10,len:.55,y:.3}},customdata:sal,hovertemplate:'%{text}: average salinity %{customdata:.1f} PSU<extra></extra>',showlegend:false});
+    textfont:{color:css('--ink'),size:12},marker:{size:20,color:sal,colorscale:MS.cs,cmin:Math.min(...sal)-padv,cmax:Math.max(...sal)+padv*.5,line:{color:css('--card'),width:2},
+    colorbar:{title:{text:MS.t+' ('+MS.u+')',side:'right'},thickness:10,len:.55,y:.3}},customdata:sal,hovertemplate:'%{text}: '+MS.w+' %{customdata:.1f} '+MS.u+'<extra></extra>',showlegend:false});
   P('pmap',tr,base({margin:{l:4,r:4,t:4,b:4},xaxis:{visible:false,range:[-70.45,-70.29]},yaxis:{visible:false,range:[43.385,43.555],scaleanchor:'x',scaleratio:1/k},
     annotations:[{x:-70.33,y:43.505,text:'Saco Bay',showarrow:false,font:{size:13,color:css('--muted')}},{x:-70.415,y:43.452,text:'Saco River',showarrow:false,font:{size:11,color:css('--ink2')}},
       {x:-70.322,y:43.433,text:'Biddeford Pool',showarrow:false,font:{size:11,color:css('--ink2')}},{x:-70.398,y:43.522,text:'Old Orchard Beach',xanchor:'right',showarrow:false,font:{size:11,color:css('--ink2')}},
@@ -208,7 +213,7 @@ function calc(){ const out=document.getElementById('calcout'); if(!out) return; 
    <tr><td>Salinity change along the estuary ∂S/∂x</td><td>${(grad*1000).toFixed(2)} PSU per km</td></tr><tr><td>Horizontal mixing K<sub>x</sub></td><td>${Kx.toLocaleString(undefined,{maximumFractionDigits:0})} m²/s</td></tr>
    <tr><td>Estuarine Richardson number Ri<sub>E</sub></td><td>${Ri.toFixed(2)}: <span class="regime">${reg}</span></td></tr><tr><td>Share of fresh water at Jordan Point</td><td>${(Math.max(0,1-S/So)*100).toFixed(0)}%</td></tr>`; }
 document.querySelectorAll('#calc input').forEach(i=>i.addEventListener('input',calc));
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ v8=b.dataset.v; CH.anova(); });
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ v8=b.dataset.v; CH.anova(); CH.map(); });
 
 function drawAll(){ texts(); for(const k in CH){ try{ CH[k](); }catch(e){ console.warn('chart',k,e); } } calc(); }
 function setUnit(u){ unit=u; try{localStorage.setItem('une-units',u==='si'?'metric':'imperial')}catch(e){} drawAll(); }

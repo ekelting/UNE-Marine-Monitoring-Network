@@ -44,6 +44,9 @@ header p{margin:6px 0 0;opacity:.9;max-width:760px}
 .kpi .k-v{font-size:30px;font-weight:700;letter-spacing:-.6px;margin-top:2px}
 .kpi .k-s{color:var(--muted);font-size:13px}
 .kpi .k-s b{color:var(--ink2);font-weight:600}
+/* wide screens: all seven headline boxes on one line */
+@media (min-width:600px) and (max-width:959px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.kpi .k-v{font-size:24px}}
+@media (min-width:960px){.kpis{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px}.kpi{padding:12px 12px;min-width:0}.kpi .k-v{font-size:clamp(18px,1.75vw,24px);letter-spacing:-.4px;white-space:nowrap}.kpi .k-l{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi .k-s{font-size:12px}}
 section{margin-top:26px}
 h2{font-size:21px;margin:0 0 4px}
 .lede{color:var(--ink2);margin:0 0 12px}
@@ -291,6 +294,7 @@ async function load(){
 }
 function val(s, k){ const d=DATA[s.slug]; return d && d.now ? d.now[k] : null; }
 
+const rng=(a,b)=>{ const x=T(a), y=T(b), u=(y.match(/[^\d.\-−]+$/)||[''])[0]; return x.slice(0, x.length-u.length)+'–'+y; };   // 53.1–55.1°F
 function renderKPIs(){
   const live = SITES.filter(s=>DATA[s.slug] && Date.now()-Date.parse(DATA[s.slug].last_obs) < 6*3600e3);   // "now" numbers only from stations heard from in the last 6 h
   const by = (k, pick) => { const xs=live.filter(s=>fin(val(s,k))); if(!xs.length) return null; return xs.reduce((a,b)=> pick(val(a,k),val(b,k)) ? a : b); };
@@ -299,17 +303,15 @@ function renderKPIs(){
         fresh=by('sal_psu',(a,b)=>a<=b), salt=by('sal_psu',(a,b)=>a>=b), lowdo=by('do_mgl',(a,b)=>a<=b);
   const k = (emoji, label, value, sub) => `<div class="kpi"><div class="k-l">${emoji} ${label}</div><div class="k-v">${value}</div><div class="k-s">${sub}</div></div>`;
   let h='';
-  if (warm) h += k('🌡️','Sea temperature', `${T(val(cold,'water_temp_c'))}–${T(val(warm,'water_temp_c'))}`, `coldest <b>${escH(cold.name)}</b> · warmest <b>${escH(warm.name)}</b>`);
-  if (big) h += k('🌊','Biggest waves now', Hs(val(big,'hs_m')), `at <b>${escH(big.name)}</b>${fin(val(big,'tp_s'))?` · ${val(big,'tp_s').toFixed(0)} s apart, from the ${escH(val(big,'wave_dir')||'')}`:''}`);
+  if (warm) h += k('🌡️','Sea temperature', rng(val(cold,'water_temp_c'), val(warm,'water_temp_c')), `coldest <b>${escH(cold.name)}</b> · warmest <b>${escH(warm.name)}</b>`);
+  if (big) h += k('🌊','Biggest waves', Hs(val(big,'hs_m')), `at <b>${escH(big.name)}</b>${fin(val(big,'tp_s'))?` · ${val(big,'tp_s').toFixed(0)} s apart, from the ${escH(val(big,'wave_dir')||'')}`:''}`);
   if (fresh) h += k('💧','Freshest water', `${val(fresh,'sal_psu').toFixed(1)} PSU`, `at <b>${escH(fresh.name)}</b> · saltiest ${val(salt,'sal_psu').toFixed(1)} at <b>${escH(salt.name)}</b>`);
   if (lowdo) { const v=val(lowdo,'do_mgl'); h += k('🫧','Lowest oxygen', `${v.toFixed(1)} mg/L`, `at <b>${escH(lowdo.name)}</b> · ${v>=5?'healthy everywhere ✅':v>=2?'stressful ⚠️':'hypoxic 🚨'}`); }
   const air=by('air_temp_c',(a,b)=>a>=b), aircold=by('air_temp_c',(a,b)=>a<=b), windy=(()=>{const xs=live.filter(s=>s.kind==='wx'&&fin(val(s,'wind_ms'))); return xs.length? xs.reduce((a,b)=>val(a,'wind_ms')>=val(b,'wind_ms')?a:b):null;})(), wet=by('rain_24h_mm',(a,b)=>a>=b);
-  if (air) h += k('🌤️','Air temperature', air===aircold? T(val(air,'air_temp_c')) : `${T(val(aircold,'air_temp_c'))}–${T(val(air,'air_temp_c'))}`,
+  if (air) h += k('🌤️','Air temperature', air===aircold? T(val(air,'air_temp_c')) : rng(val(aircold,'air_temp_c'), val(air,'air_temp_c')),
                   air===aircold? `at <b>${escH(air.name)}</b>` : `coolest <b>${escH(aircold.name)}</b> · warmest <b>${escH(air.name)}</b>`);
   if (windy) h += k('💨','Wind now', Wd(val(windy,'wind_ms')), `at <b>${escH(windy.name)}</b>${fin(val(windy,'gust_ms'))?' · gusting '+Wd(val(windy,'gust_ms')):''}${fin(val(windy,'wind_dir'))?' from the '+compass(val(windy,'wind_dir')):''}`);
   if (wet) h += k('🌧️','Rain, last 24 h', Rs(val(wet,'rain_24h_mm')), `most at <b>${escH(wet.name)}</b>`);
-  const fresh3 = SITES.filter(s=>DATA[s.slug] && Date.now()-Date.parse(DATA[s.slug].last_obs) < 3*3600e3).length, nOff3 = SITES.filter(s=>s.offline).length;
-  h += k('📡','Stations reporting', `${fresh3} / ${SITES.length-nOff3}`, 'sent data in the last 3 hours'+(nOff3?` · ${nOff3} offline`:''));
   document.getElementById('kpis').innerHTML = h;
 }
 

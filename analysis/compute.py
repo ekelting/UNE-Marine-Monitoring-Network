@@ -504,9 +504,10 @@ def a_coast(C):
            'ferry-beach': ((43.497213, -70.379113), 'top right'), 'goose-rocks-beach': ((43.396733, -70.402301), 'bottom right')}
     buoys = []
     for slug, name in SONDES.items():
-        s = C.H(slug).sal_psu.dropna(); s = s[s.index > s.index.max() - pd.Timedelta(days=30)]
+        h = C.H(slug); end = h.sal_psu.dropna().index.max()
+        m30 = lambda col: (lambda x: float(x[x.index > end - pd.Timedelta(days=30)].mean()) if len(x) else None)(h[col].dropna()) if col in h else None
         (lat, lon), tp = pos[slug]
-        buoys.append(dict(name=name, lat=lat, lon=lon, sal=float(s.mean()), pos=tp))
+        buoys.append(dict(name=name, lat=lat, lon=lon, sal=m30('sal_psu'), tmp=m30('temp_c'), do=m30('do_mgl'), pos=tp))
     return dict(lines=co['lines'], buoys=buoys, source=co['source'])
 
 
