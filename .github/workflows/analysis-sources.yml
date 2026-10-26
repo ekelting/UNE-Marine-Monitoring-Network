@@ -16,6 +16,7 @@ jobs:
           python-version: "3.12"
       - run: pip install pandas
       - run: python tools/fetch_coast_wide.py
+        continue-on-error: true
       - name: Save the downloads on this branch (compressed)
         run: |
           true
