@@ -4,12 +4,14 @@ bb = '43.452,-70.46,43.502,-70.365'
 q = (f'[out:json][timeout:120];(way["natural"="water"]({bb});relation["natural"="water"]({bb});way["waterway"="riverbank"]({bb});'
      f'way["waterway"="river"]({bb});way["waterway"="dam"]({bb});way["waterway"="weir"]({bb}););out geom;')
 LOG = open('ext/river_log.txt', 'w')
-for url in ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter']:
+d = None
+for url in ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'] * 4:
+    if d: break
     try:
         r = urllib.request.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode({'data': q}).encode(), headers={'User-Agent': 'UNE-Marine-Monitoring-Network/1.0'}), timeout=180)
         d = json.load(r); LOG.write(f'ok {url} {len(d["elements"])}\n'); break
     except Exception as e:
-        LOG.write(f'{url} {e!r}\n'); time.sleep(5)
+        LOG.write(f'{url} {e!r}\n'); time.sleep(30)
 out = []
 for e in d['elements']:
     g = lambda gm: [[round(p['lon'], 6), round(p['lat'], 6)] for p in gm]
