@@ -99,7 +99,8 @@ def page(R, plotly_src):
             n += 1
             body.append(card_html(c, n))
             vk, vl = c['v']
-            audit.append(f'<tr><td>{n}</td><td><a href="#a{n}">{c["t"]}</a></td><td><span class="verdict {vk}">{vl}</span></td></tr>')
+            emo = ''.join(x.split(' ', 1)[0] for x in c['c'])        # audience emojis, e.g. 🦞🐟
+            audit.append(f'<tr><td>{n}</td><td><a href="#a{n}">{c["t"]}</a> <span class="aud" aria-label="for {html.escape(", ".join(x.split(" ", 1)[1] for x in c["c"]))}">{emo}</span></td><td><span class="verdict {vk}">{vl}</span></td></tr>')
     css = open(os.path.join(HERE, 'style.css')).read()
     js = open(os.path.join(HERE, 'page.js')).read().replace('%%DATA%%', json.dumps(clean(R), separators=(',', ':'), allow_nan=False))
     skipped = R.get('_errors') or {}
@@ -112,6 +113,9 @@ def page(R, plotly_src):
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 <script src="{plotly_src}"></script>
 <style>{css}
+.audit .aud{{white-space:nowrap;font-size:13px;letter-spacing:1px}}
+.audkey{{list-style:none;padding:0;margin:0;display:grid;gap:3px}}
+.audkey .aud{{display:inline-block;width:1.6em}}
 .hdr-nav{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}}
 .hdr-nav a{{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:5px 13px;font-size:14px;text-decoration:none}}
 </style></head><body>
@@ -130,6 +134,8 @@ def page(R, plotly_src):
   <p>Each card has a badge:</p>
   <ul><li><span class="verdict ok">✓ Solid</span> the method fits the data and the result holds up.</li>
    <li><span class="verdict care">⚠ Use with care</span> fine to look at, but it rests on an assumption or a short record. The card says which.</li></ul>
+  <h3 style="margin:14px 0 4px;font-size:16px">Who each analysis is for</h3>
+  <ul class="audkey">{"".join(f'<li><span class="aud">{x.split(" ", 1)[0]}</span> {x.split(" ", 1)[1][0].upper() + x.split(" ", 1)[1][1:]}</li>' for x in (CARDS.ME, CARDS.MS, CARDS.OC, CARDS.GE, CARDS.MA))}</ul>
   <p style="margin-top:10px">Our own stations started between late 2025 and 2026, so most of their results cover months, not years. They will firm up as records grow.</p>
   {note}
  </div>
