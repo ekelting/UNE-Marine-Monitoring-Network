@@ -162,21 +162,32 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 .tc-st i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .tc-lbl{white-space:nowrap;font-size:11px;font-weight:700;color:#1d2a36;pointer-events:none;background:rgba(255,255,255,.88);border-radius:4px;padding:0 4px;line-height:16px}
 @media (max-width:640px){.promo{flex-wrap:wrap}.promo-art{width:100%;max-height:110px}.promo-go{margin-left:0}}
+
+/* two-column header: title and status on the left, page buttons and settings on the right */
+.hdr2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 40px;align-items:center}
+.hdr-l p{margin-top:6px}
+.hdr-r{display:grid;gap:12px;justify-items:end}
+.hdr-r .tb-links,.hdr-r .tb-prefs{margin-top:0;justify-content:flex-end}
+@media (max-width:820px){.hdr2{grid-template-columns:1fr}.hdr-r{justify-items:start}.hdr-r .tb-links,.hdr-r .tb-prefs{justify-content:flex-start}}
 </style></head>
 <body>
-<header class="hero"><div class="wrap">
+<header class="hero"><div class="wrap hdr2">
+  <div class="hdr-l">
   <h1>🌊 UNE Marine Monitoring Network</h1>
   <p>Live waves, water quality and weather from University of New England buoys and stations in Saco Bay, Biddeford and along the southern Maine coast.</p>
+  <div class="toolbar tb-status">
+    <span class="status"><span class="pulse"></span><span id="status">Loading live data…</span></span>
+  </div>
+  </div>
+  <div class="hdr-r">
   <div class="toolbar tb-links">
     <a class="btn big" href="./saco-bay/">🌊 Saco Bay, explained</a>
     <a class="btn big" href="./analysis/">📊 What the data say</a>
   </div>
-  <div class="toolbar tb-status">
-    <span class="status"><span class="pulse"></span><span id="status">Loading live data…</span></span>
-  </div>
   <div class="toolbar tb-prefs">
     <div class="seggrp"><span class="seglbl">Units:</span><div class="segctl" role="group" aria-label="Units"><span class="knob"></span><button id="u-si" aria-pressed="false">Metric</button><button id="u-us" aria-pressed="true">Imperial</button></div></div>
     <div class="seggrp"><span class="seglbl">Theme:</span><div class="segctl" role="group" aria-label="Theme"><span class="knob"></span><button id="th-light" aria-pressed="true">Light</button><button id="th-dark" aria-pressed="false">Dark</button></div></div>
+  </div>
   </div>
 </div>
 <svg class="waves" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0,30 C150,60 300,0 450,30 C600,60 750,0 900,30 C1050,60 1150,15 1200,30 L1200,60 L0,60 Z" fill="var(--bg)"/></svg>
