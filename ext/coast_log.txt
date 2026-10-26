@@ -1,0 +1,16 @@
+tile (42.95, -70.9, 43.375, -70.30000000000001) ok from https://overpass-api.de/api/interpreter 93 ways; total 93
+tile (42.95, -70.3, 43.375, -69.7) ok from https://overpass-api.de/api/interpreter 0 ways; total 93
+tile (42.95, -69.75, 43.375, -69.2) ok from https://overpass-api.de/api/interpreter 0 ways; total 93
+tile (43.375, -70.9, 43.8, -70.30000000000001) https://overpass-api.de/api/interpreter <HTTPError 502: 'Bad Gateway'>
+tile (43.375, -70.9, 43.8, -70.30000000000001) ok from https://overpass.kumi.systems/api/interpreter 87 ways; total 179
+tile (43.375, -70.3, 43.8, -69.7) ok from https://overpass-api.de/api/interpreter 736 ways; total 912
+tile (43.375, -69.75, 43.8, -69.2) ok from https://overpass-api.de/api/interpreter 147 ways; total 1001
+tile (43.8, -70.9, 44.2, -70.30000000000001) https://overpass-api.de/api/interpreter <HTTPError 502: 'Bad Gateway'>
+tile (43.8, -70.9, 44.2, -70.30000000000001) https://overpass.kumi.systems/api/interpreter TimeoutError('The read operation timed out')
+tile (43.8, -70.9, 44.2, -70.30000000000001) https://overpass.private.coffee/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+tile (43.8, -70.3, 44.2, -69.7) https://overpass-api.de/api/interpreter <HTTPError 502: 'Bad Gateway'>
+tile (43.8, -70.3, 44.2, -69.7) ok from https://overpass.kumi.systems/api/interpreter 381 ways; total 1361
+tile (43.8, -69.75, 44.2, -69.2) https://overpass-api.de/api/interpreter <HTTPError 502: 'Bad Gateway'>
+tile (43.8, -69.75, 44.2, -69.2) https://overpass.kumi.systems/api/interpreter TimeoutError('The read operation timed out')
+tile (43.8, -69.75, 44.2, -69.2) https://overpass.private.coffee/api/interpreter TimeoutError('The read operation timed out')
+1361 ways; 22881 fine pts; 6721 coarse pts
