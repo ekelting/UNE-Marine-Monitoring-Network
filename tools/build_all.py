@@ -15,6 +15,31 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CODE = {'wave': 'wave', 'wq': 'sonde', 'station': 'station', 'radar': 'radar'}
 
 
+def fetch_ndbc(path, station='44007'):
+    """Latest wave and wind reading from NOAA buoy 44007 (off Portland) for the trip check. Skipped quietly if NDBC is unreachable."""
+    import json, urllib.request
+    from datetime import datetime, timezone
+    try:
+        txt = urllib.request.urlopen(urllib.request.Request(f'https://www.ndbc.noaa.gov/data/realtime2/{station}.txt',
+                                     headers={'User-Agent': 'UNE-Marine-Monitoring-Network/1.0'}), timeout=30).read().decode()
+        head = txt.splitlines()[0].lstrip('#').split()
+        num = lambda v: None if v in ('MM', '') else float(v)
+        out = {}
+        for line in txt.splitlines()[2:50]:                  # newest first; take the newest value of each field
+            r = dict(zip(head, line.split()))
+            t = datetime(int(r['YY']), int(r['MM']), int(r['DD']), int(r['hh']), int(r['mm']), tzinfo=timezone.utc)
+            for k, key in (('WVHT', 'wvht_m'), ('DPD', 'dpd_s'), ('MWD', 'mwd_deg'), ('WSPD', 'wspd_ms'), ('GST', 'gst_ms'), ('WDIR', 'wdir_deg'), ('WTMP', 'wtmp_c')):
+                if key not in out and num(r.get(k, 'MM')) is not None:
+                    out[key] = num(r[k])
+                    if key == 'wvht_m':
+                        out['time'] = t.isoformat()
+        out.setdefault('time', None); out['station'] = station
+        json.dump(out, open(path, 'w'))
+        print(f'NOAA buoy {station}: {out}')
+    except Exception as e:
+        print(f'::warning::NOAA buoy {station} unavailable ({e}); the trip check falls back to the local buoy')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=os.path.join(ROOT, 'site'))
@@ -51,6 +76,11 @@ def main():
         if r.returncode:
             print('::warning::the Analysis page failed to build; its previous version is not updated this hour')
     shutil.copy(os.path.join(ROOT, 'web', 'index.html'), os.path.join(a.out, 'index.html'))
+    for f in ('tripcheck.js', 'river.json'):                     # the "On the water today" panel and the trip-check page
+        shutil.copy(os.path.join(ROOT, 'web', f), os.path.join(a.out, f))
+    os.makedirs(os.path.join(a.out, 'trip-check'), exist_ok=True)
+    shutil.copy(os.path.join(ROOT, 'web', 'trip-check', 'index.html'), os.path.join(a.out, 'trip-check', 'index.html'))
+    fetch_ndbc(os.path.join(a.out, 'ndbc-44007.json'))
     shutil.copy(os.path.join(ROOT, 'buoys.json'), os.path.join(a.out, 'buoys.json'))
     open(os.path.join(a.out, '.nojekyll'), 'w').close()
     print(f'\n✅ built {len(buoys) - len(failed)} of {len(buoys)} buoy pages' + (f' — failed: {", ".join(failed)}' if failed else ''))

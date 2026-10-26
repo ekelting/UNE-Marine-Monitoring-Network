@@ -11,6 +11,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script src="./tripcheck.js"></script>
 <style>
 :root{--bg:#f3f6f9;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e1e7ec;--accent:#1c5cab;
 --hero1:#0a2f57;--hero2:#16707a;--chip:#eef4fb;--chip2:#b7d3f6;--good:#1a9b5f;--warnc:#d98a00;--bad:#d4473f;--grid:#e8ecef;--sel:#fff6ef}
@@ -126,6 +127,34 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 .promo-txt b{font-size:20px}
 .promo-txt span{opacity:.92;font-size:15px;line-height:1.45}
 .promo-go{flex:none;margin-left:auto;background:#ff6b35;color:#fff;font-weight:800;border-radius:12px;padding:9px 16px}
+/* "On the water today": tide + NOAA alerts on the left, trip-check map on the right */
+.water{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px}
+.w-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.w-head h2{margin:0;font-size:19px}
+.w-head .lede{font-size:13px;color:var(--ink2)}
+.w-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:820px){.w-grid{grid-template-columns:1fr}}
+.w-left{display:grid;gap:10px;align-content:start;min-width:0}
+.w-tide{padding:8px 10px}
+.w-chart{height:210px}
+.w-chips{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;margin-top:4px}
+.w-chips span{background:var(--chip);border-radius:999px;padding:3px 10px}
+.alert{border-radius:10px;padding:9px 12px;font-size:13.5px;border:1px solid;margin-bottom:8px}
+.alert:last-child{margin-bottom:0}
+.alert b{font-size:14px}
+.alert .when{color:var(--ink2);font-size:12.5px}
+.al-strong{background:color-mix(in srgb,var(--bad) 12%,var(--card));border-color:var(--bad)}
+.al-warn{background:color-mix(in srgb,var(--warnc) 12%,var(--card));border-color:var(--warnc)}
+.al-info{background:var(--chip);border-color:var(--line)}
+.al-ok{background:color-mix(in srgb,var(--good) 10%,var(--card));border-color:var(--good)}
+.al-wait{background:var(--chip);border-color:var(--line);color:var(--ink2)}
+.w-map{position:relative;min-height:320px;overflow:hidden;padding:0}
+#tcmap{position:absolute;inset:0;background:var(--bg)}
+.w-tag{position:absolute;left:10px;top:8px;z-index:500;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;text-decoration:none}
+.w-tag:hover u{color:var(--accent)}
+.w-key{position:absolute;left:10px;bottom:26px;z-index:500;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:11.5px;display:flex;gap:10px;flex-wrap:wrap}
+.w-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;opacity:.75}
+.tc-lbl{white-space:nowrap;font-size:11px;font-weight:700;color:#1d2a36;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
 @media (max-width:640px){.promo{flex-wrap:wrap}.promo-art{width:100%;max-height:110px}.promo-go{margin-left:0}}
 </style></head>
 <body>
@@ -150,6 +179,20 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
   <div id="errors"></div>
+  <section class="water" aria-labelledby="water-h">
+    <div class="w-head"><h2 id="water-h">⛵ On the water today</h2><span class="lede">Tide at Camp Ellis · NOAA alerts · UNE trip check</span></div>
+    <div class="w-grid">
+      <div class="w-left">
+        <div class="card w-tide"><div id="tide" class="w-chart"></div><div class="w-chips" id="tide-chips"><span>Loading NOAA tide predictions…</span></div></div>
+        <div id="alerts" aria-live="polite"><div class="alert al-wait">Checking NOAA alerts…</div></div>
+      </div>
+      <div class="card w-map">
+        <div id="tcmap"></div>
+        <a class="w-tag" href="./trip-check/">UNE trip check · <u>Full trip check →</u></a>
+        <div class="w-key"><span><i style="background:var(--good)"></i>Looks OK</span><span><i style="background:var(--warnc)"></i>Captain's call</span><span><i style="background:var(--bad)"></i>Stay ashore</span></div>
+      </div>
+    </div>
+  </section>
   <a class="promo" href="./saco-bay/">
     <svg class="promo-art" viewBox="0 0 160 90" aria-hidden="true">
       <rect width="160" height="90" fill="#dff1f4"/><circle cx="122" cy="24" r="11" fill="#ffd37a"/>
@@ -445,8 +488,59 @@ function renderCharts(){
     lg.querySelectorAll('span[data-repo]').forEach(sp=>sp.onclick=()=>{ hidden[id+sp.dataset.repo]=!hidden[id+sp.dataset.repo]; renderCharts(); });
   }
 }
+// ---------- On the water today ----------
+let TIDES=null, TIDE_TRIED=false, ALERTS=null, ALERT_ERR=false, TCM=null, RIVER=null, NDBC=null;
+async function loadWater(){
+  const jobs=[TC.fetchTides().then(t=>TIDES=t).catch(e=>console.warn('tides',e)).finally(()=>TIDE_TRIED=true),
+    TC.fetchAlerts().then(a=>{ALERTS=a; ALERT_ERR=false;}).catch(e=>{ALERT_ERR=true; console.warn('alerts',e);}),
+    fetch('./ndbc-44007.json?t='+Math.floor(Date.now()/600000)).then(r=>r.ok?r.json():null).then(j=>NDBC=j).catch(()=>{})];
+  if(!RIVER) jobs.push(fetch('./river.json').then(r=>r.json()).then(j=>RIVER=j).catch(()=>{}));
+  await Promise.all(jobs); renderWater(); }
+const fmtT = d => d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+const fmtWhen = iso => { if(!iso) return ''; const d=new Date(iso), today=new Date().toDateString()===d.toDateString();
+  return (today? '' : d.toLocaleDateString([], {weekday:'short'})+' ')+fmtT(d); };
+function renderTide(){
+  const el=document.getElementById('tide'), chips=document.getElementById('tide-chips'); if(!el) return;
+  if(!TIDES){ if(TIDE_TRIED) chips.innerHTML='<span>NOAA tide predictions are unavailable right now.</span>'; return; }
+  const k = unit==='us'? 1 : 0.3048, u = unit==='us'? 'ft':'m', now=new Date(), d0=new Date(now); d0.setHours(0,0,0,0); const d1=new Date(+d0+864e5);
+  const xs=[], ys=[]; for(let t=+d0-36e5; t<=+d1+36e5; t+=10*60e3){ const v=TC.tideAt(TIDES,new Date(t)); if(v){ xs.push(new Date(t)); ys.push(v.v*k); } }
+  const ev=TIDES.filter(e=>e.t>=d0 && e.t<=d1), cur=TC.tideAt(TIDES,now), ink=css('--ink2'), acc=css('--accent'), grid=css('--grid');
+  const narrow=el.clientWidth<420;
+  const data=[{x:xs,y:ys,type:'scatter',mode:'lines',line:{color:acc,width:2.5},fill:'tozeroy',fillcolor:'rgba(28,92,171,0.12)',hovertemplate:'%{x|%I:%M %p}: %{y:.1f} '+u+'<extra></extra>'},
+    {x:ev.map(e=>e.t),y:ev.map(e=>e.v*k),type:'scatter',mode:'markers+text',marker:{size:7,color:acc},cliponaxis:false,
+     text:ev.map(e=>(narrow?'':(e.type==='H'?'High ':'Low '))+fmtT(e.t)),textposition:ev.map(e=>(e.type==='H'?'top':'bottom')+' center'),textfont:{size:11,color:ink},
+     hovertemplate:ev.map(e=>(e.type==='H'?'High':'Low')+' tide %{x|%I:%M %p}: %{y:.1f} '+u+'<extra></extra>')}];
+  if(cur) data.push({x:[now],y:[cur.v*k],type:'scatter',mode:'markers',marker:{size:12,color:'#f28f16',line:{color:'#fff',width:2}},hovertemplate:'Now: %{y:.1f} '+u+'<extra></extra>'});
+  const lo=Math.min(...ys), hi=Math.max(...ys), pad=(hi-lo)*.25;
+  Plotly.react(el,data,{paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',showlegend:false,margin:{l:40,r:12,t:18,b:26},
+    font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:11},
+    xaxis:{type:'date',range:[d0,d1],tickformat:'%-I %p',dtick:6*36e5,gridcolor:grid,linecolor:grid},
+    yaxis:{title:{text:'Tide ('+u+')',font:{size:11}},range:[lo-pad,hi+pad],gridcolor:grid,zerolinecolor:grid},
+    shapes:[{type:'line',x0:now,x1:now,y0:0,y1:1,yref:'paper',line:{color:'#f28f16',width:1.5,dash:'dot'}}]},{responsive:true,displaylogo:false,displayModeBar:false});
+  const up=TIDES.filter(e=>e.t>now).slice(0,2);
+  chips.innerHTML=(cur?`<span>Now <b>${(cur.v*k).toFixed(1)} ${u}</b> ${cur.rising?'⬆ rising':'⬇ falling'}</span>`:'')+up.map(e=>`<span>Next ${e.type==='H'?'high':'low'} <b>${fmtT(e.t)}</b> (${(e.v*k).toFixed(1)} ${u})</span>`).join('');
+}
+function renderAlerts(){
+  const el=document.getElementById('alerts'); if(!el) return;
+  if(ALERT_ERR && !ALERTS){ el.innerHTML='<div class="alert al-wait">Couldn\'t reach NOAA alerts just now. Check <a href="https://forecast.weather.gov/shmrn.php?mz=anz154">weather.gov</a> before going out.</div>'; return; }
+  if(!ALERTS) return;
+  if(!ALERTS.length){ el.innerHTML=`<div class="alert al-ok"><b>✓ No NOAA marine or coastal alerts</b> for Saco Bay, Casco Bay or the York and Cumberland coast. <span class="when">Checked ${fmtT(new Date())}.</span></div>`; return; }
+  el.innerHTML=ALERTS.map(a=>{ const strong=/Gale|Storm|Hurricane|Hazardous Seas|Special Marine|Tsunami|Tornado|Severe/i.test(a.event)&&/Warning/i.test(a.event), sca=/Small Craft/i.test(a.event);
+    const cls = strong? 'al-strong' : (sca||/Warning|Advisory/i.test(a.event))? 'al-warn' : 'al-info';
+    const where=[...new Set(a.zones.map(z=>TC.ZONES[z]))].join(', ');
+    const une = a.zones.includes('ANZ154') && (sca||strong) ? ' UNE trips: no-go in open water (the Saco River estuary is OK).' : '';
+    return `<div class="alert ${cls}"><b>⚠️ ${escH(a.event)}</b>${a.ends?` <span class="when">until ${fmtWhen(a.ends)}</span>`:''}<br>${escH(where)}.${une} <a href="${a.url}">Details from NWS</a></div>`; }).join('');
+}
+function renderTripMap(){
+  const el=document.getElementById('tcmap'); if(!el || typeof L==='undefined' || typeof TC==='undefined') return;
+  if(!TCM){ TCM=TC.makeMap(el,{river:RIVER,mini:true,dark:isDark()}); }
+  else if(TCM.dark!==isDark()) TCM.setBase('map',isDark());
+  const {inp}=TC.liveInputs({local:DATA['camp-ellis'], wind:DATA['ram-island'], ndbc:NDBC, alerts:ALERTS||[], tides:TIDES});
+  TCM.paint(TC.rate(inp)); setTimeout(()=>TCM.m.invalidateSize(),80);
+}
+function renderWater(){ try{ renderTide(); }catch(e){ console.error('tide',e); } try{ renderAlerts(); }catch(e){ console.error('alerts',e); } try{ renderTripMap(); }catch(e){ console.error('trip map',e); } }
 function renderAll(){
-  renderKPIs(); renderStations(); renderMap(); renderCharts();
+  renderKPIs(); renderStations(); renderMap(); renderCharts(); renderWater();
   document.getElementById('u-us').setAttribute('aria-pressed', unit==='us'); document.getElementById('u-si').setAttribute('aria-pressed', unit==='si');
   document.getElementById('maplabel').value = labelMode;
 }
@@ -471,5 +565,6 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll)
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{mapMode=b.dataset.map; try{localStorage.setItem('net-map',mapMode)}catch(e){} renderMap();});
 document.getElementById('maplabel').onchange=e=>{labelMode=e.target.value; try{localStorage.setItem('net-label2',labelMode)}catch(e){} renderMap();};
 load(); setInterval(load, 10*60e3);
+loadWater(); setInterval(loadWater, 10*60e3);
 </script>
 </body></html>
