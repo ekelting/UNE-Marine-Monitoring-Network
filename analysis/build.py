@@ -138,6 +138,7 @@ def page(R, plotly_src):
 .hdr-nav a{{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:5px 13px;font-size:14px;text-decoration:none}}
 </style></head><body>
 <header><div class="wrap">
+  <a class="backlink" href="{HOME}" style="display:inline-block;color:#fff;opacity:.85;font-size:14px;text-decoration:none;margin-bottom:6px">← UNE Marine Monitoring Network</a>
   <nav class="hdr-nav"><a href="{HOME}">🗺️ All UNE stations</a><a href="{HOME}saco-bay/">🌊 Saco Bay, explained</a></nav>
   <h1>📊 What the data say</h1>
   <p>Analyses of the network's stations, side by side with long public records from NOAA and USGS. Every card starts in plain words, with a tip on how to read the chart; the math and its assumptions are under "Is this sound?". Updated daily.</p>

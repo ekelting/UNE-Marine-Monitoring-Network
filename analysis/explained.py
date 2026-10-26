@@ -292,6 +292,7 @@ page = f'''<!doctype html>
     <path class="hw2" d="M0 85 C200 60 350 110 600 85 C800 60 950 110 1200 85 L1200 120 L0 120 Z"/>
   </svg>
   <div class="wrap hero-in">
+    <a class="backlink" href="{HOME}" style="display:inline-block;color:#fff;opacity:.85;font-size:14px;text-decoration:none;margin-bottom:6px">← UNE Marine Monitoring Network</a>
     <nav class="hnav"><a href="{HOME}">🗺️ All UNE stations</a><a href="{HOME}analysis/">📊 Full technical analyses</a></nav>
     <p class="kicker">UNE Marine Monitoring Network</p>
     <h1>Saco Bay, explained</h1>
