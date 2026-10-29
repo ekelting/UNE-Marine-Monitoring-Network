@@ -216,7 +216,7 @@
       if (g.river) g.river.setStyle({ fillColor: c[res.river.lvl] });
       g.st.forEach(x => x.remove()); g.st = [];
       if (!mini) res.groups.forEach(gp => { if (RINGS[gp.from] >= g.R) return; const r = (RINGS[gp.from] + Math.min(RINGS[gp.to + 1], g.R)) / 2;
-        g.st.push(L.marker(pt(r, gp.from === 0 ? 135 : 115), { icon: L.divIcon({ className: 'tc-lbl tc-st', html: `<i style="background:${COL(false)[gp.lvl]}"></i>${STATE[gp.lvl]}`, iconSize: null, iconAnchor: [44, 11] }), interactive: false }).addTo(m)); }); };
+        g.st.push(L.marker(pt(r, gp.from === 0 ? 135 : 115), { icon: L.divIcon({ className: 'tc-lbl tc-st', html: `<i style="background:${COL(false)[gp.lvl]}"></i>${STATE[gp.lvl]}`, iconSize: null, iconAnchor: [44, 11] }), interactive: false, zIndexOffset: 2000 }).addTo(m)); }); };   // ratings sit above the UNE logo
     g.setBase(mode, dark); g.home(); g.ready = true;
     return g;
   }
