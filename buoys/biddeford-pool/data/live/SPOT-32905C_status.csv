@@ -576,3 +576,4 @@ Epoch Time,Processing Source,Battery Voltage (V),Power (W),Humidity (%rel),Solar
 1793278800,status,4.03,1.65,32.05,5.65,cellular
 1793283600,status,4.04,1.14,28.8,6.89,cellular
 1793286000,status,4.03,0,27.51,7.56,cellular
+1793289600,status,4.03,0,26.01,7.58,cellular
