@@ -133,7 +133,7 @@ def page(R, plotly_src):
 .sec li a{{color:var(--ink);text-decoration:none}}
 .sec li a:hover{{text-decoration:underline}}
 .sec .aud{{font-size:12px;letter-spacing:1px;white-space:nowrap;display:inline}}
-@media (max-width:760px){{.ov-top{{grid-template-columns:1fr}}.secs{{columns:1}}.audkey{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
+@media (max-width:760px){{.ov-top{{grid-template-columns:1fr}}.secs{{columns:1}}.overview .audkey{{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}}.audkey li{{white-space:normal;display:flex;gap:4px;align-items:baseline}}.audkey .aud{{flex:none}}}}
 .hdr-nav{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}}
 .hdr-nav a{{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:5px 13px;font-size:14px;text-decoration:none}}
 </style></head><body>

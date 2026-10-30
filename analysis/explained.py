@@ -19,7 +19,7 @@ DIRS = ['north','north-northeast','northeast','east-northeast','east','east-sout
 
 
 
-def chap(cid, emoji, color, q, answer, sub, illus, facts, lvl2, lvl3):
+def chap(cid, emoji, color, q, answer, sub, illus, facts, lvl2, lvl3, extra=''):
     facts_html = ''.join(f'<li>{x}</li>' for x in facts)
     return f'''<section class="chap" id="{cid}" style="--c:var({color})">
   <div class="chap-top">
@@ -27,7 +27,7 @@ def chap(cid, emoji, color, q, answer, sub, illus, facts, lvl2, lvl3):
       <div class="chap-q"><span class="bubble">{emoji}</span><h2>{q}</h2></div>
       <p class="answer">{answer}</p>
       <p class="sub">{sub}</p>
-      <ul class="facts">{facts_html}</ul>
+      <ul class="facts">{facts_html}</ul>{extra}
     </div>
     <figure class="illus">{illus}</figure>
   </div>
@@ -111,7 +111,8 @@ chs = [
       + chart('p14', 'When does the seabed move?', 'each bar is a month: the share of hours waves were strong enough to roll fine sand on the seabed 12 m down.')
       + chart('p15', 'Where the bottom water drifts', 'the path a drop of dye would take if carried by the measured bottom current, out where the buoy sits (offshore of the surf zone). Near the bottom the water drifts slowly south, the opposite of the sand near shore: in a bay, deep water often returns the other way.')
       + chart('p13b', 'Why the beach angle matters', 'the yearly amount for different beach directions (above zero = north). The dotted line is Camp Ellis; the answer flips if the beach faced east or further south.', 'sm')
-      + math_box('How we measured it', f'<p>Each hour, waves from the Camp Ellis buoy are bent and steepened toward shore (linear wave theory, straight depth contours) until they break, then fed into two standard sand-transport formulas (CERC and Kamphuis). The beach from the jetty to Ferry Beach faces about {R["cfg"]["normal"]}° (east-northeast). Potential transport there: about {abs(d["k_here"])/1000:.0f} thousand m³ per year to the north (Kamphuis). The direction would flip for a beach facing more than {d["flip"]:.0f}°, so farther north, where the shore turns toward the east-southeast, this single buoy can\'t say. Seabed movement uses the Shields number for 0.2 mm sand.</p>')),
+      + math_box('How we measured it', f'<p>Each hour, waves from the Camp Ellis buoy are bent and steepened toward shore (linear wave theory, straight depth contours) until they break, then fed into two standard sand-transport formulas (CERC and Kamphuis). The beach from the jetty to Ferry Beach faces about {R["cfg"]["normal"]}° (east-northeast). Potential transport there: about {abs(d["k_here"])/1000:.0f} thousand m³ per year to the north (Kamphuis). The direction would flip for a beach facing more than {d["flip"]:.0f}°, so farther north, where the shore turns toward the east-southeast, this single buoy can\'t say. Seabed movement uses the Shields number for 0.2 mm sand.</p>'),
+      extra='<p class="tryit">🏖️ <b>Try it yourself:</b> in the <a href="https://ekelting.github.io/shoreline-sandbox/">Shoreline Sandbox</a> you can build a jetty or groins, set the wave direction, send a nor\'easter, and watch the sand move and the beach erode or grow, including on Maine beach presets.</p>'),
  chap('c-river', '🏞️', '--sea', 'Where does the river meet the sea?', 'Right at our Jordan Point buoy, and the meeting place moves twice a day.',
       'Every rising tide pushes ocean water up the Saco; every falling tide the river pushes it back out. Press play to watch two real days at Jordan Point.',
       RIVER_SVG,

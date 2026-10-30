@@ -191,3 +191,7 @@ footer{color:var(--muted);font-size:13.5px;margin:40px 0 20px}
 footer a{color:inherit}
 
 .il-xs{font-size:9.5px}
+
+/* a link out to the Shoreline Sandbox, always shown under the facts */
+.tryit{margin:10px 0 0;background:var(--chip);border:2px dashed var(--c,var(--line));border-radius:14px;padding:9px 13px;font-size:15.5px;max-width:62ch}
+.tryit a{font-weight:700}
