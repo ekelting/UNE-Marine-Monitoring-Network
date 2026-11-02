@@ -445,8 +445,6 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
     <div class="grid insights">%%CARDS%%</div></section>
 
-  %%EXPLAIN%%
-
   <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Use the buttons to zoom to the last day, week or month, or drag across any panel. Click a name in the legend to hide or show it.</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
 
@@ -456,6 +454,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
 
   <section><h2>🗓️ Month by month</h2><p class="lede">Averages, lows and highs for each month (newest first).</p>
     <div class="card tablewrap"><table><thead><tr>%%MHEAD%%</tr></thead><tbody>%%MROWS%%</tbody></table></div></section>
+
+  %%EXPLAIN%%
 
   <section><details><summary>ℹ️ About this data</summary><ul>%%HOWTO%%</ul></details></section>
   <footer>Generated %%GENERATED%% %%FOOTSRC%%. Data: University of New England School of Marine and Environmental Programs.</footer>

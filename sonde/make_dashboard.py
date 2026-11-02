@@ -528,8 +528,6 @@ table.mtable{font-size:13.5px}.mtable th{white-space:normal;vertical-align:botto
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
     <div class="grid insights">%%CARDS%%</div></section>
 
-  %%EXPLAIN%%
-
   <section><h2>📈 Every reading</h2>
     <p class="lede">All the measurements on one shared timeline, with the tide on top. Use the buttons to zoom to the last day, week or month, or drag across any panel. Dashed lines on the oxygen panel mark the 5 mg/L stress and 2 mg/L hypoxia levels.</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
@@ -550,6 +548,8 @@ table.mtable{font-size:13.5px}.mtable th{white-space:normal;vertical-align:botto
 
   <section><h2>🔧 Buoy health</h2><p class="lede">Power and conditions inside the hull, hourly. The voltage channel drops to 0 every night and climbs with the sun, so it looks like solar-charge input. Humidity creeping upward can mean moisture is getting in.</p>
     <div class="card"><div id="health" class="chart"></div></div></section>
+
+  %%EXPLAIN%%
 
   <section>
     <details><summary>⚠️ Data-quality notes — what was cleaned and why</summary><ul>%%QC%%</ul></details>

@@ -625,8 +625,6 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px}
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
     <div class="grid insights">%%CARDS%%</div></section>
 
-  %%EXPLAIN%%
-
   <section><h2>📈 Every wave, every hour</h2>
     <p class="lede">Drag the slider underneath to zoom. Orange bands are storm events (%%STORM_DEF%%).</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
@@ -661,6 +659,8 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px}
 
   <section><h2>🔧 Buoy health</h2><p class="lede">Battery (bottom) and the humidity inside the hull (top). Humidity creeping upward can mean moisture is getting in.%%HEALTH_NOTE%%</p>
     <div class="card"><div id="health" class="chart"></div></div></section>
+
+  %%EXPLAIN%%
 
   <section>
     <details><summary>⚠️ Data-quality notes — what was cleaned and why</summary><ul>%%QC%%</ul></details>
