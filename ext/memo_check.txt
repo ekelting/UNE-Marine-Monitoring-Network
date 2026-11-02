@@ -1,14 +1,262 @@
-editingInfo: {"lastEditDate": 1793509391836, "schemaLastEditDate": 1786382971796, "dataLastEditDate": 1793509391836}
-timeField fields: timestamp
-2026-11-01T04:45:00+00:00  non-null: 19 e.g. ['OBJECTID', 'spotter_ramisland_meanDirection', 'spotter_ramisland_peakDirection', 'spotter_ramisland_longitude', 'spotter_ramisland_significantWaveHeight', 'spotter_ramisland_latitude']
-2026-11-01T04:40:00+00:00  non-null: 19 e.g. ['OBJECTID', 'une363_dew_point', 'une363_wind_speed', 'une363_rain', 'une363_wind_direction', 'une363_temperature_30_cm']
-2026-11-01T04:35:00+00:00  non-null: 19 e.g. ['OBJECTID', 'ram_wind_gust', 'ram_temperature', 'ram_par', 'ram_rain_mm', 'ram_dew_point']
-2026-11-01T04:30:00+00:00  non-null: 58 e.g. ['OBJECTID', 'ram_wind_gust', 'spotter_ramisland_aanderaa_abs_speed_mean_15bits', 'spotter_ramisland_aanderaa_direction_circ_mean_13bits', 'spotter_ramisland_meanDirection', 'spotter_ramisland_bm_do_temperature_mean_16bits']
-2026-11-01T04:25:00+00:00  non-null: 19 e.g. ['OBJECTID', 'ram_wind_gust', 'ram_temperature', 'ram_par', 'ram_rain_mm', 'ram_dew_point']
-2026-11-01T04:20:00+00:00  non-null: 41 e.g. ['OBJECTID', 'greatpond_rain', 'ram_wind_gust', 'greatpond_water_level', 'marsh_temperature', 'marsh_relative_humidity']
-2026-11-01T04:15:00+00:00  non-null: 50 e.g. ['OBJECTID', 'greatpond_rain', 'ram_wind_gust', 'greatpond_water_level', 'spotter_ramisland_meanDirection', 'marsh_temperature']
-2026-11-01T04:10:00+00:00  non-null: 41 e.g. ['OBJECTID', 'greatpond_rain', 'ram_wind_gust', 'greatpond_water_level', 'marsh_temperature', 'marsh_relative_humidity']
-rows after 2026-11-01 04:00 UTC: {"count": 9}
-ram wind: 2026-11-01T04:35:00+00:00 2.003791001263787
-ram wind: 2026-11-01T04:30:00+00:00 1.669825834386489
-ram wind: 2026-11-01T04:25:00+00:00 2.003791001263787
+newest by OBJECTID in the view:
+   94778 2026-11-01T04:45:00+00:00
+   94777 2026-11-01T04:40:00+00:00
+   94776 2026-11-01T04:35:00+00:00
+   94775 2026-11-01T04:30:00+00:00
+   94774 2026-11-01T04:25:00+00:00
+   94773 2026-11-01T04:20:00+00:00
+rows with no timestamp: {'count': 0}
+view definitionQuery: None | definitionExpression: None
+
+services in this ArcGIS organisation:
+ * 11_23_2021 FeatureServer
+ * 268 FeatureServer
+ * ACT_Potential_Map_WFL1 FeatureServer
+ * Aerial_Imagery_WFL1 FeatureServer
+ * Aggregation_of_Site_Features_to_Site_Area FeatureServer
+ * All_Student_Towns_164_WFL1 FeatureServer
+ * Amphibian_Potential_Mortality_in_Vernal_Pools___WFL1 FeatureServer
+ * Area_Example_Map_WFL1 FeatureServer
+ * Arizona_pop_change_from_2000_to_2010 FeatureServer
+ * Arundel_and_nearby_towns FeatureServer
+ * Arundel_Conservation_Trust_Planning_WFL1 FeatureServer
+ * Arundel_Land_Use_Map FeatureServer
+ * Arundel_refocused_map_CW_WFL1 FeatureServer
+ * ArundelWebmapCW_WFL1 FeatureServer
+ * Biddeford_Arundel_Kennebunkport_Boundaries FeatureServer
+ * Biddeford_Historical_Photos_by_year_WFL1 FeatureServer
+ * BigNightMonitoringSites_PointsAlongLines FeatureServer
+ * Bikeability_Final_WFL1 FeatureServer
+ * Blue_shark_distribution_WFL1 FeatureServer
+ * Bobolink_Migration_WFL1 FeatureServer
+ * Building_Foot_Prints FeatureServer
+ * By_City_WFL1 FeatureServer
+ * CapeCod_Polygon FeatureServer
+ * City of Haverhill Boundary FeatureServer
+ * Clipped_SAR_Points_Density FeatureServer
+ * CSOs_on_the_Merrimack_WFL1 FeatureServer
+ * Dissolve_Africa_Countries_MA FeatureServer
+ * Dissolve_Africa_Countries_SHB FeatureServer
+ * Dissolve_WDPA_Rarity_89_Birds_Africa_MA FeatureServer
+ * Dissolve_WDPA_Rarity_89_Birds_Africa_SHB FeatureServer
+ * DOT_Culverts_WFL1 FeatureServer
+ * Endangered_Right_Whales_WFL1 FeatureServer
+ * Enriched_Counties_in_virginia FeatureServer
+ * Enriched_States_Smith FeatureServer
+ * ESCB_Clip_FeatureToPoint_Density FeatureServer
+ * Fringe_Marsh_Study_Site FeatureServer
+ * Georeferenced FeatureServer
+ * GIS_164_Fall2021_StudentTowns_WFL1 FeatureServer
+ * GIS_DAY_MAP_3_WFL1 FeatureServer
+ * GIS_Day_West3_WFL1 FeatureServer
+ * Green_Crab_Invasive_Range_WFL1 FeatureServer
+ * Green_Crab_Retail_Locations_WFL1 FeatureServer
+ * Green_Light_Contestants_WFL1 FeatureServer
+ * Haverhill 3 Meter Contours FeatureServer
+ * Haverhill 30 Ft Contours FeatureServer
+ * Haverhill MA Property Tax Parcels FeatureServer
+ * Haverhill Open Space by Level of Protection FeatureServer
+ * imagery_UNE_North_map_WFL1 FeatureServer
+     layer 0 UNE_Campus_Ortho: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 1 UNE: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 2 UArcticAssembly: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 3 RuralCommunities: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-05-14T00:00:00+00:00
+     layer 4 Partnerships_2: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 5 Partnerships_1: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 6 MaineandtheArctic: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-28T00:00:00+00:00
+     layer 7 Hackathon0: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-03-17T00:00:00+00:00
+     layer 8 DigitalHealth: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-10-15T00:00:00+00:00
+     layer 9 Covid19Watch: last data edit 2022-01-08T21:46:19.267000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-12-16T00:00:00+00:00
+ * imagery_UNE_North_map1_WFL1 FeatureServer
+     layer 0 UNE_Campus_Ortho: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 1 UNE: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 2 UArcticAssembly: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 3 RuralCommunities: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-05-14T00:00:00+00:00
+     layer 4 Partnerships_2: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 5 Partnerships_1: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 6 MaineandtheArctic: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-28T00:00:00+00:00
+     layer 7 Hackathon0: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-03-17T00:00:00+00:00
+     layer 8 DigitalHealth: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-10-15T00:00:00+00:00
+     layer 9 Covid19Watch: last data edit 2022-01-08T21:58:02.262000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-12-16T00:00:00+00:00
+ * Invader_Plant__Invasive_Species_of_York_County__ME_WFL1 FeatureServer
+ * Invasive_Species_of_York_County__ME_WFL1 FeatureServer
+ * Join_Features_to_GRB_Watershed_Sites FeatureServer
+ * Kennebunkport_Conservation_Trust FeatureServer
+ * Lighting_the_Way_to_an_Adventurous_Day FeatureServer
+ * Lionfish_Invasive_Range_WFL1 FeatureServer
+ * Maine_and_the_arctic_map_1_WFL1 FeatureServer
+ * Maine_and_the_arctic_map_WFL1 FeatureServer
+ * Maine_and_the_New_North FeatureServer
+ * Maine_and_the_New_North_WFL1 FeatureServer
+ * Maine_Boundary FeatureServer
+ * Maine_E911_Roads_Density FeatureServer
+ * Maine_Healthy_Beaches_Water_Quality_Map_WFL1 FeatureServer
+ * Maine_Wetlands_Characterization FeatureServer
+ * MaineCoastStormSurgePoints01102024 FeatureServer
+ * MaineCoastStormSurgePoints01132024 FeatureServer
+ * MAR_350 FeatureServer
+ * Marine_Conservation_Events_by_NGOs_WFL1 FeatureServer
+ * Maskiell_Internship_Squirrel_Map_WFL1 FeatureServer
+ * Merge_AllSquirrels041420_Density FeatureServer
+ * Minority_Owned_Businesses_in_Biddeford__Maine_WFL1 FeatureServer
+ * Needle_Exchange_Maine_19 FeatureServer
+ * Pangas_Project_WFL1 FeatureServer
+ * Partnered_Countries FeatureServer
+ * Partnerships FeatureServer
+ * Partnerships_for_the_Goals FeatureServer
+ * Partnerships_for_the_Goals_WFL1 FeatureServer
+ * Peregrine_Climbing_Locations_WFL1 FeatureServer
+ * PortlandCommunitySquash1 FeatureServer
+ * Potential_Mortality_of_Vernal_Pools_in_Maine_WFL1 FeatureServer
+ * Potential_Mortality_Rates_of_Vernal_Pools_WFL1 FeatureServer
+ * Pre_1850 FeatureServer
+ * Rarity_89_Birds_Africa_MA FeatureServer
+ * Rarity_89_Birds_Africa_SHB FeatureServer
+ * Registration_Map_2022_WFL1 FeatureServer
+ * Restaurants_Serving_Green_Crab_WFL1 FeatureServer
+ * Restaurants_Serving_Lionfish_WFL1 FeatureServer
+ * Road_Density_in_Thatcher_Brook_Watershed_WFL1 FeatureServer
+ * Road_Trip_Through_America_s_Past_WFL1 FeatureServer
+ * Saco_River_Wildlife_Center_Location_WFL1 FeatureServer
+ * service_3a6492919db44f12ae540c32516db427 FeatureServer
+ * service_52968c1709b943dda1b7985a6dd0c0ef FeatureServer
+ * service_e5f6d84b7d8f464a8c7f29fbc6d357bb FeatureServer
+ * Shark_Sightings FeatureServer
+ * Site_Registration_Button FeatureServer
+ * Speed_limit_WFL1 FeatureServer
+ * Spirit_WFL1 FeatureServer
+ * Squirrel_Map_WFL1 FeatureServer
+ * SRWC_Patient_Intakes_2020_2021_WFL1 FeatureServer
+ * State_Habitat_Layers_Consolidated_WFL1 FeatureServer
+ * Stores_Retailing_Lionfish_WFL1 FeatureServer
+ * Storm_Damage FeatureServer
+ * Storm_Damage_Videos FeatureServer
+ * Summarize_WDPA_Rarity_89_Birds_Africa_MA FeatureServer
+ * Summarize_WDPA_Rarity_89_Birds_Africa_SHB FeatureServer
+ * survey123_35ce3599e4e74ffcae6272e7ffbfb13e_fieldworker FeatureServer
+ * survey123_36e9e037eb30498384d1403393d10fc3_fieldworker FeatureServer
+ * survey123_48928400dce94ba2b8b904f2c64f16e4_fieldworker FeatureServer
+ * survey123_667b88baf2e04d9498cd140786410c89_fieldworker FeatureServer
+ * survey123_667b88baf2e04d9498cd140786410c89_stakeholder FeatureServer
+ * survey123_9261fafe4409499e8b4551e28bda641c_fieldworker FeatureServer
+ * survey123_a5aea78c61b34b5eb59440fd39cd8a40_fieldworker FeatureServer
+ * survey123_a85ae73a58ad42808d24867fdafcffbf_fieldworker FeatureServer
+ * survey123_ba285a2359704821a56f286409ef8f4a_stakeholder FeatureServer
+ * survey123_de1f87e9456b4cf5a739b59f9447b3d0_fieldworker FeatureServer
+ * survey123_f1d307ddf8224df29c89c2fc628f42d7_fieldworker FeatureServer
+ * TB_Watershed_RiverClass FeatureServer
+ * Thatcher_Brook_Natural_Resources_WFL1 FeatureServer
+ * Thatcher_Brook_Watershed_Impervious_Cover FeatureServer
+ * ThatcherBrookWatershed_Boundary FeatureServer
+ * ThatcherICFeatureToPoint_WithArea FeatureServer
+ * ThatcherICFeatureToPoint_WithArea_Density FeatureServer
+ * The_Big_Night—Maine_Amphibian_Migration_Monitoring_WFL1 FeatureServer
+ * Time_Map_WFL1 FeatureServer
+ * Trails_of_UNE_WFL1 FeatureServer
+     layer 0 Trails of UNE: last data edit 2021-07-14T16:01:17.719000+00:00; date fields []; newest None
+     layer 1 Parking Lots: last data edit 2020-05-01T14:37:27.072000+00:00; date fields []; newest None
+     layer 2 Lot363: last data edit 2020-05-01T14:37:27.072000+00:00; date fields []; newest None
+ * une_north_map_WFL1 FeatureServer
+     layer 1 Partnered Countries1: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 2 Partnered Countries: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 3 Ocean Labels: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 4 UNE_Campus_Ortho: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 5 UNE: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 6 Hackathon0: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-03-17T00:00:00+00:00
+     layer 7 Hackathon: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-03-17T00:00:00+00:00
+     layer 8 UArcticAssembly: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 9 RuralCommunities: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-05-14T00:00:00+00:00
+     layer 10 DigitalHealth: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-10-15T00:00:00+00:00
+     layer 11 MaineandtheArctic: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-28T00:00:00+00:00
+     layer 12 Covid19Watch: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-12-16T00:00:00+00:00
+     layer 13 Partnerships: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 14 Partnerships: last data edit 2022-01-08T22:16:22.798000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 16 TheNewNorth: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 17 UNENorthPartnerCountry_Partial: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 18 WorldCountries: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 19 Ocean_Top: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 20 SeaIceExtent2020: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+     layer 21 Ocean_Bottom: last data edit 2022-01-08T22:16:22.798000+00:00; date fields []; newest None
+ * UNE_North_Partner_map_WFL1 FeatureServer
+     layer 1 Partnered Countries1: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 2 Partnered Countries: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 3 Ocean Labels: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 4 UNE_Campus_Ortho: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 5 UNE: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-01T00:00:00+00:00
+     layer 6 Hackathon0: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-03-17T00:00:00+00:00
+     layer 7 Hackathon: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-03-17T00:00:00+00:00
+     layer 8 UArcticAssembly: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 9 RuralCommunities: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-05-14T00:00:00+00:00
+     layer 10 DigitalHealth: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2021-10-15T00:00:00+00:00
+     layer 11 MaineandtheArctic: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-10-28T00:00:00+00:00
+     layer 12 Covid19Watch: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2020-12-16T00:00:00+00:00
+     layer 13 Partnerships: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 14 Partnerships: last data edit 2022-01-08T21:27:08.515000+00:00; date fields ['Date_Start', 'Date_End']; newest 2022-05-31T00:00:00+00:00
+     layer 16 TheNewNorth: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 17 UNENorthPartnerCountry_Partial: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 18 WorldCountries: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 19 Ocean_Top: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 20 SeaIceExtent2020: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+     layer 21 Ocean_Bottom: last data edit 2022-01-08T21:27:08.515000+00:00; date fields []; newest None
+ * UNE_Vernal_pools_distance_from_road_analysis_WFL1 FeatureServer
+     layer 0 Farvernalpools_CopyFeatures1: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 1 Mediumdistancevernalpools_CopyFeatures: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 2 Closevernalpools_CopyFeatures: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 3 VPpointsLabels: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 4 DistanceFromRoads: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 5 roads_Clip: last data edit 2021-04-28T23:49:39.046000+00:00; date fields ['DATEUPDATE', 'AMUPDDAT', 'FMUPDDAT', 'CREATDAT']; newest 2020-09-02T11:06:02+00:00
+     layer 7 roads_Clip_Buffer764: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 8 roads_Clip_Buffer382: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 11 350 Meters: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 12 700 Meters: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+     layer 13 VPpoints: last data edit 2021-04-28T23:49:39.046000+00:00; date fields []; newest None
+ * updated_sightings FeatureServer
+ * us_medium_shoreline FeatureServer
+ * VPStudySite_WFL1 FeatureServer
+ * Walking_Trails_of_Biddo_and_Kennebunk_WFL1 FeatureServer
+ * YCSWCD_Landmarks_WFL1 FeatureServer
+ * YCSWCD_Office_Map_WFL1 FeatureServer
+ * YCSWCD_SiteMap_WFL1 FeatureServer
+ * zestudio_pangas_mask FeatureServer
+ * 197_Sunbutter_F FeatureServer
+ * Haverhill_Hiking_Traills FeatureServer
+ * Haverhill_MA_Conservation_Areas FeatureServer
+ * City_of_Haverhill_Boundary_Shadow FeatureServer
+ * Haverhill_Parks FeatureServer
+ * Haverhill_Parks_and_Schools FeatureServer
+ * ALF3_WFL1 FeatureServer
+ * Digitized_Dunes_by_Date FeatureServer
+     layer 0 main_Project: last data edit 2025-08-19T14:09:53.119000+00:00; date fields []; newest None
+ * Recovered_Dunes FeatureServer
+     layer 4 Recovered Dunes: last data edit 2025-09-03T21:24:43.041000+00:00; date fields []; newest None
+ * Post_Storm_Dunes FeatureServer
+     layer 3 Post-Storm Dunes: last data edit 2025-09-03T21:25:15.687000+00:00; date fields []; newest None
+ * Pre_Storm_Dunes FeatureServer
+     layer 0 Pre-Storm Dunes: last data edit 2025-09-03T21:26:17.673000+00:00; date fields []; newest None
+ * PreStorm_Dunes FeatureServer
+     layer 0 Pre-Storm Dunes: last data edit 2025-09-07T13:36:30.567000+00:00; date fields []; newest None
+ * PreStorm_Dunes2 FeatureServer
+     layer 0 Pre-Storm Dunes: last data edit 2025-09-07T14:11:18.838000+00:00; date fields []; newest None
+ * LandtrustNPP FeatureServer
+ * Bobolink_Trail FeatureServer
+ * NPPTail FeatureServer
+ * Wood_Fern_Alley FeatureServer
+ * Benches_on_nearpoint FeatureServer
+ * Bordwalks_IN_NPP FeatureServer
+ * SENSOR_DATA FeatureServer
+ * Spotter_buoy_data FeatureServer
+ * Licor UNE Ram Island Data FeatureServer
+     error InvalidURL("URL can't contain control characters. '/0vd30ZJwMECKNLFu/arcgis/rest/services/Licor UNE Ram Island Data/FeatureServer?f=json' (found at least ' ')")
+ * Civil_War_Monuments_in_Maine FeatureServer
+ * UNE_marine_and_environmental_observation_locations FeatureServer
+     layer 0 UNE_marine_and_environmental_observation_locations: last data edit 2026-09-17T14:12:30.822000+00:00; date fields []; newest None
+ * UNE_observations_data_layer_view FeatureServer
+     layer 0 UNE MEMO data: last data edit 2026-11-01T05:03:11.836000+00:00; date fields ['timestamp']; newest 2026-11-01T04:45:00+00:00
+ * BlueSonde_Buoy_Data_view FeatureServer
+ * Fathom Live Environmental Sensors FeatureServer
+ * SWH_Infographic_Pounts FeatureServer
+ * Basement_and_Foundation FeatureServer
+ * Sayward_Wheeler_House_Flood_Lines FeatureServer
+ * 2024_Flood FeatureServer
+ * SWH_points_2 FeatureServer
+ * 245_M_Timothy FeatureServer
