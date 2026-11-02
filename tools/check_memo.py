@@ -16,26 +16,27 @@ try:
     W('newest by OBJECTID in the view:'); [W('  ', f['attributes']['OBJECTID'], ts(f['attributes']['timestamp'])) for f in js.get('features', [])]
     W('rows with no timestamp:', get(view + '/query', where='timestamp IS NULL', returnCountOnly='true'))
     meta = get(view); W('view definitionQuery:', meta.get('viewDefinitionQuery'), '| definitionExpression:', meta.get('definitionExpression'))
-    svcs = get(BASE)
-    W('\nservices in this ArcGIS organisation:')
-    for s in svcs.get('services', []):
-        name = s['name']; W(' *', name, s['type'])
-        if s['type'] != 'FeatureServer' or not any(k in name.lower() for k in ('une', 'obs', 'memo', 'licor', 'station', 'weather', 'ram')):
-            continue
+    for name in ['SENSOR_DATA', 'Licor UNE Ram Island Data', 'Spotter_buoy_data', 'Fathom Live Environmental Sensors', 'BlueSonde_Buoy_Data_view']:
+        W('\n*', name)
         try:
-            fs = get(f"{BASE}/{name}/FeatureServer")
+            u = f"{BASE}/{urllib.parse.quote(name)}/FeatureServer"
+            fs = get(u)
             for lyr in fs.get('layers', []) + fs.get('tables', []):
-                lm = get(f"{BASE}/{name}/FeatureServer/{lyr['id']}")
+                lm = get(f"{u}/{lyr['id']}")
                 ei = lm.get('editingInfo') or {}
+                flds = [f['name'] for f in lm.get('fields', [])]
                 dates = [f['name'] for f in lm.get('fields', []) if f.get('type') == 'esriFieldTypeDate']
-                newest = None
-                if dates:
-                    q = get(f"{BASE}/{name}/FeatureServer/{lyr['id']}/query", where='1=1', outFields=dates[0], orderByFields=f'{dates[0]} DESC', resultRecordCount=1, returnGeometry='false')
-                    fe = q.get('features') or []
-                    newest = ts(fe[0]['attributes'][dates[0]]) if fe else None
-                W(f"     layer {lyr['id']} {lyr['name']}: last data edit {ts(ei.get('dataLastEditDate'))}; date fields {dates}; newest {newest}")
+                W(f"   layer {lyr['id']} {lyr['name']}: last data edit {ts(ei.get('dataLastEditDate'))}; {len(flds)} fields; date fields {dates}")
+                W('   fields:', ', '.join(flds[:60]))
+                for d in dates[:3]:
+                    q = get(f"{u}/{lyr['id']}/query", where='1=1', outFields='*', orderByFields=f'{d} DESC', resultRecordCount=2, returnGeometry='false')
+                    for fe in q.get('features') or []:
+                        a = fe['attributes']; W(f"     newest by {d}: {ts(a.get(d))} ->", {k: v for k, v in list(a.items())[:12]})
+                if not dates:
+                    q = get(f"{u}/{lyr['id']}/query", where='1=1', outFields='*', orderByFields='OBJECTID DESC', resultRecordCount=2, returnGeometry='false')
+                    for fe in q.get('features') or []: W('     newest row:', fe['attributes'])
         except Exception as e:
-            W('     error', repr(e))
+            W('   error', repr(e))
 except Exception as e:
     W('ERROR', repr(e))
 out.close(); print(open('ext/memo_check.txt').read())
