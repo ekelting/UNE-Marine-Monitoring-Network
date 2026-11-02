@@ -1,0 +1,14 @@
+editingInfo: {"lastEditDate": 1793509391836, "schemaLastEditDate": 1786382971796, "dataLastEditDate": 1793509391836}
+timeField fields: timestamp
+2026-11-01T04:45:00+00:00  non-null: 19 e.g. ['OBJECTID', 'spotter_ramisland_meanDirection', 'spotter_ramisland_peakDirection', 'spotter_ramisland_longitude', 'spotter_ramisland_significantWaveHeight', 'spotter_ramisland_latitude']
+2026-11-01T04:40:00+00:00  non-null: 19 e.g. ['OBJECTID', 'une363_dew_point', 'une363_wind_speed', 'une363_rain', 'une363_wind_direction', 'une363_temperature_30_cm']
+2026-11-01T04:35:00+00:00  non-null: 19 e.g. ['OBJECTID', 'ram_wind_gust', 'ram_temperature', 'ram_par', 'ram_rain_mm', 'ram_dew_point']
+2026-11-01T04:30:00+00:00  non-null: 58 e.g. ['OBJECTID', 'ram_wind_gust', 'spotter_ramisland_aanderaa_abs_speed_mean_15bits', 'spotter_ramisland_aanderaa_direction_circ_mean_13bits', 'spotter_ramisland_meanDirection', 'spotter_ramisland_bm_do_temperature_mean_16bits']
+2026-11-01T04:25:00+00:00  non-null: 19 e.g. ['OBJECTID', 'ram_wind_gust', 'ram_temperature', 'ram_par', 'ram_rain_mm', 'ram_dew_point']
+2026-11-01T04:20:00+00:00  non-null: 41 e.g. ['OBJECTID', 'greatpond_rain', 'ram_wind_gust', 'greatpond_water_level', 'marsh_temperature', 'marsh_relative_humidity']
+2026-11-01T04:15:00+00:00  non-null: 50 e.g. ['OBJECTID', 'greatpond_rain', 'ram_wind_gust', 'greatpond_water_level', 'spotter_ramisland_meanDirection', 'marsh_temperature']
+2026-11-01T04:10:00+00:00  non-null: 41 e.g. ['OBJECTID', 'greatpond_rain', 'ram_wind_gust', 'greatpond_water_level', 'marsh_temperature', 'marsh_relative_humidity']
+rows after 2026-11-01 04:00 UTC: {"count": 9}
+ram wind: 2026-11-01T04:35:00+00:00 2.003791001263787
+ram wind: 2026-11-01T04:30:00+00:00 1.669825834386489
+ram wind: 2026-11-01T04:25:00+00:00 2.003791001263787
