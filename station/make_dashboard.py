@@ -68,6 +68,15 @@ def build_figs(S):
     if gaps.any():
         P = pd.concat([P, pd.DataFrame(index=P.index[gaps.values] - pd.Timedelta(minutes=1), columns=P.columns, dtype=float)]).sort_index()
     H = _loc(S['hourly'])
+
+    def _own(frame, col):
+        # one measurement's own readings: sensors on the same station report at different rates (soil every 10 min,
+        # air every 5), so skip the empty slots between readings and break the line only at gaps over 3 hours
+        c = frame[col].dropna()
+        g = c.index.to_series().diff() > pd.Timedelta(hours=3)
+        if g.any():
+            c = pd.concat([c, pd.Series(np.nan, index=c.index[g.values] - pd.Timedelta(minutes=1))]).sort_index()
+        return c
     panels = []
     for v in bc.VARS:
         if v['key'] not in df or v.get('agg') == 'dir' or not v.get('panel'):
@@ -102,7 +111,7 @@ def build_figs(S):
                                marker=dict(color=col), meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
                                hovertemplate='%{y:.2f} ' + ulabel(v) + '<extra>' + esc(v['label']) + '</extra>'))
             else:
-                tr.append(dict(type='scattergl', mode='lines', name=v['label'], x=_ts(P.index), y=_clean(P[v['key']].values),
+                tr.append(dict(type='scattergl', mode='lines', name=v['label'], x=_ts(_own(P, v['key']).index), y=_clean(_own(P, v['key']).values),
                                line=dict(color=col, width=1.4), connectgaps=False, meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
                                hovertemplate='%{y:.' + str(v.get('dec', 1)) + 'f} ' + ulabel(v) + '<extra>' + esc(v['label']) + '</extra>'))
     # One small legend per panel, just above its top-right corner, instead of one long legend under the chart.
@@ -508,10 +517,22 @@ function render(){
       for (const k of ['angle','size']) t.marker[k]=idx.map(i=>t.marker[k][i]);
       L.yaxis.categoryarray=keep;
       if (el.clientWidth<700){ const k=Math.max(0.55, el.clientWidth/760); t.marker.size=t.marker.size.map(v=>v*k); } L.height=Math.max(260, 36*keep.length+70); el.style.height=L.height+'px'; }
-    if (Object.keys(L).some(k=>/^legend\d+$/.test(k)) && el.clientWidth < 600){   // phones: per-panel legends would wrap into the panels, so use one legend underneath
-      for (const k of Object.keys(L)) if (/^legend\d+$/.test(k)) delete L[k];
-      for (const t of f.data) delete t.legend;
-      L.legend={orientation:'h', x:0, xanchor:'left', y:-0.07, yanchor:'top', font:{size:11}}; }
+    if (Object.keys(L).some(k=>/^legend\d*$/.test(k)) && el.clientWidth < 600){
+      // phones: keep each panel's legend with its own panel, in a band just above it sized for the rows it wraps to
+      const W=el.clientWidth, panelPx=140, gapPx=24;
+      const mt=(L.margin&&L.margin.t)||50, mb=(L.margin&&L.margin.b)||40;
+      const ax=Object.keys(L).filter(k=>/^yaxis\d*$/.test(k)).sort((a,b)=>(+a.slice(5)||1)-(+b.slice(5)||1));
+      const lg=k=>k==='yaxis'?'legend':'legend'+k.slice(5);
+      const avail=W-((L.margin&&L.margin.l)||70)-((L.margin&&L.margin.r)||20);   // legends wrap at the plotting width
+      const bands=ax.map(k=>{ const nm=lg(k); if(!L[nm]) return 0;
+        const names=f.data.filter(t=>(t.legend||'legend')===nm && t.showlegend!==false).map(t=>String(t.name||''));
+        let rows=names.length?1:0, used=0; for (const nmx of names){ const w=60+nmx.length*6.8; if(used && used+w>avail){ rows++; used=0; } used+=w; }
+        return rows*19+6; });
+      const plotPx=ax.reduce((sum,k,i)=>sum+panelPx+bands[i]+(i?gapPx:0),0);
+      let y=plotPx;
+      ax.forEach((k,i)=>{ if(i) y-=gapPx; y-=bands[i]; const top=y, bot=y-panelPx; L[k].domain=[Math.max(0,bot/plotPx), top/plotPx];
+        const nm=lg(k); if(L[nm]) Object.assign(L[nm],{x:0, xanchor:'left', y:top/plotPx, yanchor:'bottom', font:{size:10.5}}); y=bot; });
+      L.height=plotPx+mt+mb; el.style.height=L.height+'px'; }
     if (L.polar && el.clientWidth < 560){ L.height=600; L.polar.domain={x:[0,1],y:[0.42,1]}; L.legend=Object.assign({},L.legend,{x:0,y:0,yanchor:'bottom'}); }
     try { Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']}); } catch(e){ console.error(id,e); }
   }
