@@ -105,7 +105,7 @@ def build_xlsx(S, path, SS=None):
     wh = wb.active
     wh.title = 'Hourly'
     h = hr.copy()
-    h.index = bc.local(h.index).tz_localize(None)
+    h = bc.naive(h)
     h = h.reset_index().rename(columns={'t': 'time', 'index': 'time'})
     h = h[['time', 'hs', 'tp', 'te', 'dm', 'power_kw_m', 'wspd', 'pres']]
     h = h.dropna(subset=['hs', 'pres'], how='all')
@@ -455,7 +455,7 @@ def _sensor_sheets(wb, SS):
     # hourly sheet + charts per group
     wh = wb.create_sheet('Sensors Hourly')
     H = SS['hourly'].copy()
-    H.index = bc.local(H.index).tz_localize(None)
+    H = bc.naive(H)
     H = H.dropna(how='all')
     _title(wh, '⏱️ Smart Mooring sensors — hourly averages', 'Local time. One column per sensor channel.', len(H.columns) + 1)
     _header(wh, 3, ['Time (local)'] + list(H.columns))

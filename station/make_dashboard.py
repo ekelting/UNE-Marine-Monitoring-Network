@@ -40,7 +40,7 @@ def _ts(idx):
 
 def _loc(df):
     d = df.copy()
-    d.index = bc.local(d.index).tz_localize(None)
+    d = bc.naive(d)
     return d
 
 

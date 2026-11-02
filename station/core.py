@@ -31,6 +31,12 @@ DO_STRESS, DO_HYPOXIC = 5.0, 2.0
 
 def local(idx):
     return pd.DatetimeIndex(idx).tz_convert(LOCAL_TZ)
+def naive(obj):
+    """obj with its index in local clock time, without the time zone. When clocks fall back in November the
+    1–2 AM hour happens twice; the repeat would give duplicate times, so only the first of each is kept."""
+    out = obj.set_axis(local(obj.index).tz_localize(None))
+    return out[~out.index.duplicated(keep='first')]
+
 
 
 def c2f(c):
@@ -111,7 +117,7 @@ def daily(df):
 
 def monthly(df):
     L = df.copy()
-    L.index = local(L.index).tz_localize(None)
+    L = naive(L)
     rows = []
     for p, g in L.groupby(L.index.to_period('M')):
         r = {'month': str(p), 'label': p.strftime('%b %Y'), 'days_with_data': g.index.normalize().nunique(), 'days_in_month': p.days_in_month}

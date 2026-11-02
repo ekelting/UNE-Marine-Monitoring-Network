@@ -69,7 +69,7 @@ def main():
         print('::error::No station data yet — nothing to build.')
         sys.exit(1)
     S = bc.summary(df, removed)
-    L = lambda d: d.set_axis(bc.local(d.index).tz_localize(None)).rename_axis('time_local')  # noqa: E731
+    L = lambda d: bc.naive(d).rename_axis('time_local')  # noqa: E731
     L(S['hourly']).round(4).to_csv(os.path.join(a.out, 'data', 'hourly.csv'))
     S['daily'].round(4).to_csv(os.path.join(a.out, 'data', 'daily.csv'))
     S['monthly'].round(4).to_csv(os.path.join(a.out, 'data', 'monthly.csv'), index=False)

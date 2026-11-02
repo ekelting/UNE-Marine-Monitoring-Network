@@ -174,7 +174,7 @@ def build(d):
     wide = pd.DataFrame({s['col']: cols[s['id']] for s in series}).sort_index()
     # monthly
     loc = wide.copy()
-    loc.index = bc.local(loc.index).tz_localize(None)
+    loc = bc.naive(loc)
     rows = []
     for s in series:
         col = loc[s['col']].dropna()

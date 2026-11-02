@@ -60,7 +60,7 @@ def build_figs(S, bd):
     mo = mo[~mo['partial']].reset_index(drop=True)
     figs = {}
     H = hr.copy()
-    H.index = bc.local(H.index).tz_localize(None)
+    H = bc.naive(H)
 
     # 1) timeline --------------------------------------------------------------
     dmax = H['hs'].resample('1D').max()
@@ -162,7 +162,7 @@ def build_figs(S, bd):
 
     # 5) pressure + waves (stacked panels, shared time axis — no dual axis) -----
     P = bd.met['pres'].resample('1h').mean()
-    P.index = bc.local(P.index).tz_localize(None)
+    P = bc.naive(P)
     W = H['wspd'] * 2.23694        # m/s → mph
     figs['pressure'] = _fig([
         dict(type='scattergl', mode='lines', name='Pressure', x=_ts(P.index), y=_clean(P.tolist()),
@@ -230,7 +230,7 @@ def build_figs(S, bd):
 
     # 7) buoy health ------------------------------------------------------------
     M = bd.met[['humid', 'batt']].resample('6h').mean()
-    M.index = bc.local(M.index).tz_localize(None)
+    M = bc.naive(M)
     figs['health'] = _fig([
         dict(type='scatter', mode='lines', name='Hull humidity', x=_ts(M.index), y=_clean(M['humid'].tolist()),
              line=dict(color=AQUA, width=2), yaxis='y2', hovertemplate='%{x|%b %d}: %{y:.0f}% humidity<extra></extra>'),
@@ -254,7 +254,7 @@ def build_sensor_figs(SS):
         return {}, block, []
     figs, parts, tiles = {}, [], []
     H = SS['hourly'].copy()
-    H.index = bc.local(H.index).tz_localize(None)
+    H = bc.naive(H)
     x = _ts(H.index)
     groups = []
     for s in SS['series']:

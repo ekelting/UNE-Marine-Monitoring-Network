@@ -294,6 +294,12 @@ def load(root, verbose=True, cache_dir=None):
 # -------------------------------------------------------------------- stats --
 def local(idx):
     return idx.tz_convert(LOCAL_TZ)
+def naive(obj):
+    """obj with its index in local clock time, without the time zone. When clocks fall back in November the
+    1–2 AM hour happens twice; the repeat would give duplicate times, so only the first of each is kept."""
+    out = obj.set_axis(local(obj.index).tz_localize(None))
+    return out[~out.index.duplicated(keep='first')]
+
 
 
 def hourly(bd):
@@ -367,9 +373,9 @@ def daily(bd):
 
 def monthly(bd, ev):
     w = bd.waves.copy()
-    w.index = local(w.index).tz_localize(None)
+    w = naive(w)
     m = bd.met.copy()
-    m.index = local(m.index).tz_localize(None)
+    m = naive(m)
     out = []
     for per, g in w.groupby(w.index.to_period('M')):
         gm = m[m.index.to_period('M') == per]

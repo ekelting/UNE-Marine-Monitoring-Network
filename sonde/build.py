@@ -71,7 +71,7 @@ def main():
     # ---- downloads ----
     def L(df):
         d = df.copy()
-        d.index = bc.local(d.index).tz_localize(None)
+        d = bc.naive(d)
         d.index.name = 'time_local'
         return d
     rd = L(B['df'].drop(columns=['batt_v'], errors='ignore'))
@@ -153,7 +153,7 @@ def build_xlsx(S, readings, path):
         nice(S['monthly']).to_excel(xw, sheet_name='Monthly', index=False)
         nice(S['daily']).to_excel(xw, sheet_name='Daily')
         h = S['hourly'].copy()
-        h.index = bc.local(h.index).tz_localize(None)
+        h = bc.naive(h)
         h.index.name = 'time_local'
         nice(h).round(4).to_excel(xw, sheet_name='Hourly')
         nice(readings).round(4).to_excel(xw, sheet_name='Every reading')

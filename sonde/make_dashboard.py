@@ -38,7 +38,7 @@ def _ts(idx):
 
 def _loc(s):
     s = s.copy()
-    s.index = bc.local(s.index).tz_localize(None)
+    s = bc.naive(s)
     return s
 
 

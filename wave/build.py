@@ -95,7 +95,7 @@ def main():
     msheet.build_xlsx(S, os.path.join(a.out, xlsx), SS)
 
     # tidy CSV exports (handy for Google Sheets IMPORTDATA / MATLAB / R)
-    L = lambda df: df.set_axis(bc.local(df.index).tz_localize(None)) if isinstance(df.index, pd.DatetimeIndex) else df
+    L = lambda df: bc.naive(df) if isinstance(df.index, pd.DatetimeIndex) else df
     hr = L(S['hourly'].copy())
     hr.index.name = 'time_local'
     hr.round(4).to_csv(os.path.join(a.out, 'data', 'hourly.csv'))
