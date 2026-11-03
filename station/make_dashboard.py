@@ -98,22 +98,56 @@ def build_figs(S):
                                                       dict(count=1, label='1 mo', step='month', stepmode='backward'),
                                                       dict(step='all', label='All')], x=0, y=1.0, yanchor='bottom')))
     tr = []
+    # Two versions of every line, swapped by the page as you zoom: zoomed out (more than ~5 weeks shown) each line is a
+    # daily average with a light band from that day's low to high, and rain is daily totals; zoomed in it is every reading.
+    D = _loc(df)
+    def _daily(col):
+        c = D[col].dropna()
+        g = c.resample('1D')
+        return g.min(), g.max(), g.mean()
     for i, (title, vs) in enumerate(panels):
         ax = '' if i == 0 else str(i + 1)
         top, h = tops[i], hs_[i]
         units = ulabel(vs[0])
+        PEAK = {'gust_ms', 'solar_wm2', 'par'}   # drop to zero every night or are peaks already: show each day's peak
+        band = len(vs) <= 2 and not any(x['key'] in PEAK for x in vs)   # bands only where they won't pile up
         lay['yaxis' + ax] = dict(title=f'{title} ({units})' if units else title, domain=[max(top - h, 0), top], anchor='x',
                                  rangemode='tozero' if vs[0].get('agg') == 'sum' or vs[0].get('conv') == 'speed' else 'normal')
         for j, v in enumerate(vs):
             col = v.get('color') or CAT[(i + j) % len(CAT)]
+            k, dec, u = v['key'], str(v.get('dec', 1)), ulabel(v)
             if v.get('agg') == 'sum':
-                tr.append(dict(type='bar', name=v['label'] + ' (hourly total)', x=_ts(H.index), y=_clean(H[v['key']].values),
+                dt = H[k].resample('1D').sum(min_count=1)
+                tr.append(dict(type='bar', uid=f'd:{k}', name=v['label'] + ' (daily total)', x=_ts(dt.index), y=_clean(dt.values),
                                marker=dict(color=col), meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
-                               hovertemplate='%{y:.2f} ' + ulabel(v) + '<extra>' + esc(v['label']) + '</extra>'))
+                               hovertemplate='%{x|%b %d}: %{y:.2f} ' + u + '<extra>' + esc(v['label']) + ', daily total</extra>'))
+                tr.append(dict(type='bar', uid=f'r:{k}', name=v['label'] + ' (hourly total)', x=_ts(H.index), y=_clean(H[k].values),
+                               marker=dict(color=col), meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
+                               hovertemplate='%{y:.2f} ' + u + '<extra>' + esc(v['label']) + '</extra>'))
             else:
-                tr.append(dict(type='scattergl', mode='lines', name=v['label'], x=_ts(_own(P, v['key']).index), y=_clean(_own(P, v['key']).values),
+                mn, mx, me = _daily(k); x = _ts(me.index)
+                if band:
+                    # one closed shape per unbroken run of days, so the band never stretches across a gap
+                    ok = me.notna().values; bx, by = [], []
+                    runs = np.split(np.arange(len(ok)), np.where(np.diff(ok.astype(int)) != 0)[0] + 1)
+                    for r in runs:
+                        if len(r) and ok[r[0]]:
+                            xs = [x[j] for j in r]; bx += xs + xs[::-1] + [None]; by += list(mx.values[r]) + list(mn.values[r][::-1]) + [None]
+                    tr.append(dict(type='scatter', uid=f'd:{k}:band', mode='lines', x=bx, y=_clean(np.array(by, dtype=float)), fill='toself',
+                                   fillcolor=col + '30', line=dict(width=0, color=col), meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
+                                   hoverinfo='skip', showlegend=False))
+                if k in PEAK:
+                    tr.append(dict(type='scatter', uid=f'd:{k}', mode='lines', name=v['label'], x=x, y=_clean(mx.values),
+                                   line=dict(color=col, width=1.6), connectgaps=False, meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
+                                   hovertemplate='%{x|%b %d}: peak %{y:.' + dec + 'f} ' + u + '<extra>' + esc(v['label']) + '</extra>'))
+                else:
+                    tr.append(dict(type='scatter', uid=f'd:{k}', mode='lines', name=v['label'], x=x, y=_clean(me.values),
+                                   line=dict(color=col, width=1.8), connectgaps=False, meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
+                                   customdata=_clean(np.c_[mn.values, mx.values]),
+                                   hovertemplate='%{x|%b %d}: average %{y:.' + dec + 'f} ' + u + ' (low %{customdata[0]:.' + dec + 'f}, high %{customdata[1]:.' + dec + 'f})<extra>' + esc(v['label']) + '</extra>'))
+                tr.append(dict(type='scattergl', uid=f'r:{k}', mode='lines', name=v['label'], x=_ts(_own(P, k).index), y=_clean(_own(P, k).values),
                                line=dict(color=col, width=1.4), connectgaps=False, meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
-                               hovertemplate='%{y:.' + str(v.get('dec', 1)) + 'f} ' + ulabel(v) + '<extra>' + esc(v['label']) + '</extra>'))
+                               hovertemplate='%{y:.' + dec + 'f} ' + u + '<extra>' + esc(v['label']) + '</extra>'))
     # One small legend per panel, just above its top-right corner, instead of one long legend under the chart.
     # Panels with a single line need no legend (the axis title names it).
     lay.pop('legend', None)
@@ -121,7 +155,8 @@ def build_figs(S):
         ax = '' if i == 0 else str(i + 1)
         mine = [t for t in tr if t.get('yaxis') == 'y' + ax]
         lname = 'legend' if i == 0 else f'legend{i + 1}'
-        multi = len([t for t in mine if t.get('showlegend', True) is not False]) > 1
+        multi = len({(t.get('uid') or '').split(':')[1] if ':' in (t.get('uid') or '') else t.get('name')
+                     for t in mine if t.get('showlegend', True) is not False}) > 1      # one entry per measurement
         for t in mine:
             t['legend'] = lname
             if not multi:
@@ -454,7 +489,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px;word-break:break-a
   <section><h2>💡 What the data says</h2><p class="lede">Written automatically from the numbers — it changes as new data arrives.</p>
     <div class="grid insights">%%CARDS%%</div></section>
 
-  <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Use the buttons to zoom to the last day, week or month, or drag across any panel. Click a name in the legend to hide or show it.</p>
+  <section><h2>📈 Every reading</h2><p class="lede">All measurements on one shared timeline. Zoomed out, most lines are daily averages with a light band from that day's low to its high; gusts and sunlight show each day's peak, and rain shows daily totals. Zoom to five weeks or less (use the buttons, or drag across any panel) to see every reading. Click a name in a legend to hide or show it.</p>
     <div class="card"><div id="timeline" class="chart"></div></div></section>
 
   %%WINDCAL%%
@@ -498,6 +533,43 @@ function themed(layout){
 %%MAPJS%%
 let mapMode='street';
 try{ mapMode = localStorage.getItem('buoy-map') || 'street'; }catch(e){}
+// "Every reading": more than ~5 weeks on screen shows daily averages (with each day's low-high band) and daily rain
+// totals; zooming in to 5 weeks or less shows every reading. Flipping is just a visibility change, so it is instant.
+let TL_MODE='daily', TL_RANGE=null;
+const tParse=x=>Date.parse(String(x).replace(' ','T'));
+function tlZoom(el, ev){
+  let span;
+  if (ev['xaxis.autorange'] || ev['xaxis.showspikes']!==undefined && Object.keys(ev).length===1) { span=Infinity; TL_RANGE=null; }
+  else if (ev['xaxis.range']) { TL_RANGE=ev['xaxis.range'].slice(); }
+  else if ('xaxis.range[0]' in ev) { TL_RANGE=[ev['xaxis.range[0]'], ev['xaxis.range[1]']]; }
+  else return;
+  if (TL_RANGE) span=(tParse(TL_RANGE[1])-tParse(TL_RANGE[0]))/864e5;
+  const mode = span>35 ? 'daily' : 'raw';
+  if (mode!==TL_MODE){
+    TL_MODE=mode;
+    Plotly.restyle(el, {visible: el.data.map(t=> t.uid && /^[dr]:/.test(t.uid) ? ((t.uid[0]==='d')===(mode==='daily')) : (t.visible===undefined ? true : t.visible))});
+  }
+  tlFitY(el);
+}
+// rescale each panel's vertical axis to the readings on screen (zoomed in, a whole year's range flattens the lines)
+function tlFitY(el){
+  const upd={}, lim={};
+  if (!TL_RANGE){ for (const k of Object.keys(el.layout)) if (/^yaxis\d*$/.test(k)) upd[k+'.autorange']=true; Plotly.relayout(el, upd); return; }
+  const a=tParse(TL_RANGE[0]), b=tParse(TL_RANGE[1]);
+  for (const t of el.data){
+    if (t.visible===false || t.visible==='legendonly' || !t.x) continue;
+    const ax='yaxis'+(t.yaxis||'y').slice(1), xs=t.x, ys=t.y;
+    let lo=Infinity, hi=-Infinity;
+    for (let i=0;i<xs.length;i++){ const y=ys[i]; if (y==null || xs[i]==null) continue; const x=tParse(xs[i]); if (x<a || x>b) continue; if (y<lo) lo=y; if (y>hi) hi=y; }
+    if (lo<=hi){ const L_=lim[ax]||(lim[ax]=[Infinity,-Infinity]); L_[0]=Math.min(L_[0],lo); L_[1]=Math.max(L_[1],hi); }
+  }
+  for (const [ax,[lo,hi]] of Object.entries(lim)){
+    const zero = el.layout[ax] && el.layout[ax].rangemode==='tozero';
+    const l = zero ? Math.min(0, lo) : lo, pad=Math.max((hi-l)*0.08, Math.abs(hi)*0.02, 0.5);
+    upd[ax+'.range'] = [zero && l===0 ? 0 : l-pad, hi+pad];
+  }
+  if (Object.keys(upd).length) Plotly.relayout(el, upd);
+}
 function render(){
   for (const id of Object.keys(ORIG)){
     const el=document.getElementById(id); if(!el) continue;
@@ -508,6 +580,9 @@ function render(){
       t.hovertemplate=sub(t.hovertemplate); if (t.name) t.name=sub(t.name);
     }
     const L=themed(JSON.parse(sub(JSON.stringify(f.layout))));
+    if (id==='timeline'){   // daily averages when zoomed out, every reading when zoomed in (see tlZoom below)
+      for (const t of f.data) if (t.uid && /^[dr]:/.test(t.uid)) t.visible = (t.uid[0]==='d') === (TL_MODE==='daily');
+      if (TL_RANGE) { L.xaxis.range=TL_RANGE.slice(); L.xaxis.autorange=false; } }
     if (id==='windcal'){   // wind calendar: show the latest 12 months unless "show all" is on
       if (curTheme()==='dark') f.data[0].marker.color='#7fb2f0';
       const ms=L.meta.months, keep=wcAll? ms : ms.slice(-12), b=document.getElementById('wc-all');
@@ -525,7 +600,7 @@ function render(){
       const lg=k=>k==='yaxis'?'legend':'legend'+k.slice(5);
       const avail=W-((L.margin&&L.margin.l)||70)-((L.margin&&L.margin.r)||20);   // legends wrap at the plotting width
       const bands=ax.map(k=>{ const nm=lg(k); if(!L[nm]) return 0;
-        const names=f.data.filter(t=>(t.legend||'legend')===nm && t.showlegend!==false).map(t=>String(t.name||''));
+        const names=f.data.filter(t=>(t.legend||'legend')===nm && t.showlegend!==false && t.visible!==false).map(t=>String(t.name||''));
         let rows=names.length?1:0, used=0; for (const nmx of names){ const w=60+nmx.length*6.8; if(used && used+w>avail){ rows++; used=0; } used+=w; }
         return rows*19+6; });
       const plotPx=ax.reduce((sum,k,i)=>sum+panelPx+bands[i]+(i?gapPx:0),0);
@@ -535,6 +610,7 @@ function render(){
       L.height=plotPx+mt+mb; el.style.height=L.height+'px'; }
     if (L.polar && el.clientWidth < 560){ L.height=600; L.polar.domain={x:[0,1],y:[0.42,1]}; L.legend=Object.assign({},L.legend,{x:0,y:0,yanchor:'bottom'}); }
     try { Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']}); } catch(e){ console.error(id,e); }
+    if (id==='timeline' && !el._tlHook && el.on){ el._tlHook=true; el.on('plotly_relayout', ev=>tlZoom(el, ev)); }
   }
   document.querySelectorAll('.cv').forEach(el=>{ const v=parseFloat(el.dataset.v), c=el.dataset.c, d=+(el.dataset.d||1); if(isNaN(v)) return;
     if (unit==='us' && CONV[c]) el.textContent = CONV[c](v).toFixed(c==='rain'? 2 : (c==='len'? 1 : d)) + ' ' + UNITS.us[c];
