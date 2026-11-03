@@ -121,10 +121,11 @@
       if (!why.length) why.push('nothing over the draft limits');
       return { lvl, why };
     });
-    // the Saco River estuary, mouth to the Biddeford dams: OK during a Small Craft Advisory
+    // the Saco River estuary, mouth to the Biddeford dams: any NOAA alert for our zone makes it the captain's call
     const river = (() => { let lvl = 0; const why = []; const up = (n, t) => { if (n > lvl) lvl = n; why.push(t); };
-      if (inp.alert === 'sca') why.push('Small Craft Advisory in effect, but the estuary is OK to work in');
-      if (inp.alert === 'gale') up(1, 'Gale Warning or stronger in effect');
+      if (inp.alert === 'sca') up(1, 'Small Craft Advisory in effect: captain\'s call in the estuary');
+      if (inp.alert === 'gale') up(1, 'Gale Warning or stronger in effect: captain\'s call in the estuary');
+      for (const e of inp.extra || []) up(1, `${e} in effect: captain's call in the estuary`);
       if (w >= 25 || g >= 30) up(2, `wind ${w} kt, gusts ${g} kt`); else if (w >= 20 || g >= 25) up(1, `wind ${w} kt, gusts ${g} kt`);
       if (dir === 'E' && w >= 10 && inp.tide === 'fall') up(1, 'onshore wind against the falling tide: steep waves at the river mouth');
       if (!why.length) why.push('sheltered from ocean waves; nothing over the draft limits');

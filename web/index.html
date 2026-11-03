@@ -570,7 +570,7 @@ function renderAlerts(){
   el.innerHTML=ALERTS.map(a=>{ const strong=/Gale|Storm|Hurricane|Hazardous Seas|Special Marine|Tsunami|Tornado|Severe/i.test(a.event)&&/Warning/i.test(a.event), sca=/Small Craft/i.test(a.event);
     const cls = strong? 'al-strong' : (sca||/Warning|Advisory/i.test(a.event))? 'al-warn' : 'al-info';
     const where=[...new Set(a.zones.map(z=>TC.ZONES[z]))].join(', ');
-    const une = a.zones.includes('ANZ154') && (sca||strong) ? ' UNE trips: no-go in open water (the Saco River estuary is OK).' : '';
+    const une = a.zones.includes('ANZ154') && (sca||strong) ? ' UNE trips: no-go in open water; captain\'s call in the Saco River estuary.' : '';
     return `<div class="alert ${cls}"><b>⚠️ ${escH(a.event)}</b>${a.ends?` <span class="when">until ${fmtWhen(a.ends)}</span>`:''}<br>${escH(where)}.${une} <a href="${a.url}">Details from NWS</a></div>`; }).join('');
 }
 function renderTripMap(){
