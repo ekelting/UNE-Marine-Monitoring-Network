@@ -67,6 +67,22 @@ def load(data_dir):
         bad = (s < lo) | (s > hi)
         removed[v['key']] = int(bad.sum())
         df[v['key']] = s.where(~bad)
+    # stretches the site's people know are bad (e.g. sensors hanging in the air after a move): left out
+    for p in CFG.get('bad_periods', []):
+        t0 = pd.Timestamp(p['from']).tz_convert('UTC') if p.get('from') else df.index.min()
+        t1 = pd.Timestamp(p['to']).tz_convert('UTC') if p.get('to') else df.index.max()
+        m = (df.index >= t0) & (df.index <= t1)
+        for k in p.get('vars') or list(df.columns):
+            if k in df:
+                removed[k] = removed.get(k, 0) + int(df.loc[m, k].notna().sum())
+                df.loc[m, k] = np.nan
+    # a light sensor that reads zero all day long (sunny or not) has stopped working: treat those days as missing
+    for k in ('solar_wm2', 'par'):
+        if k in df and df[k].notna().any():
+            day = local(df.index).normalize()
+            dead = (df[k].groupby(day).transform('max') <= 1).values
+            removed[k] = removed.get(k, 0) + int((dead & df[k].notna().values).sum())
+            df.loc[dead, k] = np.nan
     return df.dropna(how='all'), removed
 
 

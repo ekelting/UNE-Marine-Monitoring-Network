@@ -13,6 +13,7 @@ import buoy_core as bc
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'shared'))
 import mapjs  # noqa: E402
+import chartfit  # noqa: E402
 import explain  # noqa: E402
 
 # palette (validated reference palette from the dataviz method)
@@ -68,7 +69,7 @@ def build_figs(S, bd):
     for r in ev.itertuples() if len(ev) else []:
         shapes.append(dict(type='rect', xref='x', yref='paper', x0=r.start.strftime('%Y-%m-%d %H:%M'),
                            x1=(r.end + pd.Timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'), y0=0, y1=1,
-                           fillcolor=ORANGE, opacity=0.2, line_width=0, layer='below'))
+                           fillcolor=ORANGE, opacity=0.2, line=dict(width=0), layer='below'))
     figs['timeline'] = _fig([
         dict(type='scatter', mode='lines', name='Hourly wave height', x=_ts(H.index), y=_clean(H['hs'].tolist()),
              line=dict(color=BLUE, width=1.2), meta='len',
@@ -485,7 +486,7 @@ def build_html(S, bd, path, plotly_js=None, SS=None, mode='local', plotly_src=No
     fig_json = json.dumps(figs, default=str, ensure_ascii=False)
     page = TEMPLATE
     for k, v in {
-        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND, '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html,
+        '%%MAPHEAD%%': mapjs.HEAD, '%%CHARTFIT%%': chartfit.JS, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND, '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html,
         '%%PLOTLY_TAG%%': plotly_tag, '%%FIGS%%': fig_json, '%%SENSORS%%': sensor_block, '%%HOWTO%%': howto,
         '%%DOWNLOADS%%': dl, '%%TIDES%%': json.dumps(tides or []), '%%TIDE_ST%%': json.dumps(str(bc.CFG.get('tide_station') or '')),
         '%%TZ%%': json.dumps(str(bc.LOCAL_TZ)), '%%WHERE%%': where, '%%HEALTH_NOTE%%': health_note, '%%SISTERS%%': sisters,
@@ -753,6 +754,7 @@ async function refreshTides(){   // page left open for a while? fetch fresh pred
   try{ const r=await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=UNE_buoy&begin_date=${d}&range=96&datum=MLLW&station=${TIDE_ST}&time_zone=lst_ldt&units=english&interval=hilo&format=json`);
     const j=await r.json(); if (j.predictions && j.predictions.length){ TIDES=j.predictions; renderTide(); } }catch(e){ console.warn('tides',e); }
 }
+%%CHARTFIT%%
 function render(){
   const k = unit==='ft'? M2FT:1;
   let chartLayers = [];
@@ -773,11 +775,10 @@ function render(){
         source:['https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer?service=WMS&request=GetMap&version=1.3.0&layers=0,1,2,3,4,5,6,7&styles=&format=image/png&transparent=false&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}&display_params='+dp]}];
     }
     if (L.map) L.height = Math.max(380, el.clientHeight || 0);
-    if (L.polar && el.clientWidth < 560) {      // narrow screens: legend underneath the rose
-      L.height=640; L.polar.domain={x:[0,1],y:[0.42,1]};
-      L.legend=Object.assign({},L.legend,{orientation:'v',x:0,y:0,xanchor:'left',yanchor:'bottom'}); }
+    const cfg = L.map ? {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']} : chartFit(el, f, L);
+    if (id==='timeline') shadeByZoom(el, L);
     try {
-      const p = Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
+      const p = Plotly.react(el,f.data,L,cfg);
       // raster layers must be added after the new base style has loaded, or MapLibre drops them
       if (L.map) { const lay = (mapMode==='chart') ? chartLayers : [];
         Promise.resolve(p).then(()=>setTimeout(()=>Plotly.relayout(el, {'map.layers': lay}), 150)); }

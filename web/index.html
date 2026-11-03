@@ -425,10 +425,13 @@ function renderStations(){
   el.querySelectorAll('.st').forEach(c=>{ const f=()=>select(c.dataset.repo, true); c.onclick=f; c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); f();} }; });
   for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent) continue;
     const key = s.kind==='radar' ? 'sparkle_ring_pct' : s.kind==='wave' ? 'hs_m' : s.kind==='wx' ? 'air_temp_c' : (d.recent.water_temp_c ? 'water_temp_c' : 'air_temp_c'), conv = s.kind==='wave' ? Hn : s.kind==='radar' ? (v=>v) : Tn;
-    const t=d.recent.t.slice(-168), y=(d.recent[key]||[]).slice(-168).map(conv);
-    Plotly.react('sp-'+s.slug.replace(/\W/g,''), [{x:t,y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
-      hovertemplate:'%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):s.kind==='radar'?'%':(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':s.kind==='radar'?'radar roughness %':key==='air_temp_c'?'air temp':'water temp')+'</extra>'}],
-      {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false},yaxis:{visible:false,
+    const [t, y] = breakGaps(d.recent.t.slice(-168), (d.recent[key]||[]).slice(-168).map(v=>fin(v)?conv(v):null), s.kind==='radar'? 6 : 3);
+    // one filled piece per unbroken run of readings (a filled area would otherwise be drawn straight across an outage)
+    const segs=[]; let cur=null; t.forEach((x,i)=>{ if (y[i]===null){ cur=null; return; } if(!cur){ cur={x:[],y:[]}; segs.push(cur); } cur.x.push(x); cur.y.push(y[i]); });
+    const hov='%{x|%b %d %I %p}: %{y:.1f}'+(s.kind==='wave'?(unit==='us'?' ft':' m'):s.kind==='radar'?'%':(unit==='us'?'°F':'°C'))+'<extra>'+(s.kind==='wave'?'waves':s.kind==='radar'?'radar roughness %':key==='air_temp_c'?'air temp':'water temp')+'</extra>';
+    Plotly.react('sp-'+s.slug.replace(/\W/g,''), segs.map(g=>({x:g.x,y:g.y,type:'scatter',mode:'lines',line:{color:s.color,width:1.6},fill:'tozeroy',fillcolor:s.color+'22',
+      hovertemplate:hov})),
+      {margin:{l:0,r:0,t:2,b:2},height:38,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',xaxis:{visible:false, range: t.length? [t[0], t[t.length-1]] : undefined},yaxis:{visible:false,
        range: (()=>{const v=y.filter(fin); if(!v.length) return undefined; const lo=Math.min(...v), hi=Math.max(...v); return [lo-(hi-lo)*.15, hi+(hi-lo)*.1+1e-6];})()},showlegend:false},
       {displayModeBar:false,responsive:true,staticPlot:false});
   }
@@ -488,6 +491,15 @@ function select(repo, fromCard){
   if (selected && !fromCard){ const c=document.querySelector(`.st[data-repo="${repo}"]`); if(c) c.scrollIntoView({block:'nearest',behavior:'smooth'}); }
 }
 
+// put a break (null) wherever readings stop for more than 3 hours, so lines don't draw straight across outages
+function breakGaps(t, y, maxH=3){
+  const xo=[], yo=[];
+  for (let i=0;i<t.length;i++){
+    if (i && Date.parse(t[i]) - Date.parse(t[i-1]) > maxH*36e5){ xo.push(new Date((Date.parse(t[i]) + Date.parse(t[i-1]))/2).toISOString()); yo.push(null); }
+    xo.push(t[i]); yo.push(y[i]); }
+  return [xo, yo];
+}
+function narrowScreen(){ return window.innerWidth < 600; }
 function renderCharts(){
   const ink=css('--ink2'), grid=css('--grid');
   const spec = {'c-temp':['water_temp_c', Tn, ()=> unit==='us'?'°F':'°C'], 'c-sal':['sal_psu', v=>v, ()=>'PSU'], 'c-do':['do_mgl', v=>v, ()=>'mg/L'], 'c-hs':['hs_m', Hn, ()=> unit==='us'?'ft':'m'],
@@ -499,14 +511,19 @@ function renderCharts(){
     const tr=[]; const present=[];
     for (const s of SITES){ const d=DATA[s.slug]; if(!d||!d.recent||!d.recent[key]||!d.recent[key].some(fin)) continue;
       present.push(s);
-      tr.push({x:d.recent.t, y:d.recent[key].map(v=>fin(v)?conv(v):null), name:s.name, type: key==='rain_mm'?'bar':'scatter', mode:'lines', connectgaps:false, marker:{color:s.color},
+      const [gx, gy] = key==='rain_mm' ? [d.recent.t, d.recent[key].map(v=>fin(v)?conv(v):null)] : breakGaps(d.recent.t, d.recent[key].map(v=>fin(v)?conv(v):null));
+      tr.push({x:gx, y:gy, name:s.name, type: key==='rain_mm'?'bar':'scatter', mode:'lines', connectgaps:false, marker:{color:s.color},
         visible: hidden[id+s.slug] ? 'legendonly' : true, line:{color:s.color,width: selected===s.slug?3.2:1.7}, opacity: selected && selected!==s.slug ? .45 : 1,
         hovertemplate:'%{x|%b %d, %I %p}<br><b>%{y:.2f} '+u()+'</b><extra>'+escH(s.name)+'</extra>'}); }
     const shapes = key==='do_mgl' ? [5,2].map((y,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:y,y1:y,line:{color:i?'#d4473f':'#eda100',width:1.2,dash:'dash'}})) : [];
     const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:12},
       margin:{l:50,r:12,t:10,b:36},showlegend:false,hovermode:'x unified',shapes,
       xaxis:{type:'date',range:XR,gridcolor:grid,linecolor:grid},yaxis:{title:{text:u(),font:{size:12}},gridcolor:grid,zerolinecolor:grid,rangemode: key==='hs_m'?'tozero':'normal'}};
-    Plotly.react(id, tr, L, {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
+    if (key==='rain_mm'){       // a dry fortnight: say so rather than show an empty -1…1 axis
+      const inWin = tr.flatMap(t=>t.x.map((x,i)=>[Date.parse(x), t.y[i]])).filter(([x,v])=>!XR || x>=Date.parse(XR[0]));
+      if (!inWin.some(([x,v])=>v>0)){ L.yaxis.range=[0, unit==='us'? 0.1 : 2.5];
+        L.annotations=[{xref:'paper',yref:'paper',x:0.5,y:0.6,showarrow:false,text:'No rain in these two weeks',font:{size:13,color:css('--muted')||ink}}]; } }
+    Plotly.react(id, tr, L, {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d'], displayModeBar: narrowScreen()? false : 'hover'});
     const lg=document.querySelector(`.legend[data-for="${id}"]`);
     lg.innerHTML = present.map(s=>`<span data-repo="${s.slug}" class="${hidden[id+s.slug]?'off':''}"><span class="swatch" style="background:${s.color}"></span>${escH(s.name)}</span>`).join('');
     lg.querySelectorAll('span[data-repo]').forEach(sp=>sp.onclick=()=>{ hidden[id+sp.dataset.repo]=!hidden[id+sp.dataset.repo]; renderCharts(); });

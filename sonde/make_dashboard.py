@@ -12,6 +12,7 @@ import core as bc
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'shared'))
 import mapjs  # noqa: E402
+import chartfit  # noqa: E402
 import explain  # noqa: E402
 
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED = (
@@ -390,7 +391,7 @@ def build_html(S, path, plotly_src, downloads=None, notice='', tides=None):
     page = TEMPLATE
     for k, v in {
         '%%PLOTLY_TAG%%': f'<script src="{plotly_src}"></script>', '%%FIGS%%': json.dumps(figs, default=str, ensure_ascii=False),
-        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND, '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html,
+        '%%MAPHEAD%%': mapjs.HEAD, '%%CHARTFIT%%': chartfit.JS, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND, '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html,
         '%%TIDES%%': json.dumps(tides or []), '%%TIDE_ST%%': json.dumps(tide_st), '%%TZ%%': json.dumps(bc.LOCAL_TZ),
         '%%WHERE%%': where, '%%SISTERS%%': sisters, '%%DOWNLOADS%%': dl, '%%NOW_TILES%%': now_tiles,
         '%%SEASON_TILES%%': season_tiles, '%%CARDS%%': cards, '%%MROWS%%': mrows, '%%MHEAD%%': mhead, '%%STALE%%': stale, '%%VIBES%%': vibes,
@@ -641,6 +642,7 @@ async function refreshTides(){
 let mapMode='street', calMetric='temp';
 try{ mapMode = localStorage.getItem('buoy-map') || 'street'; calMetric = localStorage.getItem('wq-cal') || 'temp'; }catch(e){}
 if (!ORIG['cal_'+calMetric]) calMetric = (Object.keys(ORIG).find(k=>k.startsWith('cal_'))||'cal_temp').slice(4);
+%%CHARTFIT%%
 function render(){
   const ids = Object.keys(ORIG).filter(k=>!k.startsWith('cal_')).concat(['calendar']);
   for (const id of ids){
@@ -663,8 +665,9 @@ function render(){
     }
     if (L.map) L.height = Math.max(380, el.clientHeight || 0);
     if (id==='tidephase' && el.clientWidth < 520) L.height = 560;
+    const cfg = L.map ? {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']} : chartFit(el, f, L);
     try {
-      const p = Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']});
+      const p = Plotly.react(el,f.data,L,cfg);
       if (L.map) { const lay = (mapMode==='chart') ? chartLayers : [];
         Promise.resolve(p).then(()=>setTimeout(()=>Plotly.relayout(el, {'map.layers': lay}), 150)); }
     } catch(e) { console.error('chart '+id, e); }

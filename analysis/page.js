@@ -10,6 +10,7 @@ const Wm=v=>v==null?null:(unit==='us'? v*2.23694 : v), Wu=()=>unit==='us'?'mph':
 const Qc=v=>v==null?null:(unit==='us'? v*35.3147 : v), Qu=()=>unit==='us'?'cfs':'m³/s';
 const SITE={'Wood Island':'--wi','Jordan Point':'--jp','Ferry Beach':'--fb','Goose Rocks Beach':'--grb'};
 const CFG={displaylogo:false,responsive:true,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d','toggleSpikelines']};
+if (window.innerWidth < 600) CFG.displayModeBar=false;   // phones: the floating toolbar sits on top of legends and titles
 function base(extra){ const ink=css('--ink2'), grid=css('--grid');
   const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif',color:ink,size:12},
     margin:{l:56,r:12,t:10,b:40},hoverlabel:{font:{family:'system-ui'}},legend:{orientation:'h',y:1.14,x:0},

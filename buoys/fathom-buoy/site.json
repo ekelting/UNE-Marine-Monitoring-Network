@@ -36,7 +36,7 @@
   "archive_url": "https://une.app.box.com/s/6gm2pq078kwrdsxzy94zenltzu4gppmy/folder/382628073259",
   "notes": [
     "This buoy carries a Fathom acoustic receiver (the kind used to detect fish fitted with small sound tags) plus water sensors. Fish detections are not part of the public data feed; the page shows the water measurements.",
-    "Launched May 2026 off Camp Ellis; moved near Ram Island in mid-September; last reading Sep 24, 2026. Readings taken anywhere other than its two moorings (for example at the dock after recovery) are left out.",
+    "Launched May 2026 off Camp Ellis; moved near Ram Island in mid-September; last reading Sep 24, 2026. Readings taken anywhere other than its two moorings (for example at the dock after recovery) are left out. Water readings after the move on Sep 15 are left out too: the sensors were reading air, not water (daily swings of 10–25 °C, no salinity).",
     "Questions about this buoy: Dr. Tricia Thibodeau, UNE (pthibodeau1@une.edu)."
   ],
   "vars": [
@@ -199,6 +199,18 @@
       "lon": -70.348578
     }
   ],
-  "status_note": "🐟 Offline: the Fathom buoy is out of the water for repairs. Its 2026 season ran from May 7 to late September; this page shows that deployment, and new readings will appear automatically when it goes back in.",
-  "offline": true
+  "status_note": "🐟 Offline: the Fathom buoy is out of the water for repairs. Its 2026 season ran from May 7 to mid-September; this page shows that deployment, and new readings will appear automatically when it goes back in.",
+  "offline": true,
+  "bad_periods": [
+    {
+      "from": "2026-09-15T08:15:00Z",
+      "vars": [
+        "water_temp_c",
+        "sal_psu",
+        "do_pct",
+        "cdom_ppb"
+      ],
+      "why": "After the buoy was moved on Sep 15 its water sensors read like air (daily swings of 10–25 °C, oxygen pinned near 100%, no salinity), so they were out of the water."
+    }
+  ]
 }

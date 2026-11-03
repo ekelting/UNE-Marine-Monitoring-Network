@@ -355,6 +355,7 @@ function theme(layout){
   return L;
 }
 const CFGP={displaylogo:false,responsive:true,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
+if (window.innerWidth < 600) CFGP.displayModeBar=false;   // phones: the floating toolbar sits on top of titles
 function empty(id,msg){ $(id).innerHTML=`<div class="empty">${msg}</div>`; }
 const TS=D.ts||{t:[]};
 function drawTimeline(){

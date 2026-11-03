@@ -15,6 +15,7 @@ import core as bc
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'shared'))
 import explain  # noqa: E402
 import mapjs  # noqa: E402
+import chartfit  # noqa: E402
 
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED = (
     '#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948')
@@ -169,6 +170,8 @@ def build_figs(S):
     # ---------- day by day ----------
     dy = S['daily'].copy()
     dy.index = pd.to_datetime(dy.index)
+    if len(dy):     # every calendar day, so days without readings show as gaps instead of straight lines across them
+        dy = dy.reindex(pd.date_range(dy.index.min(), dy.index.max(), freq='D'))
     dkeys = [v for v in bc.VARS if v.get('daily') and (f'{v["key"]}_mean' in dy or f'{v["key"]}_total' in dy)]
     if dkeys and len(dy) > 1:
         n = len(dkeys)
@@ -185,10 +188,15 @@ def build_figs(S):
                                xaxis='x', yaxis='y' + ax, hovertemplate='%{x|%a %b %d}: <b>%{y:.2f} ' + ulabel(v) + '</b><extra>daily total</extra>'))
                 ttl = f'Daily {v["label"].lower()} ({ulabel(v)})'
             else:
-                tr.append(dict(type='scatter', mode='lines', x=x, y=_clean(dy[f'{k}_min'].values), line=dict(width=0, color=col),
-                               meta=v.get('conv'), xaxis='x', yaxis='y' + ax, hoverinfo='skip', showlegend=False))
-                tr.append(dict(type='scatter', mode='lines', x=x, y=_clean(dy[f'{k}_max'].values), line=dict(width=0, color=col),
-                               fill='tonexty', fillcolor=col + '40', meta=v.get('conv'), xaxis='x', yaxis='y' + ax, hoverinfo='skip'))
+                # low-high band as one closed shape per unbroken run of days, so it never stretches across a gap
+                lo_, hi_ = dy[f'{k}_min'].values, dy[f'{k}_max'].values
+                ok = np.isfinite(np.asarray(dy[f'{k}_mean'].values, float)); bx, by = [], []
+                for r in np.split(np.arange(len(ok)), np.where(np.diff(ok.astype(int)) != 0)[0] + 1):
+                    if len(r) and ok[r[0]]:
+                        xs = [x[j] for j in r]; bx += xs + xs[::-1] + [None]; by += list(hi_[r]) + list(lo_[r][::-1]) + [None]
+                tr.append(dict(type='scatter', mode='lines', x=bx, y=_clean(np.array(by, dtype=float)), fill='toself',
+                               fillcolor=col + '40', line=dict(width=0, color=col), meta=v.get('conv'), xaxis='x', yaxis='y' + ax,
+                               hoverinfo='skip', showlegend=False))
                 tr.append(dict(type='scatter', mode='lines', x=x, y=_clean(dy[f'{k}_mean'].values), line=dict(width=2, color=col),
                                customdata=_clean(np.c_[dy[f'{k}_min'].values, dy[f'{k}_max'].values]), meta=v.get('conv'),
                                xaxis='x', yaxis='y' + ax,
@@ -347,7 +355,7 @@ def build_html(S, path, plotly_src, downloads=None, notice='', archive_url=None,
     has = lambda k: k in figs  # noqa: E731
     for k, val in {
         '%%PLOTLY_TAG%%': f'<script src="{plotly_src}"></script>', '%%FIGS%%': json.dumps(figs, default=str, ensure_ascii=False),
-        '%%MAPHEAD%%': mapjs.HEAD, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND,
+        '%%MAPHEAD%%': mapjs.HEAD, '%%CHARTFIT%%': chartfit.JS, '%%MAPCSS%%': mapjs.CSS, '%%MAPJS%%': mapjs.JS.replace('%%MAPDATA%%', mapdata), '%%LEGEND%%': mapjs.LEGEND,
         '%%EXCSS%%': explain.CSS, '%%EXPLAIN%%': explain_html, '%%WHERE%%': where, '%%SISTERS%%': mapjs.nav_buttons(bc.SISTER_SITES),
         '%%DOWNLOADS%%': dl, '%%NOW_TILES%%': now_tiles, '%%CARDS%%': cards, '%%MHEAD%%': mhead, '%%MROWS%%': mrows, '%%STALE%%': stale,
         '%%DAYS%%': ('<section><h2>📅 Day by day</h2><p class="lede">Each day\'s range (shaded) and average (line); bars are daily totals.</p>'
@@ -570,6 +578,7 @@ function tlFitY(el){
   }
   if (Object.keys(upd).length) Plotly.relayout(el, upd);
 }
+%%CHARTFIT%%
 function render(){
   for (const id of Object.keys(ORIG)){
     const el=document.getElementById(id); if(!el) continue;
@@ -608,8 +617,8 @@ function render(){
       ax.forEach((k,i)=>{ if(i) y-=gapPx; y-=bands[i]; const top=y, bot=y-panelPx; L[k].domain=[Math.max(0,bot/plotPx), top/plotPx];
         const nm=lg(k); if(L[nm]) Object.assign(L[nm],{x:0, xanchor:'left', y:top/plotPx, yanchor:'bottom', font:{size:10.5}}); y=bot; });
       L.height=plotPx+mt+mb; el.style.height=L.height+'px'; }
-    if (L.polar && el.clientWidth < 560){ L.height=600; L.polar.domain={x:[0,1],y:[0.42,1]}; L.legend=Object.assign({},L.legend,{x:0,y:0,yanchor:'bottom'}); }
-    try { Plotly.react(el,f.data,L,{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']}); } catch(e){ console.error(id,e); }
+    const cfg = L.map ? {responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']} : chartFit(el, f, L);
+    try { Plotly.react(el,f.data,L,cfg); } catch(e){ console.error(id,e); }
     if (id==='timeline' && !el._tlHook && el.on){ el._tlHook=true; el.on('plotly_relayout', ev=>tlZoom(el, ev)); }
   }
   document.querySelectorAll('.cv').forEach(el=>{ const v=parseFloat(el.dataset.v), c=el.dataset.c, d=+(el.dataset.d||1); if(isNaN(v)) return;
