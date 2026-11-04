@@ -31,9 +31,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # skip only if an update was started AFTER this heartbeat began waiting (GitHub's schedule or a push
-          # already covered this hour — that run lines up its own heartbeat when it finishes)
-          newer=$(gh api "repos/${{ github.repository }}/actions/workflows/update.yml/runs?per_page=5" \
-            --jq "[.workflow_runs[] | select((.created_at | fromdateiso8601) > $WAIT_START)] | length")
-          if [ "$newer" -gt 0 ]; then echo "An update already started while waiting — nothing to do."; exit 0; fi
-          gh workflow run update.yml --repo "${{ github.repository }}" --ref main
-          echo "Started the next hourly update."
+          # already covered this hour — that run lines up its own heartbeat when it finishes).
+          # GitHub's API sometimes fails for a minute; retry for up to ~10 minutes so one hiccup can't stop the hourly chain.
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if newer=$(gh api "repos/${{ github.repository }}/actions/workflows/update.yml/runs?per_page=5" \
+                 --jq "[.workflow_runs[] | select((.created_at | fromdateiso8601) > $WAIT_START)] | length"); then
+              if [ "$newer" -gt 0 ]; then echo "An update already started while waiting — nothing to do."; exit 0; fi
+              if gh workflow run update.yml --repo "${{ github.repository }}" --ref main; then
+                echo "Started the next hourly update."; exit 0; fi
+            fi
+            echo "GitHub API call failed (try $i); retrying in 60 s"; sleep 60
+          done
+          echo "::error::Could not start the next hourly update after 10 tries"; exit 1
