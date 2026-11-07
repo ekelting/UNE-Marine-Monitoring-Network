@@ -7,6 +7,7 @@
 <script>try{const t=localStorage.getItem('buoy-theme'); if(t) document.documentElement.dataset.theme=t;}catch(e){}</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="../basemaps.js"></script>
 <script src="../tripcheck.js"></script>
 <style>
 /* For boat captains and PIs: the rules in order, today's live readings (editable), and the distance bands on a map. */
@@ -102,7 +103,7 @@ footer{color:var(--muted);font-size:13px;padding-bottom:30px}
   <section class="card">
     <div class="tripwrap">
       <div><div id="map"></div>
-        <div class="btns" role="group" aria-label="Background"><button type="button" data-base="map" aria-pressed="true">Map</button><button type="button" data-base="chart" aria-pressed="false">Nautical chart</button></div>
+        <div class="btns" role="group" aria-label="Background"><button type="button" data-base="map" aria-pressed="true">Map</button><button type="button" data-base="satellite" aria-pressed="false">Satellite</button><button type="button" data-base="chart" aria-pressed="false">Nautical chart</button></div>
         <p class="note">Rings at 1 nm, then every 3 nm from the UNE boat launch (the UNE logo) out to 24 nm, shaded over water only. Hover over a ring to see its distance. Drag or zoom; scroll-zoom turns on after you click the map. The chart background is from NOAA and is not for navigation.</p></div>
       <div class="trips" id="trips" aria-live="polite"></div>
     </div>

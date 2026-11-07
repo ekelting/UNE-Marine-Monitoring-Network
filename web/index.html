@@ -11,6 +11,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script src="./basemaps.js"></script>
 <script src="./tripcheck.js"></script>
 <style>
 :root{--bg:#f3f6f9;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e1e7ec;--accent:#1c5cab;
@@ -217,6 +218,7 @@ footer{color:var(--muted);font-size:13px;margin:32px 0 40px}
       <div class="card mapcard">
         <div class="maptools">
           <button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button>
+          <button class="seg" data-map="satellite" aria-pressed="false">🛰️ Satellite</button>
           <button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart</button>
           <span class="sp"></span>
           <label for="maplabel" style="font-size:13px;color:var(--ink2)">Labels</label>
@@ -465,16 +467,9 @@ function renderMap(){
   const el=document.getElementById('map'); if(!el||typeof L==='undefined') return;
   if(!LMAP){ LMAP=L.map(el,{scrollWheelZoom:false}); el.addEventListener('click',()=>LMAP.scrollWheelZoom.enable(),{once:true});
     LMAP.fitBounds(SITES.map(s=>[s.lat,s.lon]),{padding:[40,80]}); LMAP.on('zoomend moveend', declutter); }
-  const key = mapMode+'|'+(mapMode==='chart'? unit : (isDark()?'dark':'light'));
+  const key = mapMode+'|'+(mapMode==='chart'? unit : mapMode==='satellite' ? '' : (isDark()?'dark':'light'));
   if (key!==LBASE_KEY){ if(LBASE) LMAP.removeLayer(LBASE);
-    LBASE = mapMode==='chart'
-      ? L.tileLayer.wms('https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer',{layers:'0,1,2,3,4,5,6,7',format:'image/png',transparent:false,version:'1.3.0',maxZoom:18,
-          display_params:JSON.stringify({ECDISParameters:{DynamicParameters:{Parameter:[{name:'DisplayDepthUnits',value:unit==='us'?2:1}]}}}),attribution:'NOAA Office of Coast Survey — not for navigation'})
-      : (isDark()
-        ? L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {maxZoom:16, attribution:'Esri, HERE, Garmin, &copy; OpenStreetMap contributors'}),
-                        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom:16})])
-        : L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {maxZoom:16, attribution:'Esri, GEBCO, NOAA, Garmin, HERE, &copy; OpenStreetMap contributors'}),
-                        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom:16})]));
+    LBASE = UNEBASE(mapMode, isDark(), unit!=='us');
     LBASE.addTo(LMAP); LBASE_KEY=key; }
   for (const s of SITES){ const sel = selected===s.slug;
     if (MARKERS[s.slug]) LMAP.removeLayer(MARKERS[s.slug]);

@@ -1,10 +1,11 @@
 """
 mapjs.py — the "Where is the buoy?" map, shared by the wave-buoy and BlueSonde dashboards.
 Leaflet map with drawn buoy icons (Spotter = yellow wave buoy, BlueSonde = orange water-quality buoy),
-labels that stay readable on both the street map and the NOAA nautical chart.
+labels that stay readable on the street map, satellite view and the NOAA nautical chart.
 Same file in every UNE buoy repo — edit it in one place and copy it to the others.
 """
 import json
+import os
 
 HEAD = ('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">'
         '<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>')
@@ -105,26 +106,20 @@ function renderMap(){
     const pts = [[me.lat, me.lon]].concat((MAPDATA.others||[]).map(o=>[o.lat, o.lon])).concat(MAPDATA.track||[]);
     if (pts.length > 1) LMAP.fitBounds(pts, {padding:[40, 60], maxZoom:15});
   }
-  const key = mapMode + '|' + (mapMode==='chart' ? unitKey() : (mapIsDark()?'dark':'light'));
+  const key = mapMode + '|' + (mapMode==='chart' ? unitKey() : mapMode==='satellite' ? '' : (mapIsDark()?'dark':'light'));
   if (key !== LBASE_KEY){
     if (LBASE) LMAP.removeLayer(LBASE);
-    if (mapMode==='chart'){
-      LBASE = L.tileLayer.wms('https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer', {
-        layers:'0,1,2,3,4,5,6,7', format:'image/png', transparent:false, version:'1.3.0', maxZoom:18,
-        display_params: JSON.stringify({ECDISParameters:{DynamicParameters:{Parameter:[{name:'DisplayDepthUnits',value: unitKey()==='metric'?1:2}]}}}),
-        attribution:'NOAA Office of Coast Survey — not for navigation'});
-    } else {
-      LBASE = (mapIsDark()
-        ? L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {maxZoom:16, attribution:'Esri, HERE, Garmin, &copy; OpenStreetMap contributors'}),
-                        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom:16})])
-        : L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {maxZoom:16, attribution:'Esri, GEBCO, NOAA, Garmin, HERE, &copy; OpenStreetMap contributors'}),
-                        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom:16})]));
-    }
+    LBASE = UNEBASE(mapMode, mapIsDark(), unitKey()==='metric');
     LBASE.addTo(LMAP); LBASE_KEY = key;
   }
   setTimeout(()=>{ LMAP.invalidateSize(); declutter(); }, 80);
 }
 """
+
+# the map backgrounds (ocean map that turns into a street map when zoomed in, satellite, NOAA chart) come from
+# web/basemaps.js, shared with the main page and the trip check
+JS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'web', 'basemaps.js'), encoding='utf-8').read() + JS
+
 
 LEGEND = ('<div class="maplegend"><span><svg width="18" height="20" viewBox="0 0 40 46"><path d="M4 25a16 16 0 0 0 32 0z" fill="#ffc915" stroke="#7a5d00"/>'
           '<path d="M4 25a16 13 0 0 1 32 0z" fill="#1f2a3a"/></svg>Wave buoy</span>'

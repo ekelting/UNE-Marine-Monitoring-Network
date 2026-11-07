@@ -141,15 +141,8 @@
 
   // ---------- map ----------
   const COL = dark => dark ? ['#4fc98a', '#f0b44a', '#f07a6f'] : ['#1a9b5f', '#d98a00', '#d4473f'];
-  function baseLayer(mode, dark) {
-    if (mode === 'chart') return L.tileLayer.wms('https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer',
-      { layers: '0,1,2,3,4,5,6,7', format: 'image/png', transparent: false, version: '1.3.0', maxZoom: 18, attribution: 'NOAA Office of Coast Survey — not for navigation' });
-    return dark
-      ? L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Esri, HERE, Garmin, &copy; OpenStreetMap contributors' }),
-                      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 })])
-      : L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Esri, GEBCO, NOAA, Garmin, HERE, &copy; OpenStreetMap contributors' }),
-                      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 })]);
-  }
+  // map backgrounds live in basemaps.js (shared by every map on the site)
+  const baseLayer = (mode, dark) => window.UNEBASE(mode === 'map' ? 'street' : mode, dark, false);
   // el: map element; river: {outer, inner, dams} in [lat, lon]; geo: bands.json (the rings trimmed to water);
   // mini: the small main-page version, which opens at 3 nm and steps out ring by ring
   const STEPS = [3, 6, 9, 12, 15, 18, 21, 24];

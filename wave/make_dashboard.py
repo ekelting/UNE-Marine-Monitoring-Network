@@ -615,7 +615,7 @@ code{background:var(--chip);padding:1px 5px;border-radius:5px}
 
   <section><h2>📍 Where is the buoy?</h2><p class="lede">Updates every hour. This buoy is highlighted in orange, at its latest position; the blue line is where it has drifted around its anchor (⚓) over the last week. The others are UNE's nearby wave buoys (yellow) and water-quality buoys (orange floats) — hover over one for its name, click to visit its page.</p>
     <div class="grid two"><div class="card mapcard" style="padding:0;overflow:hidden">
-      <div class="maptools"><button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button><button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart (depths &amp; contours)</button></div>
+      <div class="maptools"><button class="seg" data-map="street" aria-pressed="true">🗺️ Street map</button><button class="seg" data-map="satellite" aria-pressed="false">🛰️ Satellite</button><button class="seg" data-map="chart" aria-pressed="false">⚓ Nautical chart (depths &amp; contours)</button></div>
       <div id="map"></div>%%LEGEND%%
       <p class="t-sub" style="margin:6px 12px 10px">Nautical chart: NOAA Office of Coast Survey — depths at low tide, in the units you pick at the top. Not for navigation.</p></div>
     <div class="card wherecard">%%WHERE%%</div></div></section>
